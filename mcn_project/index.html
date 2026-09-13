@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCN 达人运营中台 · MVP 演示</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: { fontFamily: { sans: ['"PingFang SC"','"Microsoft YaHei"','system-ui','sans-serif'] } } }
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  [v-cloak]{display:none}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  .fade-enter-active,.fade-leave-active{transition:opacity .18s ease}
+  .fade-enter-from,.fade-leave-to{opacity:0}
+  .kanban-col{min-width:230px}
+  .img-loading{background:linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 37%,#f1f5f9 63%);background-size:400% 100%;animation:shimmer 1.4s ease infinite}
+  @keyframes shimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased">
+<div id="app" v-cloak>
+  <div class="flex min-h-screen">
+
+    <!-- 侧边导航 -->
+    <aside class="w-60 shrink-0 bg-slate-900 text-slate-300 flex flex-col fixed inset-y-0 left-0 z-20">
+      <div class="px-5 py-5 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white font-bold text-lg">M</div>
+          <div>
+            <div class="text-white font-semibold text-[15px] leading-tight">MCN 运营中台</div>
+            <div class="text-[11px] text-slate-400">达人增长 · 寄拍 · 收益</div>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <template v-for="m in nav" :key="m.key">
+        <!-- V1 增量：分组标题（原 8 项不受影响） -->
+        <div v-if="m.group" class="px-3 pt-5 pb-1 text-[11px] font-medium text-slate-500 tracking-wider">{{ m.label }}</div>
+        <a v-else :href="m.href || undefined" @click="m.href ? null : goPage(m.key)"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer transition-colors"
+           :class="page===m.key ? 'bg-indigo-600 text-white font-medium shadow-lg shadow-indigo-600/30' : 'hover:bg-slate-800 hover:text-white'">
+          <span class="w-5 h-5 flex items-center justify-center" v-html="m.icon"></span>
+          {{ m.label }}
+          <span v-if="m.key==='leads'" class="ml-auto text-[11px] px-1.5 py-0.5 rounded-full"
+                :class="page===m.key ? 'bg-white/20 text-white' : 'bg-slate-800 text-slate-400'">{{ pendingLeads }}</span>
+        </a>
+        </template>
+      </nav>
+      <div class="px-4 py-4 border-t border-slate-800 text-[11px] leading-relaxed text-slate-500">
+        <div class="flex items-center gap-1.5 mb-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          MVP 演示环境
+        </div>
+        验证业务闭环后再决定自研<br>数据为模拟数据 · 可自由操作
+      </div>
+    </aside>
+
+    <!-- 主内容 -->
+    <div class="flex-1 ml-60 flex flex-col min-w-0">
+      <!-- 顶栏 -->
+      <header class="h-16 bg-white/90 backdrop-blur border-b border-slate-200 flex items-center px-6 sticky top-0 z-10">
+        <h1 class="text-lg font-semibold text-slate-900">{{ currentNav.label }}</h1>
+        <span class="ml-3 text-xs text-slate-400">{{ currentNav.desc }}</span>
+        <div class="ml-auto flex items-center gap-3">
+          <button @click="goPage('leads'); openLeadModal()" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">+ 新增线索</button>
+          <div class="text-sm text-slate-500">{{ today }}</div>
+          <div class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium">老</div>
+        </div>
+      </header>
+
+      <main class="flex-1 p-6">
+
+        <!-- ============ 经营看板 ============ -->
+        <section v-if="page==='dashboard'">
+          <div class="grid grid-cols-4 gap-4 mb-5">
+            <div v-for="k in kpis" :key="k.label" class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500 mb-2">{{ k.label }}</div>
+              <div class="text-2xl font-bold text-slate-900 tracking-tight">{{ k.value }}<span class="text-sm font-normal text-slate-400 ml-1">{{ k.unit }}</span></div>
+              <div class="mt-2 text-xs flex items-center gap-1" :class="k.good? 'text-emerald-600':'text-slate-400'">
+                <span v-html="k.good ? trendUp : trendFlat"></span> {{ k.note }}
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5 flex items-start gap-3">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 font-bold">AI</div>
+            <div class="text-[13px] leading-relaxed text-slate-700">
+              <span class="font-semibold text-indigo-700">AI 经营速览：</span>
+              本月累计获客投入 <b>¥{{ fmt(totalCost) }}</b>，新增达人 <b>{{ monthNewTalents }}</b> 人，单达人获客成本 <b>¥{{ costPerTalent }}</b>；
+              <b>{{ insight.bestChannel }}</b> 转化率最高（{{ insight.bestRate }}%），<b>{{ insight.cheapChannel }}</b> 付费渠道中获客成本最低（¥{{ insight.cheapCost }}/人）。
+              待结算佣金 <b>¥{{ fmt(pendingAmount) }}</b>，建议本周跟进结算。
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-4 mb-5">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-sm font-semibold mb-3">获客转化漏斗（全渠道）</div>
+              <div ref="funnelChart" style="height:280px"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-sm font-semibold mb-3">渠道效果对比</div>
+              <div ref="channelChart" style="height:280px"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-sm font-semibold mb-3">近 3 周佣金走势</div>
+              <div ref="trendChart" style="height:280px"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-sm font-semibold">待办跟进（最近 24 小时）</div>
+                <span class="text-xs text-indigo-600 cursor-pointer" @click="goPage('leads')">去处理 →</span>
+              </div>
+              <div class="space-y-2.5">
+                <div v-for="t in todos" :key="t.id" class="flex items-center gap-3 text-[13px]">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="t.urgent?'bg-rose-500':'bg-amber-400'"></span>
+                  <span class="text-slate-700 font-medium">{{ t.name }}</span>
+                  <span class="text-slate-400">{{ t.action }}</span>
+                  <span class="ml-auto text-xs" :class="t.urgent?'text-rose-500':'text-slate-400'">{{ t.time }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="flex items-center justify-between mb-3">
+                <div class="text-sm font-semibold">任务阶段分布</div>
+                <span class="text-xs text-indigo-600 cursor-pointer" @click="goPage('tasks')">查看全部 →</span>
+              </div>
+              <div class="space-y-2">
+                <div v-for="s in taskStageDist" :key="s.name" class="flex items-center gap-3 text-[13px]">
+                  <span class="w-20 text-slate-500 shrink-0">{{ s.name }}</span>
+                  <div class="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500" :style="{width:(s.count/tasks.length*100)+'%'}"></div>
+                  </div>
+                  <span class="w-6 text-right font-semibold">{{ s.count }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 推广获客 ============ -->
+        <section v-if="page==='channels'">
+          <div class="grid grid-cols-4 gap-4 mb-5">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">推广活动数</div>
+              <div class="text-2xl font-bold mt-1">{{ campaigns.length }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">总投入</div>
+              <div class="text-2xl font-bold mt-1">¥{{ fmt(totalCost) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">有效线索</div>
+              <div class="text-2xl font-bold mt-1">{{ sum(campaigns,'validLeads') }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">新增达人</div>
+              <div class="text-2xl font-bold mt-1">{{ sum(campaigns,'talents') }}</div>
+            </div>
+          </div>
+
+          <div class="bg-emerald-50 border border-emerald-100 rounded-2xl p-4 mb-5 text-[13px] text-slate-700 leading-relaxed">
+            <b class="text-emerald-700">渠道结论：</b>
+            转化率最高的是 <b>{{ insight.bestChannel }}</b>（{{ insight.bestRate }}%，且零现金投入，建议加大激励）；
+            付费渠道中 <b>{{ insight.cheapChannel }}</b> 单达人成本最低（¥{{ insight.cheapCost }}），ROI 最好；
+            <b>海报图文</b> 当前单达人成本 ¥{{ cpa('海报图文') }}、转化仅 5.6%，建议暂停或换素材方向后再测。
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500 text-[13px]">
+                <tr>
+                  <th class="text-left px-5 py-3 font-medium">推广活动</th>
+                  <th class="text-left px-3 py-3 font-medium">渠道</th>
+                  <th class="text-left px-3 py-3 font-medium">负责人</th>
+                  <th class="text-right px-3 py-3 font-medium">投入</th>
+                  <th class="text-right px-3 py-3 font-medium">咨询</th>
+                  <th class="text-right px-3 py-3 font-medium">有效线索</th>
+                  <th class="text-right px-3 py-3 font-medium">报名</th>
+                  <th class="text-right px-3 py-3 font-medium">新增达人</th>
+                  <th class="text-right px-3 py-3 font-medium">单线索成本</th>
+                  <th class="text-right px-5 py-3 font-medium">单达人成本</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="c in campaigns" :key="c.id" class="border-t border-slate-100 hover:bg-slate-50/60">
+                  <td class="px-5 py-3.5">
+                    <div class="font-medium text-slate-800">{{ c.name }}</div>
+                    <div class="text-xs text-slate-400">{{ c.id }} · {{ c.start }}</div>
+                  </td>
+                  <td class="px-3 py-3.5"><span class="px-2 py-1 rounded-md bg-slate-100 text-xs">{{ c.channel }}</span></td>
+                  <td class="px-3 py-3.5 text-slate-600">{{ c.owner }}</td>
+                  <td class="px-3 py-3.5 text-right">¥{{ fmt(c.cost) }}</td>
+                  <td class="px-3 py-3.5 text-right text-slate-600">{{ c.consult }}</td>
+                  <td class="px-3 py-3.5 text-right font-medium">{{ c.validLeads }}</td>
+                  <td class="px-3 py-3.5 text-right text-slate-600">{{ c.signed }}</td>
+                  <td class="px-3 py-3.5 text-right font-semibold text-indigo-600">{{ c.talents }}</td>
+                  <td class="px-3 py-3.5 text-right text-slate-600">{{ c.cost? '¥'+fmt(c.cost/c.validLeads) : '—' }}</td>
+                  <td class="px-5 py-3.5 text-right font-semibold" :class="c.cost? 'text-slate-800':'text-emerald-600'">{{ c.cost? '¥'+fmt(c.cost/c.talents) : '¥0' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-slate-400 mt-3">单有效线索成本 = 推广成本 ÷ 有效线索数；单达人获客成本 = 推广成本 ÷ 新增达人数。零成本渠道（转介绍/社群）人力成本未计入。</p>
+        </section>
+
+        <!-- ============ 线索管理（看板） ============ -->
+        <section v-if="page==='leads'">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="flex bg-white rounded-lg border border-slate-200 p-1 text-sm">
+              <button @click="leadView='board'" :class="leadView==='board'?'bg-indigo-600 text-white':'text-slate-500'" class="px-3 py-1.5 rounded-md transition">看板视图</button>
+              <button @click="leadView='table'" :class="leadView==='table'?'bg-indigo-600 text-white':'text-slate-500'" class="px-3 py-1.5 rounded-md transition">表格视图</button>
+            </div>
+            <input v-model="leadKeyword" placeholder="搜索昵称 / 负责人 / 渠道…" class="flex-1 max-w-xs px-3.5 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200">
+            <button @click="openLeadModal()" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">+ 新增线索</button>
+            <button @click="goPage('import')" class="px-3.5 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-white">Excel 批量导入</button>
+          </div>
+
+          <!-- 看板 -->
+          <div v-if="leadView==='board'" class="flex gap-4 overflow-x-auto pb-4">
+            <div v-for="st in leadStagesAll" :key="st" class="kanban-col flex-1 bg-slate-200/50 rounded-2xl p-3">
+              <div class="flex items-center gap-2 px-1 mb-3">
+                <span class="w-2 h-2 rounded-full" :style="{background: leadStageColor(st)}"></span>
+                <span class="font-semibold text-sm">{{ st }}</span>
+                <span class="ml-auto text-xs bg-white rounded-full px-2 py-0.5 text-slate-500">{{ filteredLeads(st).length }}</span>
+              </div>
+              <div class="space-y-2.5">
+                <div v-for="l in filteredLeads(st)" :key="l.id" class="bg-white rounded-xl p-3 shadow-sm border border-slate-100 hover:shadow-md transition">
+                  <div class="flex items-center gap-2">
+                    <div class="font-medium text-sm text-slate-800">{{ l.name }}</div>
+                    <span class="ml-auto text-[10px] px-1.5 py-0.5 rounded font-semibold"
+                          :class="l.level==='A'?'bg-rose-100 text-rose-600':l.level==='B'?'bg-amber-100 text-amber-600':'bg-slate-100 text-slate-500'">{{ l.level }} 级</span>
+                  </div>
+                  <div class="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500 flex-wrap">
+                    <span class="px-1.5 py-0.5 bg-slate-100 rounded">{{ l.channel }}</span>
+                    <span>{{ l.owner }}</span>
+                  </div>
+                  <div class="mt-2 text-[11px] text-slate-400">最近跟进：{{ l.lastFollow }}</div>
+                  <div v-if="l.nextFollow" class="text-[11px]" :class="isOverdue(l.nextFollow)?'text-rose-500 font-medium':'text-slate-400'">
+                    下次跟进：{{ l.nextFollow }} <span v-if="isOverdue(l.nextFollow)">（已逾期）</span>
+                  </div>
+                  <div v-if="l.invalidReason" class="mt-1.5 text-[11px] text-rose-400">无效原因：{{ l.invalidReason }}</div>
+                  <select v-if="st!=='已成为达人' && st!=='无效线索'" v-model="l.status" @change="onLeadMove(l)"
+                          class="mt-2 w-full text-[11px] border border-slate-200 rounded-md px-1.5 py-1 text-slate-600 bg-white focus:outline-none">
+                    <option v-for="s in leadStagesAll" :key="s" :value="s" :disabled="s===l.status">移动到：{{ s }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div v-else class="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500 text-[13px]">
+                <tr>
+                  <th class="text-left px-5 py-3 font-medium">昵称/姓名</th>
+                  <th class="text-left px-3 py-3 font-medium">来源渠道</th>
+                  <th class="text-left px-3 py-3 font-medium">联系方式</th>
+                  <th class="text-left px-3 py-3 font-medium">负责人</th>
+                  <th class="text-left px-3 py-3 font-medium">意向</th>
+                  <th class="text-left px-3 py-3 font-medium">状态</th>
+                  <th class="text-left px-3 py-3 font-medium">最近跟进</th>
+                  <th class="text-left px-5 py-3 font-medium">下次跟进</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="l in leadsFiltered" :key="l.id" class="border-t border-slate-100 hover:bg-slate-50/60">
+                  <td class="px-5 py-3 font-medium">{{ l.name }}</td>
+                  <td class="px-3 py-3 text-slate-600">{{ l.channel }}</td>
+                  <td class="px-3 py-3 text-slate-500">{{ l.contact }}</td>
+                  <td class="px-3 py-3">{{ l.owner }}</td>
+                  <td class="px-3 py-3">{{ l.level }}</td>
+                  <td class="px-3 py-3"><span class="px-2 py-0.5 rounded-md text-xs text-white" :style="{background:leadStageColor(l.status)}">{{ l.status }}</span></td>
+                  <td class="px-3 py-3 text-slate-500">{{ l.lastFollow }}</td>
+                  <td class="px-5 py-3" :class="isOverdue(l.nextFollow)?'text-rose-500 font-medium':'text-slate-500'">{{ l.nextFollow || '—' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ============ 寄拍任务 ============ -->
+        <section v-if="page==='tasks'">
+          <div class="flex items-center gap-2 mb-4 flex-wrap">
+            <button @click="taskFilter='全部'" :class="taskFilter==='全部'?'bg-slate-900 text-white':'bg-white text-slate-600 border border-slate-200'" class="px-3 py-1.5 rounded-lg text-sm">全部（{{ tasks.length }}）</button>
+            <button v-for="s in TASK_STAGES" :key="s" @click="taskFilter=s"
+                    :class="taskFilter===s?'bg-slate-900 text-white':'bg-white text-slate-600 border border-slate-200'"
+                    class="px-3 py-1.5 rounded-lg text-sm">{{ s }}（{{ tasks.filter(x=>x.status===s).length }}）</button>
+          </div>
+
+          <div class="space-y-3">
+            <div v-for="t in tasksFiltered" :key="t.id" class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-4 flex items-center gap-4">
+              <img :src="t.img" class="w-16 h-16 rounded-xl object-cover shrink-0" :alt="t.product">
+              <div class="w-44 shrink-0">
+                <div class="font-medium text-slate-800">{{ t.product }}</div>
+                <div class="text-xs text-slate-400 mt-0.5">{{ t.id }} · 截止 {{ t.deadline }}</div>
+                <div class="text-xs text-slate-500 mt-0.5">达人：{{ t._talentName }}</div>
+              </div>
+              <!-- 阶段条 -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center">
+                  <template v-for="(s,i) in TASK_STAGES" :key="s">
+                    <div class="flex flex-col items-center shrink-0">
+                      <div class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] text-white"
+                           :class="i<=stageIdx(t.status)? 'bg-indigo-500':'bg-slate-200'">
+                        <span v-if="i<stageIdx(t.status)">✓</span>
+                        <span v-else-if="i===stageIdx(t.status)" class="w-2 h-2 rounded-full bg-white"></span>
+                      </div>
+                      <div class="text-[10px] mt-1 whitespace-nowrap" :class="i<=stageIdx(t.status)?'text-indigo-600 font-medium':'text-slate-400'">{{ s }}</div>
+                    </div>
+                    <div v-if="i<TASK_STAGES.length-1" class="h-0.5 flex-1 mx-0.5 -mt-4" :class="i<stageIdx(t.status)?'bg-indigo-400':'bg-slate-200'"></div>
+                  </template>
+                </div>
+              </div>
+              <div class="w-28 text-right shrink-0">
+                <div class="font-semibold text-slate-800">¥{{ fmt(t.commission) }}</div>
+                <div class="text-[11px] text-slate-400">MCN ¥{{ fmt(t.commission*t.rate) }}</div>
+                <button @click="advanceTask(t)" v-if="t.status!=='已结算'" class="mt-1 text-[11px] px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100">推进 →</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 收益结算 ============ -->
+        <section v-if="page==='finance'">
+          <div class="grid grid-cols-5 gap-4 mb-5">
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">本月总佣金</div>
+              <div class="text-2xl font-bold mt-1">¥{{ fmt(totalCommission) }}</div>
+              <div class="text-xs text-slate-400 mt-1">已发布/完成/结算</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">MCN 预计收益</div>
+              <div class="text-2xl font-bold mt-1 text-indigo-600">¥{{ fmt(mcnIncome) }}</div>
+              <div class="text-xs text-slate-400 mt-1">分成比例 20%</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">达人应得</div>
+              <div class="text-2xl font-bold mt-1">¥{{ fmt(totalCommission-mcnIncome) }}</div>
+              <div class="text-xs text-slate-400 mt-1">佣金 80%</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">已结算</div>
+              <div class="text-2xl font-bold mt-1 text-emerald-600">¥{{ fmt(settledAmount) }}</div>
+            </div>
+            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
+              <div class="text-[13px] text-slate-500">待结算</div>
+              <div class="text-2xl font-bold mt-1 text-amber-600">¥{{ fmt(pendingAmount) }}</div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+            <div class="px-5 py-3.5 border-b border-slate-100 text-sm font-semibold">结算明细</div>
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 text-slate-500 text-[13px]">
+                <tr>
+                  <th class="text-left px-5 py-3 font-medium">任务</th>
+                  <th class="text-left px-3 py-3 font-medium">达人</th>
+                  <th class="text-right px-3 py-3 font-medium">任务佣金</th>
+                  <th class="text-right px-3 py-3 font-medium">MCN 应得（20%）</th>
+                  <th class="text-right px-3 py-3 font-medium">达人应得（80%）</th>
+                  <th class="text-right px-5 py-3 font-medium">状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="t in revenueTasks" :key="t.id" class="border-t border-slate-100 hover:bg-slate-50/60">
+                  <td class="px-5 py-3">
+                    <div class="font-medium">{{ t.product }}</div>
+                    <div class="text-xs text-slate-400">{{ t.id }}</div>
+                  </td>
+                  <td class="px-3 py-3 text-slate-600">{{ t._talentName }}</td>
+                  <td class="px-3 py-3 text-right font-medium">¥{{ fmt(t.commission) }}</td>
+                  <td class="px-3 py-3 text-right text-indigo-600 font-medium">¥{{ fmt(t.commission*t.rate) }}</td>
+                  <td class="px-3 py-3 text-right text-slate-700">¥{{ fmt(t.commission*(1-t.rate)) }}</td>
+                  <td class="px-5 py-3 text-right">
+                    <span class="px-2 py-0.5 rounded-md text-xs text-white" :style="{background:taskStageColor(t.status)}">{{ t.status }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-slate-400 mt-3">计算规则：MCN 应得 = 任务佣金 × MCN 分成比例（示例 20%）；达人应得 = 任务佣金 − MCN 应得。佣金在任务「已发布」后计入，「已结算」为实际到账。</p>
+        </section>
+
+        <!-- ============ AI 生图 ============ -->
+        <section v-if="page==='ai'">
+          <div class="grid grid-cols-3 gap-5">
+            <!-- 左：生成面板 -->
+            <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
+              <div class="text-sm font-semibold mb-4">AI 生图工作台</div>
+              <label class="text-xs text-slate-500">场景模板</label>
+              <select v-model="ai.tpl" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                <option v-for="t in aiTemplates" :key="t.key" :value="t.key">{{ t.name }}</option>
+              </select>
+              <label class="text-xs text-slate-500">商品描述（必填）</label>
+              <input v-model="ai.product" placeholder="例：复古慢跑鞋，米白色，翻毛皮" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <label class="text-xs text-slate-500">模特 / 人物</label>
+              <input v-model="ai.model" placeholder="例：25岁亚洲女性，甜美风格" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <label class="text-xs text-slate-500">场景</label>
+              <input v-model="ai.scene" placeholder="例：上海街头咖啡店外，秋日阳光" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <label class="text-xs text-slate-500">Prompt 预览（可手动调整）</label>
+              <textarea v-model="aiPrompt" rows="4" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-xs font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-200"></textarea>
+              <button @click="generateImages()" :disabled="ai.generating" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-medium hover:opacity-90 disabled:opacity-50">
+                {{ ai.generating ? '生成中…（约 10-30 秒）' : '生成 3 张素材' }}
+              </button>
+              <div class="mt-4 rounded-xl bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-500">
+                <b class="text-slate-600">MVP 标准流程：</b>标准需求表 → Prompt 模板 → AI 生成 → 审核（Logo/颜色/版型/手脚/光影）→ 可用素材归档。
+                参考图（商品图/人物图）在正式版中随需求表上传，演示版先用文字描述。
+              </div>
+            </div>
+
+            <!-- 右：素材库与指标 -->
+            <div class="col-span-2 space-y-5">
+              <div class="grid grid-cols-4 gap-4">
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-sm">
+                  <div class="text-xs text-slate-500">已生成</div>
+                  <div class="text-xl font-bold mt-1">{{ ai.images.length }} 张</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-sm">
+                  <div class="text-xs text-slate-500">有效素材率</div>
+                  <div class="text-xl font-bold mt-1 text-emerald-600">{{ aiUsableRate }}%</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-sm">
+                  <div class="text-xs text-slate-500">传统拍摄 / 组</div>
+                  <div class="text-xl font-bold mt-1">~3 天 · ¥1800</div>
+                  <div class="text-[10px] text-slate-400">模特+场地+拍摄+修图</div>
+                </div>
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/70 shadow-sm">
+                  <div class="text-xs text-slate-500">AI 生成 / 组</div>
+                  <div class="text-xl font-bold mt-1 text-indigo-600">~15 分钟 · ¥6</div>
+                  <div class="text-[10px] text-slate-400">3 张 · 约 ¥2/张</div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="text-sm font-semibold">生成素材（请按审核结果评级）</div>
+                  <div class="text-xs text-slate-400">审核项：Logo / 文字 / 颜色 / 版型 / 手脚 / 光影</div>
+                </div>
+                <div v-if="ai.images.length===0" class="py-12 text-center text-slate-400 text-sm">
+                  填写左侧商品信息，点击「生成 3 张素材」开始测试
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                  <div v-for="(g,i) in ai.images" :key="i" class="rounded-xl border border-slate-200 overflow-hidden">
+                    <div class="aspect-[4/3] relative">
+                      <div v-if="g.loading" class="w-full h-full img-loading flex items-end p-2">
+                        <span class="text-[11px] text-slate-500">AI 绘制中…</span>
+                      </div>
+                      <img v-if="!g.error" :src="g.url" @load="g.loading=false" @error="g.loading=false;g.error=true"
+                           class="w-full h-full object-cover" :class="g.loading?'hidden':''">
+                      <div v-if="g.error" class="w-full h-full bg-slate-100 flex items-center justify-center text-xs text-slate-400">生成失败，请重试</div>
+                    </div>
+                    <div class="p-2.5">
+                      <div class="flex gap-1">
+                        <button v-for="r in ['直接可用','简单修改','不可用']" :key="r" @click="g.rating=r"
+                                class="flex-1 text-[11px] py-1.5 rounded-md border transition"
+                                :class="g.rating===r ? (r==='不可用'?'bg-rose-500 text-white border-rose-500':r==='直接可用'?'bg-emerald-500 text-white border-emerald-500':'bg-amber-400 text-white border-amber-400') : 'border-slate-200 text-slate-500 hover:bg-slate-50'">{{ r }}</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============ 数据导入 ============ -->
+        <section v-if="page==='import'">
+          <!-- 抖音数据来源说明 -->
+          <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5 mb-5">
+            <div class="text-sm font-semibold mb-3">抖音 / 得物数据从哪里来？</div>
+            <div class="grid grid-cols-4 gap-3">
+              <div class="rounded-xl border border-slate-200 p-4">
+                <div class="font-medium text-sm text-slate-800">① 巨量百应</div>
+                <div class="text-[12px] text-slate-500 mt-1 leading-relaxed">buyin.jinritemai.com<br>MCN/达人带货后台：订单、佣金结算、直播带货数据 → 导出 Excel</div>
+              </div>
+              <div class="rounded-xl border border-slate-200 p-4">
+                <div class="font-medium text-sm text-slate-800">② 抖音电商罗盘</div>
+                <div class="text-[12px] text-slate-500 mt-1 leading-relaxed">compass.jinritemai.com<br>机构/商家经营数据：商品、交易、达人合作 → 导出 Excel</div>
+              </div>
+              <div class="rounded-xl border border-slate-200 p-4">
+                <div class="font-medium text-sm text-slate-800">③ 创作者服务中心</div>
+                <div class="text-[12px] text-slate-500 mt-1 leading-relaxed">creator.douyin.com<br>达人账号数据、内容数据，截图或导出后录入</div>
+              </div>
+              <div class="rounded-xl border border-slate-200 p-4">
+                <div class="font-medium text-sm text-slate-800">④ 飞书多维表格</div>
+                <div class="text-[12px] text-slate-500 mt-1 leading-relaxed">MVP 阶段主力：员工在线填写，导出 Excel 后一键导入本系统</div>
+              </div>
+            </div>
+            <div class="mt-4 rounded-xl bg-amber-50 border border-amber-100 p-3.5 text-[12px] leading-relaxed text-slate-600">
+              <b class="text-amber-700">三阶段路线：</b>
+              <b>现在（MVP）</b>：各后台手动导出 Excel/CSV → 本页面上传导入，字段自动映射，30 秒完成；
+              <b>跑顺后</b>：飞书多维表格 API 自动同步，无需人工导出；
+              <b>自研阶段</b>：申请抖音开放平台 / 电商开放平台接口（需企业资质 + 达人 OAuth 授权），系统自动拉单。
+              <b style="color:#e11d48">不建议</b>用爬虫/外挂抓取，违反平台规则且账号有风险。
+            </div>
+          </div>
+
+          <!-- 导入操作区 -->
+          <div class="grid grid-cols-2 gap-5">
+            <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
+              <div class="text-sm font-semibold mb-4">第 1 步：下载导入模板（或直接用后台导出的表）</div>
+              <div class="space-y-2.5">
+                <button v-for="t in tplList" :key="t.key" @click="downloadTemplate(t.key)"
+                        class="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/40 transition text-left">
+                  <span class="w-9 h-9 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-bold">表</span>
+                  <div>
+                    <div class="text-sm font-medium">{{ t.name }}模板</div>
+                    <div class="text-[11px] text-slate-400">{{ t.cols }}</div>
+                  </div>
+                  <span class="ml-auto text-indigo-600 text-sm">下载 CSV →</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
+              <div class="text-sm font-semibold mb-4">第 2 步：上传文件（.xlsx / .xls / .csv）</div>
+              <select v-model="imp.target" class="w-full mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none">
+                <option value="leads">导入为：线索数据</option>
+                <option value="talents">导入为：达人数据</option>
+                <option value="tasks">导入为：寄拍任务</option>
+              </select>
+              <label class="block border-2 border-dashed border-slate-300 rounded-xl py-10 text-center cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/30 transition">
+                <input type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="handleFile">
+                <div class="text-3xl mb-2">📄</div>
+                <div class="text-sm text-slate-600 font-medium">点击选择 Excel / CSV 文件</div>
+                <div class="text-xs text-slate-400 mt-1">支持飞书导出、巨量百应导出、电商罗盘导出</div>
+              </label>
+              <div v-if="imp.fileName" class="mt-3 text-[13px] text-slate-600">
+                已选择：<b>{{ imp.fileName }}</b> · 识别到 {{ imp.rows.length }} 行数据，{{ imp.matchedCount }} 个字段自动匹配
+              </div>
+            </div>
+          </div>
+
+          <!-- 预览 -->
+          <div v-if="imp.rows.length" class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5 mt-5">
+            <div class="flex items-center justify-between mb-4">
+              <div class="text-sm font-semibold">第 3 步：数据预览与字段映射</div>
+              <button @click="confirmImport" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+                确认导入 {{ imp.rows.length }} 条数据
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th v-for="(h,i) in imp.headers" :key="i" class="px-3 py-2 text-left font-medium whitespace-nowrap">
+                      {{ h }}
+                      <span v-if="imp.fieldMap[i]" class="ml-1 text-indigo-500">→ {{ imp.fieldMap[i] }}</span>
+                      <span v-else class="ml-1 text-rose-400">（未识别）</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(r,ri) in imp.preview" :key="ri" class="border-t border-slate-100">
+                    <td v-for="(c,ci) in r" :key="ci" class="px-3 py-2 text-slate-600 whitespace-nowrap">{{ c }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div v-if="imp.done" class="mt-5 rounded-2xl bg-emerald-50 border border-emerald-200 p-5 text-center">
+            <div class="text-2xl mb-1">✅</div>
+            <div class="font-semibold text-emerald-700">导入成功：{{ imp.doneCount }} 条数据已进入系统</div>
+            <div class="text-sm text-slate-500 mt-1">可到「{{ imp.target==='leads'?'线索管理':imp.target==='talents'?'达人库':'寄拍任务' }}」页面查看，演示数据刷新页面后重置。</div>
+          </div>
+        </section>
+
+        <!-- ============ 达人线索管理（新增模块） ============ -->
+        <section v-if="page==='talent-leads'">
+          <!-- 筛选区 -->
+          <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-4 mb-4">
+            <div class="flex flex-wrap items-center gap-3">
+              <input v-model="tl.filters.name" placeholder="达人昵称" class="w-36 px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              <select v-model="tl.filters.source" class="w-32 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">来源渠道</option><option v-for="s in tl.SOURCES" :key="s">{{ s }}</option></select>
+              <select v-model="tl.filters.stage" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">当前阶段</option><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select>
+              <select v-model="tl.filters.potential" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">达人潜力</option><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select>
+              <select v-model="tl.filters.willing" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">合作意愿</option><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select>
+              <select v-model="tl.filters.category" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">达人分类</option><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select>
+              <select v-model="tl.filters.owner" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">负责人</option><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select>
+              <button @click="tl.doSearch()" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700">查询</button>
+              <button @click="tl.doReset()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">重置</button>
+              <button @click="tl.openImport()" class="px-3.5 py-1.5 rounded-lg border border-sky-400 text-sky-600 text-sm hover:bg-sky-50">导入 Excel</button>
+              <button @click="tl.openCreate()" class="ml-auto px-3.5 py-1.5 rounded-lg bg-emerald-600 text-white text-sm hover:bg-emerald-700">+ 新增线索</button>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm min-w-[1300px]">
+                <thead class="bg-slate-50 text-slate-500 text-xs">
+                  <tr>
+                    <th class="text-left px-3 py-2.5 w-14">序号</th>
+                    <th class="text-left px-3 py-2.5">达人昵称</th>
+                    <th class="text-left px-3 py-2.5">来源渠道</th>
+                    <th class="text-left px-3 py-2.5">自媒体情况</th>
+                    <th class="text-right px-3 py-2.5">粉丝量</th>
+                    <th class="text-left px-3 py-2.5">当前阶段</th>
+                    <th class="text-left px-3 py-2.5">达人潜力</th>
+                    <th class="text-left px-3 py-2.5">合作意愿</th>
+                    <th class="text-left px-3 py-2.5">达人分类</th>
+                    <th class="text-left px-3 py-2.5">合作路径</th>
+                    <th class="text-left px-3 py-2.5">当前负责人</th>
+                    <th class="text-left px-3 py-2.5">下次跟进时间</th>
+                    <th class="text-left px-3 py-2.5">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, i) in tl.pagedList" :key="row.id" class="border-t border-slate-100 hover:bg-slate-50/60">
+                    <td class="px-3 py-2.5 text-slate-400 text-xs">{{ (tl.page-1)*tl.pageSize + i + 1 }}</td>
+                    <td class="px-3 py-2.5 font-medium text-slate-800">{{ row.name }}</td>
+                    <td class="px-3 py-2.5 text-slate-600">{{ row.source }}</td>
+                    <td class="px-3 py-2.5 text-xs text-slate-500">{{ row.hasMedia ? row.platforms.join('/') : '无' }}</td>
+                    <td class="px-3 py-2.5 text-right text-slate-600">{{ row.fans > 0 ? fmt(row.fans) : '—' }}</td>
+                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('stage', row.stage)">{{ row.stage }}</span></td>
+                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('potential', row.potential)">{{ row.potential }}</span></td>
+                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('willing', row.willing)">{{ row.willing }}</span></td>
+                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('category', row.category)">{{ row.category }}</span></td>
+                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('path', row.coopPath)">{{ row.coopPath }}</span></td>
+                    <td class="px-3 py-2.5 text-slate-600">{{ row.owner }}</td>
+                    <td class="px-3 py-2.5 text-xs text-slate-400">{{ row.nextFollow || '—' }}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap">
+                      <button @click="tl.openDetail(row)" class="text-indigo-600 hover:underline mr-2">查看</button>
+                      <button @click="tl.openEdit(row)" class="text-slate-600 hover:underline mr-2">编辑</button>
+                      <button @click="tl.openFollow(row)" class="text-slate-600 hover:underline mr-2">跟进</button>
+                      <button @click="tl.openClassify(row)" class="text-slate-600 hover:underline mr-2">分类</button>
+                      <button @click="tl.openHandover(row)" class="text-slate-600 hover:underline">交接</button>
+                    </td>
+                  </tr>
+                  <tr v-if="!tl.pagedList.length"><td colspan="13" class="px-3 py-10 text-center text-slate-400 text-sm">暂无数据</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- 分页 -->
+            <div class="flex items-center justify-between px-4 py-3 border-t border-slate-100">
+              <div class="text-xs text-slate-400">共 {{ tl.total }} 条</div>
+              <div class="flex items-center gap-1">
+                <button @click="tl.onPageChange(tl.page-1)" :disabled="tl.page<=1" class="px-2.5 py-1 rounded text-xs border border-slate-200 disabled:opacity-40 hover:bg-slate-50">上一页</button>
+                <span class="px-2 text-xs text-slate-600">{{ tl.page }} / {{ Math.max(1, Math.ceil(tl.total/tl.pageSize)) }}</span>
+                <button @click="tl.onPageChange(tl.page+1)" :disabled="tl.page>=Math.ceil(tl.total/tl.pageSize)" class="px-2.5 py-1 rounded text-xs border border-slate-200 disabled:opacity-40 hover:bg-slate-50">下一页</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ====== 达人线索：查看详情弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.dlg.show.detail" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeAll()">
+          <div class="bg-white rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <div class="text-base font-semibold">达人线索详情</div>
+              <button @click="tl.closeAll()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+            </div>
+            <div v-if="tl.dlg.current" class="grid grid-cols-3 gap-x-6 gap-y-3 text-sm">
+              <div><span class="text-slate-400 text-xs">昵称：</span>{{ tl.dlg.current.name }}</div>
+              <div><span class="text-slate-400 text-xs">联系方式：</span>{{ tl.dlg.current.contact }}</div>
+              <div><span class="text-slate-400 text-xs">来源渠道：</span>{{ tl.dlg.current.source }}</div>
+              <div><span class="text-slate-400 text-xs">有自媒体经验：</span>{{ tl.dlg.current.hasMedia ? '是' : '否' }}</div>
+              <div><span class="text-slate-400 text-xs">平台：</span>{{ tl.dlg.current.platforms.join(' / ') }}</div>
+              <div><span class="text-slate-400 text-xs">粉丝量：</span>{{ fmt(tl.dlg.current.fans) }}</div>
+              <div><span class="text-slate-400 text-xs">有寄拍/商单经验：</span>{{ tl.dlg.current.hasExp ? '是' : '否' }}</div>
+              <div class="col-span-2"><span class="text-slate-400 text-xs">合作品类：</span>{{ tl.dlg.current.coopCategories }}</div>
+              <div><span class="text-slate-400 text-xs">想做品类：</span>{{ tl.dlg.current.wantCategories }}</div>
+              <div class="col-span-2"><span class="text-slate-400 text-xs">出镜方式：</span>{{ tl.dlg.current.appearWay }}</div>
+              <div><span class="text-slate-400 text-xs">当前阶段：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('stage', tl.dlg.current.stage)">{{ tl.dlg.current.stage }}</span></div>
+              <div><span class="text-slate-400 text-xs">达人潜力：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('potential', tl.dlg.current.potential)">{{ tl.dlg.current.potential }}</span></div>
+              <div><span class="text-slate-400 text-xs">合作意愿：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('willing', tl.dlg.current.willing)">{{ tl.dlg.current.willing }}</span></div>
+              <div><span class="text-slate-400 text-xs">达人分类：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('category', tl.dlg.current.category)">{{ tl.dlg.current.category }}</span></div>
+              <div><span class="text-slate-400 text-xs">合作路径：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('path', tl.dlg.current.coopPath)">{{ tl.dlg.current.coopPath }}</span></div>
+              <div><span class="text-slate-400 text-xs">当前负责人：</span>{{ tl.dlg.current.owner }}</div>
+              <div><span class="text-slate-400 text-xs">最近跟进：</span>{{ tl.dlg.current.lastFollow }}</div>
+              <div><span class="text-slate-400 text-xs">下次跟进：</span>{{ tl.dlg.current.nextFollow || '—' }}</div>
+              <div class="col-span-3"><span class="text-slate-400 text-xs">备注：</span>{{ tl.dlg.current.note || '—' }}</div>
+            </div>
+            <div class="flex justify-end mt-5"><button @click="tl.closeAll()" class="px-4 py-2 rounded-lg border border-slate-300 text-sm">关闭</button></div>
+          </div>
+        </div>
+        </transition>
+
+        <!-- ====== 达人线索：编辑弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.dlg.show.edit" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeAll()">
+          <div class="bg-white rounded-2xl w-full max-w-xl p-6 shadow-2xl">
+            <div class="text-base font-semibold mb-4">编辑达人线索</div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div><label class="text-xs text-slate-500">昵称</label><input v-model="tl.forms.edit.name" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></div>
+              <div><label class="text-xs text-slate-500">来源渠道</label><select v-model="tl.forms.edit.source" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.SOURCES" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">当前阶段</label><select v-model="tl.forms.edit.stage" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">达人潜力</label><select v-model="tl.forms.edit.potential" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">合作意愿</label><select v-model="tl.forms.edit.willing" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">达人分类</label><select v-model="tl.forms.edit.category" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">合作路径</label><select v-model="tl.forms.edit.coopPath" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.PATHS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">当前负责人</label><select v-model="tl.forms.edit.owner" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select></div>
+              <div class="col-span-2"><label class="text-xs text-slate-500">下次跟进时间</label><input v-model="tl.forms.edit.nextFollow" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="YYYY-MM-DD HH:mm"></div>
+              <div class="col-span-2"><label class="text-xs text-slate-500">备注</label><textarea v-model="tl.forms.edit.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
+            </div>
+            <div class="flex gap-3 mt-5"><button @click="tl.closeAll()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button><button @click="tl.saveEdit(showToast)" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">保存</button></div>
+          </div>
+        </div>
+        </transition>
+
+        <!-- ====== 达人线索：跟进弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.dlg.show.follow" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeAll()">
+          <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <div class="text-base font-semibold mb-1">添加跟进记录</div>
+            <div class="text-xs text-slate-400 mb-4" v-if="tl.dlg.current">{{ tl.dlg.current.name }}</div>
+            <div class="space-y-3 text-sm">
+              <div><label class="text-xs text-slate-500">跟进方式</label><select v-model="tl.forms.follow.method" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.FOLLOW_METHODS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">跟进结果</label><input v-model="tl.forms.follow.result" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="如：已发送签约资料"></div>
+              <div><label class="text-xs text-slate-500">本次跟进备注</label><textarea v-model="tl.forms.follow.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
+              <div><label class="text-xs text-slate-500">下次跟进时间</label><input v-model="tl.forms.follow.nextFollow" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="YYYY-MM-DD HH:mm"></div>
+            </div>
+            <div class="flex gap-3 mt-5"><button @click="tl.closeAll()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button><button @click="tl.saveFollow(showToast)" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">保存</button></div>
+          </div>
+        </div>
+        </transition>
+
+        <!-- ====== 达人线索：分类弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.dlg.show.classify" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeAll()">
+          <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <div class="text-base font-semibold mb-1">达人分类</div>
+            <div class="text-xs text-slate-400 mb-4" v-if="tl.dlg.current">{{ tl.dlg.current.name }}</div>
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div><label class="text-xs text-slate-500">达人潜力</label><select v-model="tl.forms.classify.potential" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">合作意愿</label><select v-model="tl.forms.classify.willing" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">达人分类</label><select v-model="tl.forms.classify.category" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">合作路径</label><select v-model="tl.forms.classify.coopPath" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.PATHS" :key="s">{{ s }}</option></select></div>
+            </div>
+            <div class="flex gap-3 mt-5"><button @click="tl.closeAll()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button><button @click="tl.saveClassify(showToast)" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">保存</button></div>
+          </div>
+        </div>
+        </transition>
+
+        <!-- ====== 达人线索：交接弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.dlg.show.handover" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeAll()">
+          <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <div class="text-base font-semibold mb-1">负责人交接</div>
+            <div class="text-xs text-slate-400 mb-4" v-if="tl.dlg.current">{{ tl.dlg.current.name }}</div>
+            <div class="space-y-3 text-sm">
+              <div><label class="text-xs text-slate-500">当前负责人</label><input :value="tl.forms.handover.from" disabled class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-500"></div>
+              <div><label class="text-xs text-slate-500">接收负责人 *</label><select v-model="tl.forms.handover.to" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">请选择</option><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select></div>
+              <div><label class="text-xs text-slate-500">交接说明</label><textarea v-model="tl.forms.handover.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
+            </div>
+            <div class="flex gap-3 mt-5"><button @click="tl.closeAll()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button><button @click="tl.saveHandover(showToast)" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">确认交接</button></div>
+          </div>
+        </div>
+        </transition>
+
+        <!-- ====== 达人线索：新增弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.dlg.show.create" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeAll()">
+          <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <div class="text-base font-semibold mb-4">新增达人线索</div>
+            <div class="space-y-3 text-sm">
+              <div><label class="text-xs text-slate-500">达人昵称 *</label><input v-model="tl.forms.create.name" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></div>
+              <div><label class="text-xs text-slate-500">联系方式</label><input v-model="tl.forms.create.contact" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="微信 / 电话"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div><label class="text-xs text-slate-500">来源渠道</label><select v-model="tl.forms.create.source" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.SOURCES" :key="s">{{ s }}</option></select></div>
+                <div><label class="text-xs text-slate-500">负责人</label><select v-model="tl.forms.create.owner" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select></div>
+              </div>
+              <div><label class="text-xs text-slate-500">备注</label><textarea v-model="tl.forms.create.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
+            </div>
+            <div class="flex gap-3 mt-5"><button @click="tl.closeAll()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button><button @click="tl.saveCreate(showToast)" class="flex-1 py-2.5 rounded-lg bg-emerald-600 text-white text-sm font-medium">创建</button></div>
+          </div>
+        </div>
+        </transition>
+
+        <!-- ====== 达人线索：Excel 导入弹窗 ====== -->
+        <transition name="fade">
+        <div v-if="tl.imp.show" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="tl.closeImport()">
+          <div class="bg-white rounded-2xl w-full max-w-3xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <div class="text-base font-semibold">导入达人线索（Excel / CSV）</div>
+              <button @click="tl.closeImport()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+            </div>
+            <!-- 第一步：下载模板 + 上传 -->
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm text-slate-500">第 1 步：下载模板填写，或直接上传已有表格（表头需为中文，如「达人昵称」「来源渠道」）</div>
+              <button @click="tl.downloadExcelTemplate()" class="px-3 py-1.5 rounded-lg bg-sky-50 text-sky-600 text-sm hover:bg-sky-100">下载模板</button>
+            </div>
+            <label class="block border-2 border-dashed border-slate-300 rounded-xl py-8 text-center cursor-pointer hover:border-sky-400 hover:bg-sky-50/30 transition">
+              <input type="file" accept=".xlsx,.xls,.csv" class="hidden" @change="tl.handleExcelFile($event, showToast)">
+              <div class="text-3xl mb-2">📄</div>
+              <div class="text-sm text-slate-600 font-medium">点击选择 Excel / CSV 文件</div>
+              <div class="text-xs text-slate-400 mt-1">支持 .xlsx / .xls / .csv</div>
+            </label>
+            <div v-if="tl.imp.fileName" class="mt-3 text-xs text-slate-600">已选择：<b>{{ tl.imp.fileName }}</b> · {{ tl.imp.rows.length }} 行 · {{ tl.imp.matched }} 个字段匹配</div>
+
+            <!-- 预览 + 字段映射 -->
+            <div v-if="tl.imp.rows.length" class="mt-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm font-semibold">第 2 步：数据预览与字段匹配</div>
+                <button @click="tl.confirmExcelImport(showToast)" class="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">确认导入 {{ tl.imp.rows.length }} 条</button>
+              </div>
+              <div class="overflow-x-auto border border-slate-200 rounded-lg">
+                <table class="w-full text-xs">
+                  <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th v-for="(h,i) in tl.imp.headers" :key="i" class="px-2 py-2 text-left font-medium whitespace-nowrap">
+                        {{ h }}
+                        <span v-if="tl.imp.fieldMap[i]" class="ml-1 text-indigo-500">→ 已匹配</span>
+                        <span v-else class="ml-1 text-rose-400">（未匹配）</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(r,ri) in tl.imp.preview" :key="ri" class="border-t border-slate-100">
+                      <td v-for="(c,ci) in r" :key="ci" class="px-2 py-1.5 text-slate-600 whitespace-nowrap">{{ c }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div v-if="tl.imp.done" class="mt-4 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
+              <div class="text-2xl mb-1">✅</div>
+              <div class="font-semibold text-emerald-700">导入成功：{{ tl.imp.doneCount }} 条达人线索</div>
+              <div class="text-sm text-slate-500 mt-1">可在达人线索列表查看</div>
+            </div>
+          </div>
+        </div>
+        </transition>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- 新增线索弹窗 -->
+  <transition name="fade">
+    <div v-if="leadModal" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="leadModal=false">
+      <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div class="text-base font-semibold mb-4">新增线索</div>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-500">昵称 / 姓名 *</label>
+            <input v-model="leadForm.name" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="微信昵称或姓名">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-500">来源渠道</label>
+              <select v-model="leadForm.channel" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none">
+                <option v-for="c in CHANNELS" :key="c">{{ c }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500">意向等级</label>
+              <select v-model="leadForm.level" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none">
+                <option>A</option><option>B</option><option>C</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-500">联系方式</label>
+              <input v-model="leadForm.contact" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="微信号 / 手机号">
+            </div>
+            <div>
+              <label class="text-xs text-slate-500">负责人</label>
+              <select v-model="leadForm.owner" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none">
+                <option v-for="o in OWNERS" :key="o">{{ o }}</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">备注</label>
+            <textarea v-model="leadForm.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" placeholder="咨询内容、意向商品等"></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-5">
+          <button @click="leadModal=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm text-slate-600">取消</button>
+          <button @click="saveLead()" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">保存线索</button>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Toast -->
+  <transition name="fade">
+    <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
+  </transition>
+</div>
+<script src="./talent-leads.js?v=20260909c"></script>
+<script src="./app.js?v=20260909c"></script>
+</body>
+</html>

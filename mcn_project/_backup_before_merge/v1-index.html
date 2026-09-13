@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>得物 MCN 达人培育后台 V1</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+  [v-cloak]{display:none}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:8px}
+  .fade-enter-active,.fade-leave-active{transition:opacity .15s}
+  .fade-enter-from,.fade-leave-to{opacity:0}
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased">
+<div id="app" v-cloak>
+<div class="flex min-h-screen">
+  <!-- 侧边栏 -->
+  <aside class="w-56 shrink-0 bg-slate-900 text-slate-300 flex flex-col fixed inset-y-0 left-0 z-20">
+    <div class="px-5 py-5 border-b border-slate-800">
+      <div class="text-white font-semibold">MCN 达人培育后台</div>
+      <div class="text-[11px] text-slate-400 mt-0.5">V1 · 前端 → 后端API → 飞书</div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <a v-for="m in navMenus" :key="m.key" @click="goPage(m.key)"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer"
+         :class="page===m.key ? 'bg-indigo-600 text-white font-medium' : 'hover:bg-slate-800 hover:text-white'">
+        <span v-html="m.icon" class="w-4 h-4 shrink-0"></span>{{ m.label }}
+      </a>
+    </nav>
+    <div class="px-4 py-4 border-t border-slate-800 text-[11px] text-slate-500 leading-relaxed">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full" :class="meta.mode==='feishu'?'bg-emerald-400':'bg-amber-400'"></span>
+        存储模式：{{ meta.mode==='feishu' ? '飞书多维表格' : 'Mock 本地JSON' }}
+      </div>
+      <div class="mt-1">配置 FEISHU_* 环境变量自动切换</div>
+    </div>
+  </aside>
+
+  <div class="flex-1 ml-56 flex flex-col min-w-0">
+    <!-- 顶栏 -->
+    <header class="h-14 bg-white border-b border-slate-200 flex items-center px-6 sticky top-0 z-10">
+      <h1 class="font-semibold text-slate-900">{{ pageTitle }}</h1>
+      <div class="ml-auto flex items-center gap-3">
+        <span class="text-xs text-slate-400">当前用户</span>
+        <select v-model="userIdx" class="text-sm border border-slate-200 rounded-lg px-2 py-1.5 bg-white">
+          <option v-for="(u,i) in users" :key="i" :value="i">{{ u.name }} · {{ u.role }}</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="flex-1 p-6">
+      <!-- ============ Dashboard ============ -->
+      <section v-if="page==='dashboard'">
+        <div class="grid grid-cols-5 gap-4 mb-4">
+          <div v-for="c in kpiTalents" :key="c.label" @click="c.click"
+               class="bg-white rounded-xl p-4 border border-slate-200/70 cursor-pointer hover:border-indigo-300 hover:shadow transition">
+            <div class="text-xs text-slate-500">{{ c.label }}</div>
+            <div class="text-xl font-bold mt-1" :class="c.hot ? 'text-indigo-600' : ''">{{ c.value }}</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-5 gap-4 mb-4">
+          <div v-for="c in kpiTasks" :key="c.label" @click="c.click"
+               class="bg-white rounded-xl p-4 border border-slate-200/70 cursor-pointer hover:border-indigo-300 hover:shadow transition">
+            <div class="text-xs text-slate-500">{{ c.label }}</div>
+            <div class="text-xl font-bold mt-1" :class="c.hot ? 'text-indigo-600' : ''">{{ c.value }}</div>
+          </div>
+          <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
+            <div class="text-xs text-indigo-500">本月佣金（预计 / 已结算）</div>
+            <div class="text-xl font-bold mt-1 text-indigo-700">¥{{ fmt(dash.commission?.monthExpected) }} <span class="text-sm font-normal text-indigo-400">/ ¥{{ fmt(dash.commission?.monthSettled) }}</span></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl p-4 border border-slate-200/70"><div class="text-sm font-semibold mb-2">近 7 天达人新增</div><div ref="cTrend" style="height:220px"></div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-200/70"><div class="text-sm font-semibold mb-2">达人状态分布</div><div ref="cTalent" style="height:220px"></div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-200/70"><div class="text-sm font-semibold mb-2">任务状态分布</div><div ref="cTask" style="height:220px"></div></div>
+          <div class="bg-white rounded-xl p-4 border border-slate-200/70"><div class="text-sm font-semibold mb-2">本月任务完成率 {{ dash.completionRate }}%</div><div ref="cRate" style="height:220px"></div></div>
+        </div>
+      </section>
+
+      <!-- ============ 达人列表 ============ -->
+      <section v-if="page==='talents'">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <input v-model="tf.q" @input="loadTalents()" placeholder="搜索 昵称 / 抖音号 / 手机微信" class="w-60 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white">
+          <select v-model="tf.status" @change="loadTalents()" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option value="">全部状态</option><option v-for="s in meta.TALENT_STATUSES" :key="s">{{ s }}</option></select>
+          <select v-model="tf.level" @change="loadTalents()" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option value="">全部等级</option><option>A</option><option>B</option><option>C</option></select>
+          <select v-model="tf.owner" @change="loadTalents()" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option value="">全部负责人</option><option v-for="o in ownerOptions" :key="o">{{ o }}</option></select>
+          <select v-model="tf.channel" @change="loadTalents()" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option value="">全部来源</option><option v-for="c in channelOptions" :key="c">{{ c }}</option></select>
+          <select v-model="tf.tag" @change="loadTalents()" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option value="">全部标签</option><option v-for="t in tagOptions" :key="t">{{ t }}</option></select>
+          <button @click="resetTf()" class="text-xs text-slate-400 hover:text-slate-600">重置</button>
+          <button @click="openTalentForm()" class="ml-auto px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">+ 新增达人</button>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200/70 overflow-x-auto">
+          <table class="w-full text-sm min-w-[1100px]">
+            <thead class="bg-slate-50 text-slate-500 text-xs">
+              <tr><th class="text-left px-4 py-2.5">达人ID</th><th class="text-left px-3 py-2.5">昵称</th><th class="text-left px-3 py-2.5">抖音号</th><th class="text-left px-3 py-2.5">联系方式</th><th class="text-left px-3 py-2.5">来源</th><th class="text-left px-3 py-2.5">等级</th><th class="text-left px-3 py-2.5">状态</th><th class="text-right px-3 py-2.5">粉丝量</th><th class="text-left px-3 py-2.5">标签</th><th class="text-left px-3 py-2.5">负责人</th><th class="text-left px-3 py-2.5">最近跟进</th><th class="text-left px-3 py-2.5">操作</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="t in talents" :key="t.id" class="border-t border-slate-100 hover:bg-slate-50/60">
+                <td class="px-4 py-2.5 text-slate-400 text-xs">{{ t.id }}</td>
+                <td class="px-3 py-2.5 font-medium text-indigo-600 cursor-pointer" @click="openTalent(t.id)">{{ t.name }}</td>
+                <td class="px-3 py-2.5 text-slate-500 text-xs">{{ t.douyin }}</td>
+                <td class="px-3 py-2.5 text-slate-500 text-xs">{{ t.contact }}</td>
+                <td class="px-3 py-2.5 text-xs">{{ t.channel }}</td>
+                <td class="px-3 py-2.5">{{ t.level }}</td>
+                <td class="px-3 py-2.5"><span @click="openStatusModal(t)" class="px-2 py-0.5 rounded-md text-xs text-white cursor-pointer hover:opacity-80" :style="{background:statusColor(t.status)}">{{ t.status }}</span></td>
+                <td class="px-3 py-2.5 text-right text-xs">{{ fmt(t.fans) }}</td>
+                <td class="px-3 py-2.5 text-xs"><span v-for="tg in t.tags" :key="tg" class="mr-1 px-1.5 py-0.5 bg-slate-100 rounded text-slate-500">{{ tg }}</span></td>
+                <td class="px-3 py-2.5 text-xs">{{ t.owner }}</td>
+                <td class="px-3 py-2.5 text-xs text-slate-400">{{ t.lastFollowAt }}</td>
+                <td class="px-3 py-2.5 text-xs whitespace-nowrap">
+                  <button @click="openTalentForm(t)" class="text-indigo-600 hover:underline">编辑</button>
+                  <button v-if="t.status==='待审核' && canAudit" @click="auditPass(t)" class="ml-2 text-emerald-600 hover:underline">通过</button>
+                  <button v-if="t.status==='待审核' && canAudit" @click="openRejectModal(t)" class="ml-2 text-rose-500 hover:underline">拒绝</button>
+                </td>
+              </tr>
+              <tr v-if="!talents.length"><td colspan="12" class="px-4 py-10 text-center text-slate-400 text-sm">暂无数据</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 达人详情 ============ -->
+      <section v-if="page==='talent' && detail">
+        <button @click="goPage('talents')" class="text-sm text-slate-400 hover:text-slate-600 mb-3">← 返回达人列表</button>
+        <div class="bg-white rounded-xl border border-slate-200/70 p-5 mb-4">
+          <div class="flex items-start gap-6">
+            <div class="flex-1">
+              <div class="flex items-center gap-3">
+                <span class="text-lg font-bold">{{ detail.talent.name }}</span>
+                <span class="px-2 py-0.5 rounded-md text-xs text-white" :style="{background:statusColor(detail.talent.status)}">{{ detail.talent.status }}</span>
+                <span class="text-xs text-slate-400">{{ detail.talent.id }}</span>
+                <span v-if="!detail.talent.isActive" class="text-xs px-1.5 py-0.5 rounded bg-rose-100 text-rose-600">已停用</span>
+              </div>
+              <div class="grid grid-cols-4 gap-y-2 mt-3 text-[13px]">
+                <div><span class="text-slate-400">联系方式：</span>{{ detail.talent.contact }}</div>
+                <div><span class="text-slate-400">抖音号：</span>{{ detail.talent.douyin }}</div>
+                <div><span class="text-slate-400">粉丝量：</span>{{ fmt(detail.talent.fans) }}</div>
+                <div><span class="text-slate-400">来源渠道：</span>{{ detail.talent.channel }}</div>
+                <div><span class="text-slate-400">等级：</span>{{ detail.talent.level }}</div>
+                <div><span class="text-slate-400">负责人：</span>{{ detail.talent.owner }}</div>
+                <div class="col-span-2"><span class="text-slate-400">标签：</span><span v-for="tg in detail.talent.tags" :key="tg" class="mr-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-500 rounded text-xs">{{ tg }}</span></div>
+              </div>
+              <div v-if="detail.talent.rejectReason" class="mt-2 text-xs text-rose-500">拒绝原因：{{ detail.talent.rejectReason }}</div>
+            </div>
+            <div class="flex flex-col gap-2 shrink-0">
+              <button v-if="detail.talent.status==='待审核' && canAudit" @click="auditPass(detail.talent)" class="px-3 py-2 rounded-lg bg-emerald-500 text-white text-sm hover:bg-emerald-600">审核通过</button>
+              <button v-if="detail.talent.status==='待审核' && canAudit" @click="openRejectModal(detail.talent)" class="px-3 py-2 rounded-lg bg-rose-500 text-white text-sm hover:bg-rose-600">审核拒绝</button>
+              <button @click="openTalentForm(detail.talent)" class="px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">编辑达人</button>
+              <button @click="openStatusModal(detail.talent)" class="px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">修改状态</button>
+              <button @click="openFollowup()" class="px-3 py-2 rounded-lg border border-slate-300 text-sm hover:bg-slate-50">添加跟进</button>
+              <button @click="openTaskForm(detail.talent)" class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700">创建寄拍任务</button>
+              <button v-if="detail.talent.isActive" @click="deactivate(detail.talent)" class="px-3 py-2 rounded-lg text-rose-500 text-sm hover:bg-rose-50">停用合作</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-6 gap-3 mt-4 pt-4 border-t border-slate-100">
+            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="font-bold">{{ detail.stats.coopCount }}</div><div class="text-[11px] text-slate-400">历史合作次数</div></div>
+            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="font-bold text-emerald-600">{{ detail.stats.completed }}</div><div class="text-[11px] text-slate-400">完成任务数</div></div>
+            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="font-bold text-amber-600">{{ detail.stats.uncompleted }}</div><div class="text-[11px] text-slate-400">未完成任务数</div></div>
+            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="font-bold">{{ detail.stats.fulfillmentRate }}%</div><div class="text-[11px] text-slate-400">履约率</div></div>
+            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="font-bold text-indigo-600">¥{{ fmt(detail.stats.totalCommission) }}</div><div class="text-[11px] text-slate-400">累计佣金</div></div>
+            <div class="bg-slate-50 rounded-lg p-3 text-center"><div class="font-bold text-sm pt-1">{{ detail.stats.lastCoopAt || '—' }}</div><div class="text-[11px] text-slate-400">最近一次合作</div></div>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div class="col-span-2 bg-white rounded-xl border border-slate-200/70 p-5">
+            <div class="text-sm font-semibold mb-3">历史任务（{{ detail.tasks.length }}）</div>
+            <table class="w-full text-[13px]">
+              <thead class="text-slate-400 text-xs"><tr><th class="text-left py-1.5">任务ID</th><th class="text-left">商品</th><th class="text-left">状态</th><th class="text-right">佣金</th><th class="text-left pl-3">发布时间</th></tr></thead>
+              <tbody>
+                <tr v-for="t in detail.tasks" :key="t.id" class="border-t border-slate-100">
+                  <td class="py-2 text-slate-400 text-xs">{{ t.id }}</td>
+                  <td>{{ t.product }}</td>
+                  <td><span class="px-1.5 py-0.5 rounded text-xs text-white" :style="{background:statusColor(t.status)}">{{ t.status }}</span></td>
+                  <td class="text-right">¥{{ fmt(t.commission) }}</td>
+                  <td class="pl-3 text-xs text-slate-400">{{ t.publishedAt || '—' }}</td>
+                </tr>
+                <tr v-if="!detail.tasks.length"><td colspan="5" class="py-6 text-center text-slate-400">暂无任务</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200/70 p-5">
+            <div class="text-sm font-semibold mb-3">跟进记录</div>
+            <div class="space-y-0">
+              <div v-for="(f,i) in detail.followups" :key="f.id" class="relative pl-4 pb-4" :class="i<detail.followups.length-1 ? 'border-l border-slate-200 ml-1' : ''">
+                <span class="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                <div class="text-[13px] text-slate-700">{{ f.content }}</div>
+                <div class="text-[11px] text-slate-400 mt-1">{{ f.operator }} · {{ f.createdAt }} · {{ f.method }}<span v-if="f.nextAt"> · 下次跟进 {{ f.nextAt }}</span></div>
+              </div>
+              <div v-if="!detail.followups.length" class="text-slate-400 text-sm py-4 text-center">暂无跟进记录</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 寄拍任务 ============ -->
+      <section v-if="page==='tasks'">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+          <select v-model="taskFilter.status" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white">
+            <option value="">全部状态</option><option value="__active">进行中</option><option value="__abnormal">异常</option>
+            <option v-for="s in meta.TASK_STATUSES" :key="s">{{ s }}</option>
+          </select>
+          <input v-model="taskFilter.q" placeholder="搜索 任务ID / 商品 / 达人 / 快递单号" class="w-64 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white">
+          <select v-model="taskFilter.owner" class="px-2.5 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option value="">全部负责人</option><option v-for="o in ownerOptions" :key="o">{{ o }}</option></select>
+          <span class="text-xs text-slate-400">共 {{ tasksFiltered.length }} 条</span>
+          <button @click="openTaskForm()" class="ml-auto px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">+ 创建寄拍任务</button>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200/70 overflow-x-auto">
+          <table class="w-full text-sm min-w-[1050px]">
+            <thead class="bg-slate-50 text-slate-500 text-xs">
+              <tr><th class="text-left px-4 py-2.5">任务ID</th><th class="text-left px-3 py-2.5">商品</th><th class="text-left px-3 py-2.5">达人</th><th class="text-left px-3 py-2.5">商单</th><th class="text-left px-3 py-2.5">状态</th><th class="text-left px-3 py-2.5">快递单号</th><th class="text-right px-3 py-2.5">佣金</th><th class="text-left px-3 py-2.5">负责人</th><th class="text-left px-3 py-2.5">创建时间</th><th class="text-left px-3 py-2.5">操作</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="t in tasksFiltered" :key="t.id" class="border-t border-slate-100 hover:bg-slate-50/60">
+                <td class="px-4 py-2.5 text-slate-400 text-xs">{{ t.id }}</td>
+                <td class="px-3 py-2.5">{{ t.product }}</td>
+                <td class="px-3 py-2.5 text-indigo-600 cursor-pointer" @click="openTalent(t.talentId)">{{ t.talentName }}</td>
+                <td class="px-3 py-2.5 text-xs text-slate-400">{{ t.campaignId || '—' }}</td>
+                <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded-md text-xs text-white" :style="{background:statusColor(t.status)}">{{ t.status }}</span></td>
+                <td class="px-3 py-2.5 text-xs text-slate-500">{{ t.trackingNo || '—' }}</td>
+                <td class="px-3 py-2.5 text-right font-medium">¥{{ fmt(t.commission) }}</td>
+                <td class="px-3 py-2.5 text-xs">{{ t.owner }}</td>
+                <td class="px-3 py-2.5 text-xs text-slate-400">{{ t.createdAt }}</td>
+                <td class="px-3 py-2.5">
+                  <button v-if="actionsFor(t).length" @click="openTaskAction(t)" class="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-600 text-xs hover:bg-indigo-100">操作</button>
+                  <span v-else class="text-xs text-slate-300">—</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ 操作日志 ============ -->
+      <section v-if="page==='logs'">
+        <div class="bg-white rounded-xl border border-slate-200/70 overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-slate-500 text-xs"><tr><th class="text-left px-4 py-2.5">操作人</th><th class="text-left px-3 py-2.5">时间</th><th class="text-left px-3 py-2.5">操作对象</th><th class="text-left px-3 py-2.5">操作类型</th><th class="text-left px-3 py-2.5">修改前</th><th class="text-left px-4 py-2.5">修改后</th></tr></thead>
+            <tbody>
+              <tr v-for="l in logs" :key="l.id" class="border-t border-slate-100">
+                <td class="px-4 py-2.5">{{ l.operator }}</td>
+                <td class="px-3 py-2.5 text-xs text-slate-400">{{ l.at }}</td>
+                <td class="px-3 py-2.5">{{ l.target }}</td>
+                <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded-md text-xs bg-slate-100 text-slate-600">{{ l.type }}</span></td>
+                <td class="px-3 py-2.5 text-xs text-slate-400 max-w-[200px] truncate">{{ l.before }}</td>
+                <td class="px-4 py-2.5 text-xs text-slate-700 max-w-[260px] truncate">{{ l.after }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ====== 弹窗：新增/编辑达人 ====== -->
+<transition name="fade">
+<div v-if="modals.talent" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="modals.talent=false">
+  <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="text-base font-semibold mb-4">{{ talentForm.id ? '编辑达人' : '新增达人' }}</div>
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div><label class="text-xs text-slate-500">昵称 *</label><input v-model="talentForm.name" :disabled="!!talentForm.id" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 disabled:bg-slate-50"></div>
+      <div><label class="text-xs text-slate-500">联系方式</label><input v-model="talentForm.contact" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></div>
+      <div><label class="text-xs text-slate-500">抖音号</label><input v-model="talentForm.douyin" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></div>
+      <div><label class="text-xs text-slate-500">粉丝量</label><input v-model="talentForm.fans" type="number" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></div>
+      <div><label class="text-xs text-slate-500">来源渠道</label><select v-model="talentForm.channel" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="c in channelOptions" :key="c">{{ c }}</option></select></div>
+      <div><label class="text-xs text-slate-500">达人等级</label><select v-model="talentForm.level" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option>A</option><option>B</option><option>C</option></select></div>
+      <div><label class="text-xs text-slate-500">内容类型（逗号分隔）</label><input v-model="talentForm.contentTypes" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="穿搭, 好物"></div>
+      <div><label class="text-xs text-slate-500">擅长品类（逗号分隔）</label><input v-model="talentForm.categories" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="女装, 鞋靴"></div>
+      <div><label class="text-xs text-slate-500">标签（逗号分隔）</label><input v-model="talentForm.tags" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="新达人, 高履约"></div>
+      <div><label class="text-xs text-slate-500">负责人</label><select v-model="talentForm.owner" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="o in ownerOptions" :key="o">{{ o }}</option></select></div>
+      <div class="col-span-2"><label class="text-xs text-slate-500">备注</label><textarea v-model="talentForm.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button @click="modals.talent=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
+      <button @click="saveTalent()" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">保存</button>
+    </div>
+  </div>
+</div>
+</transition>
+
+<!-- ====== 弹窗：修改状态 ====== -->
+<transition name="fade">
+<div v-if="modals.status" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="modals.status=false">
+  <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+    <div class="text-base font-semibold mb-1">修改达人状态</div>
+    <div class="text-xs text-slate-400 mb-4">{{ statusForm.name }} · 当前：{{ statusForm.current }}</div>
+    <select v-model="statusForm.status" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white">
+      <option v-for="s in meta.TALENT_STATUSES" :key="s" :value="s">{{ s }}</option>
+    </select>
+    <textarea v-if="statusForm.status==='已拒绝'" v-model="statusForm.reason" rows="3" placeholder="请填写拒绝原因（必填）" class="w-full mt-3 px-3 py-2 rounded-lg border border-slate-200 text-sm"></textarea>
+    <div v-if="!canAudit && ['已通过','已拒绝'].includes(statusForm.status)" class="mt-2 text-xs text-amber-600">审核类操作需要主管或管理员权限</div>
+    <div class="flex gap-3 mt-5">
+      <button @click="modals.status=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
+      <button @click="saveStatus()" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">确定</button>
+    </div>
+  </div>
+</div>
+</transition>
+
+<!-- ====== 弹窗：拒绝原因 ====== -->
+<transition name="fade">
+<div v-if="modals.reject" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="modals.reject=false">
+  <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+    <div class="text-base font-semibold mb-1">审核拒绝</div>
+    <div class="text-xs text-slate-400 mb-4">{{ rejectForm.name }}</div>
+    <textarea v-model="rejectForm.reason" rows="3" placeholder="请填写拒绝原因（必填）" class="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm"></textarea>
+    <div class="flex gap-3 mt-5">
+      <button @click="modals.reject=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
+      <button @click="confirmReject()" class="flex-1 py-2.5 rounded-lg bg-rose-500 text-white text-sm font-medium">确认拒绝</button>
+    </div>
+  </div>
+</div>
+</transition>
+
+<!-- ====== 弹窗：添加跟进 ====== -->
+<transition name="fade">
+<div v-if="modals.followup" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="modals.followup=false">
+  <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+    <div class="text-base font-semibold mb-4">添加跟进 · {{ detail?.talent?.name }}</div>
+    <label class="text-xs text-slate-500">跟进内容 *</label>
+    <textarea v-model="followupForm.content" rows="3" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="例：达人表示本周可以接女包商单。"></textarea>
+    <div class="grid grid-cols-2 gap-3 mt-3">
+      <div><label class="text-xs text-slate-500">跟进方式</label><select v-model="followupForm.method" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option>微信</option><option>电话</option><option>私信</option><option>线下</option></select></div>
+      <div><label class="text-xs text-slate-500">下次跟进时间</label><input v-model="followupForm.nextAt" type="date" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm"></div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button @click="modals.followup=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
+      <button @click="saveFollowup()" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">保存</button>
+    </div>
+  </div>
+</div>
+</transition>
+
+<!-- ====== 弹窗：创建任务 ====== -->
+<transition name="fade">
+<div v-if="modals.task" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="modals.task=false">
+  <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+    <div class="text-base font-semibold mb-4">创建寄拍任务</div>
+    <label class="text-xs text-slate-500">选择达人 *</label>
+    <select v-model="taskForm.talentId" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white">
+      <option value="">请选择</option>
+      <option v-for="t in talents" :key="t.id" :value="t.id">{{ t.name }}（{{ t.status }}）</option>
+    </select>
+    <label class="text-xs text-slate-500">商品名称 *</label>
+    <input v-model="taskForm.product" class="w-full mt-1 mb-3 px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="例：复古慢跑鞋（米白翻毛皮）">
+    <div class="grid grid-cols-3 gap-3">
+      <div><label class="text-xs text-slate-500">佣金</label><input v-model="taskForm.commission" type="number" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm"></div>
+      <div><label class="text-xs text-slate-500">商单ID（选填）</label><input v-model="taskForm.campaignId" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="SP2026001"></div>
+      <div><label class="text-xs text-slate-500">负责人</label><select v-model="taskForm.owner" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white"><option v-for="o in ownerOptions" :key="o">{{ o }}</option></select></div>
+    </div>
+    <div class="flex gap-3 mt-5">
+      <button @click="modals.task=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
+      <button @click="saveTask()" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">创建（状态：待确认）</button>
+    </div>
+  </div>
+</div>
+</transition>
+
+<!-- ====== 弹窗：任务状态操作 ====== -->
+<transition name="fade">
+<div v-if="modals.taskAction" class="fixed inset-0 bg-slate-900/40 z-30 flex items-center justify-center p-4" @click.self="modals.taskAction=false">
+  <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+    <div class="text-base font-semibold mb-1">任务操作</div>
+    <div class="text-xs text-slate-400 mb-4">{{ taskAction.task.id }} · {{ taskAction.task.product }} · 当前：{{ taskAction.task.status }}</div>
+    <div class="space-y-1.5 mb-4">
+      <label v-for="a in taskAction.actions" :key="a.key" class="flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm cursor-pointer"
+             :class="taskAction.chosen===a.key ? 'border-indigo-400 bg-indigo-50' : 'border-slate-200'">
+        <input type="radio" :value="a.key" v-model="taskAction.chosen">
+        <span class="font-medium">{{ a.label }}</span>
+        <span class="text-xs text-slate-400">→ {{ a.to || '异常状态' }}</span>
+      </label>
+    </div>
+    <template v-if="chosenAction">
+      <div v-for="f in chosenAction.fields" :key="f.key" class="mb-3">
+        <label class="text-xs text-slate-500">{{ f.label }}<span v-if="f.required" class="text-rose-400"> *</span></label>
+        <input v-model="taskAction.fields[f.key]" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" :placeholder="f.label">
+      </div>
+      <div v-if="taskAction.chosen==='markException'">
+        <label class="text-xs text-slate-500">异常类型 *</label>
+        <select v-model="taskAction.to" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white">
+          <option value="">请选择</option>
+          <option v-for="o in chosenAction.options" :key="o">{{ o }}</option>
+        </select>
+      </div>
+    </template>
+    <div class="flex gap-3 mt-5">
+      <button @click="modals.taskAction=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
+      <button @click="submitTaskAction()" class="flex-1 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-medium">确定</button>
+    </div>
+  </div>
+</div>
+</transition>
+
+<!-- Toast -->
+<transition name="fade">
+  <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
+</transition>
+</div>
+<script src="./app.js"></script>
+</body>
+</html>
