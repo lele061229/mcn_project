@@ -94,11 +94,16 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         coopCategories: coopCats || '无', wantCategories: wantCats || '待沟通',
         appearWay: appearWay || '待定',
         stage: { '待审核': '待初筛', '已报名': '待初筛', '已联系': '已联系', '有意向': '有意向', '合作中': '已交接', '已成为达人': '已交接', '已流失': '无效线索', '无效线索': '无效线索' }[t.status] || '新线索',
-        // 业务评估字段（服务端真实字段 → 前端展示字段）
+        // 业务评估字段（服务端真实字段 → 前端展示字段；列表默认不展示，详情弹窗「运营判断」区展示）
         potential: t.potentialLevel || '待判断',
         willing: t.intentLevel || '待判断',
         category: t.talentClass || '待分类',
         coopPath: t.coopPath || '待判断',
+        talentStatus: t.talentStatus || 'lead',
+        talentLevel: t.talentLevel || '待判断',
+        // 报名数据（20260919d）：作品链接 + 报名时间（列表「报名数据」列与详情弹窗「报名信息」区展示）
+        works: t.works || '',
+        createdAt: String(t.createdAt || '').slice(0, 16),
         owner: t.owner || '未分配',
         ownerId: t.ownerId || '',
         ownerPosition: t.ownerPosition || '', ownerPositionLabel: t.ownerPositionLabel || '',

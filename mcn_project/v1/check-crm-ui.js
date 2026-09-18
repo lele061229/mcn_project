@@ -102,9 +102,10 @@ const N = {
 
   console.log('== B. 管理员总表（列 / 统计卡 / 筛选）==');
   await clickBtn('总表'); await sleep(1200);
-  const master = await ev(`(() => { const t=document.body.innerText; return { hasPos: t.includes('当前岗位'), hasHo: t.includes('交接状态'), hasPot: t.includes('达人潜力'), hasWill: t.includes('合作意愿'), hasClass: t.includes('达人分类'), hasPath: t.includes('合作路径'), hasRecruitStat: t.includes('招募岗'), hasFinanceStat: t.includes('财务岗') }; })()`);
-  check('总表列齐全（潜力/意愿/分类/路径/当前岗位/交接状态）',
-    master.hasPos && master.hasHo && master.hasPot && master.hasWill && master.hasClass && master.hasPath, master);
+  const master = await ev(`(() => { const t=document.body.innerText; return { hasPos: t.includes('当前岗位'), hasHo: t.includes('交接状态'), hasContact: t.includes('联系方式'), hasFans: t.includes('粉丝量'), hasCats: t.includes('接拍类型'), hasAppear: t.includes('出镜方式'), hasWorks: t.includes('作品'), hasRegAt: t.includes('报名时间'), noPot: !t.includes('达人潜力'), noWill: !t.includes('合作意愿'), noPath: !t.includes('合作路径'), noLevel: !t.includes('达人评级'), noStatus: !t.includes('生命周期'), noClass: !t.includes('达人分类'), hasRecruitStat: t.includes('招募岗'), hasFinanceStat: t.includes('财务岗') }; })()`);
+  check('总表列分层（20260919d：报名数据列齐全；判断字段列不下发）',
+    master.hasPos && master.hasHo && master.hasContact && master.hasFans && master.hasCats && master.hasAppear && master.hasWorks && master.hasRegAt
+    && master.noPot && master.noWill && master.noPath && master.noLevel && master.noStatus && master.noClass, master);
   check('总表顶部有按岗位的统计卡', master.hasRecruitStat && master.hasFinanceStat, master);
   const filterBar = await ev(`(() => { const t=document.body.innerText; return { hasOwner: t.includes('全部负责人'), hasPos: t.includes('全部岗位'), hasUn: t.includes('未分配'), hasOv: t.includes('逾期未跟进'), hasHo: t.includes('待交接') }; })()`);
   check('总表有 负责人/岗位/未分配/逾期/待交接 五个筛选入口',

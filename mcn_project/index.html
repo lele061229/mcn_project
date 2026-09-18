@@ -1485,12 +1485,7 @@ tailwind.config = {
             <div class="flex flex-wrap items-center gap-3">
               <input v-model="tl.filters.name" placeholder="达人昵称" class="w-36 px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200">
               <select v-model="tl.filters.source" class="w-32 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">来源渠道</option><option v-for="s in tl.SOURCES" :key="s">{{ s }}</option></select>
-              <select v-model="tl.filters.stage" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">当前阶段</option><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select>
-              <select v-model="tl.filters.talentStatus" class="w-32 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">生命周期</option><option v-for="k in tl.TALENT_STATUS_LIST" :key="k" :value="k">{{ tl.TALENT_STATUS_LABEL[k] }}</option></select>
-              <select v-model="tl.filters.talentLevel" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">达人评级</option><option v-for="k in tl.TALENT_LEVEL_LIST" :key="k" :value="k">{{ tl.TALENT_LEVEL_LABEL[k] }}</option></select>
-              <select v-model="tl.filters.potential" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">达人潜力</option><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select>
-              <select v-model="tl.filters.willing" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">合作意愿</option><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select>
-              <select v-model="tl.filters.category" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">达人分类</option><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select>
+              <select v-model="tl.filters.stage" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">招募阶段</option><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select>
               <select v-model="tl.filters.owner" class="w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm bg-white"><option value="">负责人</option><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select>
               <button @click="tl.doSearch()" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-700">查询</button>
               <button @click="tl.doReset()" class="px-3.5 py-1.5 rounded-lg border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">重置</button>
@@ -1550,12 +1545,7 @@ tailwind.config = {
             <div v-show="tl.mFiltersOpen" class="mt-3 pt-3 border-t border-slate-100">
               <div class="grid grid-cols-2 gap-2">
                 <select v-model="tl.filters.source" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">来源渠道</option><option v-for="s in tl.SOURCES" :key="s">{{ s }}</option></select>
-                <select v-model="tl.filters.stage" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">当前阶段</option><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select>
-                <select v-model="tl.filters.talentStatus" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">生命周期</option><option v-for="k in tl.TALENT_STATUS_LIST" :key="k" :value="k">{{ tl.TALENT_STATUS_LABEL[k] }}</option></select>
-                <select v-model="tl.filters.talentLevel" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">达人评级</option><option v-for="k in tl.TALENT_LEVEL_LIST" :key="k" :value="k">{{ tl.TALENT_LEVEL_LABEL[k] }}</option></select>
-                <select v-model="tl.filters.potential" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">达人潜力</option><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select>
-                <select v-model="tl.filters.willing" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">合作意愿</option><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select>
-                <select v-model="tl.filters.category" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">达人分类</option><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select>
+                <select v-model="tl.filters.stage" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">招募阶段</option><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select>
                 <select v-model="tl.filters.owner" class="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-sm bg-white"><option value="">负责人</option><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select>
               </div>
               <div class="flex gap-2 mt-3">
@@ -1601,24 +1591,23 @@ tailwind.config = {
           <!-- 表格（列表视图，桌面端 ≥768px；移动端使用下方卡片流） -->
           <div v-if="tl.view==='list'" class="hidden md:block bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-sm min-w-[1300px]">
+              <table class="w-full text-sm min-w-[1560px]">
                 <thead class="bg-slate-50 text-slate-500 text-xs">
                   <tr>
                     <th class="text-left px-3 py-2.5 w-14">序号</th>
                     <th class="text-left px-3 py-2.5">达人昵称</th>
+                    <th class="text-left px-3 py-2.5">联系方式</th>
                     <th class="text-left px-3 py-2.5">来源渠道</th>
                     <th class="text-left px-3 py-2.5">自媒体情况</th>
                     <th class="text-right px-3 py-2.5">粉丝量</th>
-                    <th class="text-left px-3 py-2.5">当前阶段</th>
-                    <th class="text-left px-3 py-2.5">生命周期</th>
-                    <th class="text-left px-3 py-2.5">达人评级</th>
-                    <th class="text-left px-3 py-2.5">达人潜力</th>
-                    <th class="text-left px-3 py-2.5">合作意愿</th>
-                    <th class="text-left px-3 py-2.5">达人分类</th>
-                    <th class="text-left px-3 py-2.5">合作路径</th>
+                    <th class="text-left px-3 py-2.5">接拍类型</th>
+                    <th class="text-left px-3 py-2.5">出镜方式</th>
+                    <th class="text-left px-3 py-2.5">作品</th>
+                    <th class="text-left px-3 py-2.5">招募阶段</th>
                     <th class="text-left px-3 py-2.5">当前负责人</th>
                     <th class="text-left px-3 py-2.5">下次跟进时间</th>
                     <th class="text-left px-3 py-2.5">首次联系 SLA</th>
+                    <th class="text-left px-3 py-2.5">报名时间</th>
                     <th class="text-left px-3 py-2.5">操作</th>
                   </tr>
                 </thead>
@@ -1626,16 +1615,17 @@ tailwind.config = {
                   <tr v-for="(row, i) in tl.pagedList" :key="row.id" class="border-t border-slate-100 hover:bg-slate-50/60">
                     <td class="px-3 py-2.5 text-slate-400 text-xs">{{ (tl.page-1)*tl.pageSize + i + 1 }}</td>
                     <td class="px-3 py-2.5 font-medium text-slate-800">{{ row.name }}</td>
+                    <td class="px-3 py-2.5 text-xs text-slate-600">{{ row.contact }}</td>
                     <td class="px-3 py-2.5 text-slate-600">{{ row.source }}</td>
                     <td class="px-3 py-2.5 text-xs text-slate-500">{{ row.hasMedia ? row.platforms.join('/') : '无' }}</td>
                     <td class="px-3 py-2.5 text-right text-slate-600">{{ row.fans > 0 ? fmt(row.fans) : '—' }}</td>
+                    <td class="px-3 py-2.5 text-xs text-slate-600 max-w-[180px] truncate" :title="row.wantCategories">{{ row.wantCategories }}</td>
+                    <td class="px-3 py-2.5 text-xs text-slate-600 max-w-[140px] truncate" :title="row.appearWay">{{ row.appearWay }}</td>
+                    <td class="px-3 py-2.5 text-xs">
+                      <a v-if="row.works" :href="row.works" target="_blank" rel="noopener" class="text-sky-600 hover:underline">查看作品</a>
+                      <span v-else class="text-slate-300">—</span>
+                    </td>
                     <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('stage', row.stage)">{{ row.stage }}</span></td>
-                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs bg-violet-100 text-violet-700">{{ tl.TALENT_STATUS_LABEL[row.talentStatus || 'lead'] }}</span></td>
-                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs font-medium" :class="tl.levelTone(row.talentLevel)">{{ tl.TALENT_LEVEL_LABEL[row.talentLevel || 'C'] }}</span></td>
-                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('potential', row.potential)">{{ row.potential }}</span></td>
-                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('willing', row.willing)">{{ row.willing }}</span></td>
-                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('category', row.category)">{{ row.category }}</span></td>
-                    <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('path', row.coopPath)">{{ row.coopPath }}</span><span v-if="row.coopPath==='付费孵化' && row.incubationFee" class="ml-1 text-[11px] font-medium" :class="row.feeStatus==='已收' ? 'text-emerald-600' : 'text-amber-600'">¥{{ fmt(row.incubationFee) }}</span></td>
                     <td class="px-3 py-2.5 text-slate-600">
                       <div class="flex items-center gap-1.5">
                         <span>{{ row.owner }}</span>
@@ -1650,6 +1640,7 @@ tailwind.config = {
                             :title="'规则：' + (row.slaRuleLabel || '—') + '｜截止 ' + (row.slaDeadline || '—') + (row.firstContactAt ? '｜首次联系 ' + row.firstContactAt : '')">{{ tl.slaInfo(row).text }}</span>
                       <span v-if="row.escalatedAt && row.slaStatus==='overdue'" class="ml-1 text-[10px] text-rose-500">已上报</span>
                     </td>
+                    <td class="px-3 py-2.5 text-xs text-slate-500 whitespace-nowrap">{{ row.createdAt || (row.lastFollow || '').slice(0, 16) || '—' }}</td>
                     <td class="px-3 py-2.5 whitespace-nowrap relative">
                       <button @click="tl.openDetail(row); tl.closeMore()" class="text-indigo-600 hover:underline mr-2">查看</button>
                       <button @click="tl.openFollow(row); tl.closeMore()" class="text-slate-600 hover:underline mr-2">跟进</button>
@@ -1672,7 +1663,7 @@ tailwind.config = {
                       </span>
                     </td>
                   </tr>
-                  <tr v-if="!tl.pagedList.length"><td colspan="16" class="px-3 py-10 text-center text-slate-400 text-sm">暂无数据</td></tr>
+                  <tr v-if="!tl.pagedList.length"><td colspan="15" class="px-3 py-10 text-center text-slate-400 text-sm">暂无数据</td></tr>
                 </tbody>
               </table>
             </div>
@@ -1701,11 +1692,11 @@ tailwind.config = {
                 </div>
               </div>
               <div class="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span class="px-2 py-0.5 rounded" :class="tl.tagClass('potential', row.potential)">潜力 {{ row.potential }}</span>
-                <span class="px-2 py-0.5 rounded" :class="tl.tagClass('willing', row.willing)">意愿 {{ row.willing }}</span>
-                <span class="px-2 py-0.5 rounded" :class="tl.tagClass('category', row.category)">{{ row.category }}</span>
-                <span class="px-2 py-0.5 rounded" :class="tl.tagClass('path', row.coopPath)">{{ row.coopPath }}</span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 max-w-[180px] truncate">接拍：{{ row.wantCategories }}</span>
+                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 max-w-[140px] truncate">出镜：{{ row.appearWay }}</span>
+                <a v-if="row.works" :href="row.works" target="_blank" rel="noopener" class="px-2 py-0.5 rounded bg-sky-50 text-sky-600">作品有链接</a>
               </div>
+              <div class="mt-1.5 text-[11px] text-slate-400">联系：{{ row.contact }}<span v-if="row.createdAt" class="ml-2">报名 {{ row.createdAt }}</span></div>
               <div class="mt-2.5 pt-2.5 border-t border-slate-100 flex items-center gap-2 text-xs min-w-0">
                 <div class="flex items-center gap-1.5 min-w-0">
                   <span class="text-slate-400 shrink-0">负责人</span>
@@ -1796,24 +1787,25 @@ tailwind.config = {
 
             <div class="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
               <div class="overflow-x-auto">
-                <table class="w-full text-sm min-w-[1260px]">
+                <table class="w-full text-sm min-w-[1660px]">
                   <thead class="bg-slate-50 text-slate-500 text-xs">
                     <tr>
                       <th class="px-3 py-2.5 w-10 text-left"><input type="checkbox" :checked="tl.allPagedChecked" @change="tl.toggleCheckAll()" class="rounded cursor-pointer"></th>
                       <th class="text-left px-3 py-2.5 w-12">序号</th>
                       <th class="text-left px-3 py-2.5">达人昵称</th>
+                      <th class="text-left px-3 py-2.5">联系方式</th>
                       <th class="text-left px-3 py-2.5">来源渠道</th>
-                      <th class="text-left px-3 py-2.5">当前阶段</th>
-                      <th class="text-left px-3 py-2.5">生命周期</th>
-                    <th class="text-left px-3 py-2.5">达人评级</th>
-                      <th class="text-left px-3 py-2.5">达人潜力</th>
-                      <th class="text-left px-3 py-2.5">合作意愿</th>
-                      <th class="text-left px-3 py-2.5">达人分类</th>
-                      <th class="text-left px-3 py-2.5">合作路径</th>
+                      <th class="text-left px-3 py-2.5">自媒体情况</th>
+                      <th class="text-right px-3 py-2.5">粉丝量</th>
+                      <th class="text-left px-3 py-2.5">接拍类型</th>
+                      <th class="text-left px-3 py-2.5">出镜方式</th>
+                      <th class="text-left px-3 py-2.5">作品</th>
+                      <th class="text-left px-3 py-2.5">招募阶段</th>
                       <th class="text-left px-3 py-2.5">当前负责人</th>
                       <th class="text-left px-3 py-2.5">当前岗位</th>
                       <th class="text-left px-3 py-2.5">下次跟进</th>
                       <th class="text-left px-3 py-2.5">最近跟进</th>
+                      <th class="text-left px-3 py-2.5">报名时间</th>
                       <th class="text-left px-3 py-2.5">交接状态</th>
                       <th class="text-left px-3 py-2.5">首次联系 SLA</th>
                       <th class="text-left px-3 py-2.5">操作</th>
@@ -1824,20 +1816,24 @@ tailwind.config = {
                       <td class="px-3 py-2.5"><input type="checkbox" :checked="tl.isChecked(row.id)" @change="tl.toggleCheck(row.id)" class="rounded cursor-pointer"></td>
                       <td class="px-3 py-2.5 text-slate-400 text-xs">{{ (tl.page-1)*tl.pageSize + i + 1 }}</td>
                       <td class="px-3 py-2.5 font-medium text-slate-800">{{ row.name }}</td>
+                      <td class="px-3 py-2.5 text-xs text-slate-600">{{ row.contact }}</td>
                       <td class="px-3 py-2.5 text-slate-600">{{ row.source }}</td>
+                      <td class="px-3 py-2.5 text-xs text-slate-500">{{ row.hasMedia ? row.platforms.join('/') : '无' }}</td>
+                      <td class="px-3 py-2.5 text-right text-slate-600">{{ row.fans > 0 ? fmt(row.fans) : '—' }}</td>
+                      <td class="px-3 py-2.5 text-xs text-slate-600 max-w-[180px] truncate" :title="row.wantCategories">{{ row.wantCategories }}</td>
+                      <td class="px-3 py-2.5 text-xs text-slate-600 max-w-[140px] truncate" :title="row.appearWay">{{ row.appearWay }}</td>
+                      <td class="px-3 py-2.5 text-xs">
+                        <a v-if="row.works" :href="row.works" target="_blank" rel="noopener" class="text-sky-600 hover:underline">查看作品</a>
+                        <span v-else class="text-slate-300">—</span>
+                      </td>
                       <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('stage', row.stage)">{{ row.stage }}</span></td>
-                      <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs bg-violet-100 text-violet-700">{{ tl.TALENT_STATUS_LABEL[row.talentStatus || 'lead'] }}</span></td>
-                      <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs font-medium" :class="tl.levelTone(row.talentLevel)">{{ tl.TALENT_LEVEL_LABEL[row.talentLevel || 'C'] }}</span></td>
-                      <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('potential', row.potential)">{{ row.potential }}</span></td>
-                      <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('willing', row.willing)">{{ row.willing }}</span></td>
-                      <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded text-xs" :class="tl.tagClass('category', row.category)">{{ row.category }}</span></td>
-                      <td class="px-3 py-2.5 text-slate-600">{{ row.coopPath }}</td>
                       <td class="px-3 py-2.5 text-slate-700">{{ row.owner }}</td>
                       <td class="px-3 py-2.5">
                         <span class="px-2 py-0.5 rounded text-xs" :class="tl.posOf(row) ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-400'">{{ tl.posLabelOf(row) }}</span>
                       </td>
                       <td class="px-3 py-2.5 text-xs" :class="tl.nfClass(row)">{{ row.nextFollow || '未安排' }}</td>
                       <td class="px-3 py-2.5 text-xs text-slate-500">{{ (row.lastFollow || '').slice(0, 10) || '—' }}</td>
+                      <td class="px-3 py-2.5 text-xs text-slate-500 whitespace-nowrap">{{ row.createdAt || (row.lastFollow || '').slice(0, 16) || '—' }}</td>
                       <td class="px-3 py-2.5">
                         <span v-if="row.handoverStatus==='pending'" class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-700">待 {{ row.handoverTo }} 确认</span>
                         <span v-else-if="row.handoverStatus==='rejected'" class="px-2 py-0.5 rounded text-xs bg-rose-100 text-rose-600">已驳回</span>
@@ -1856,7 +1852,7 @@ tailwind.config = {
                         <button @click="tl.openDetail(row)" class="text-indigo-600 hover:underline text-xs">历史</button>
                       </td>
                     </tr>
-                    <tr v-if="!tl.pagedList.length"><td colspan="18" class="px-3 py-10 text-center text-slate-400 text-sm">暂无数据</td></tr>
+                    <tr v-if="!tl.pagedList.length"><td colspan="19" class="px-3 py-10 text-center text-slate-400 text-sm">暂无数据</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -1909,31 +1905,40 @@ tailwind.config = {
               <div class="text-base font-semibold">达人线索详情</div>
               <button @click="tl.closeAll()" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
             </div>
-            <div v-if="tl.dlg.current" class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
-              <div><span class="text-slate-400 text-xs">昵称：</span>{{ tl.dlg.current.name }}</div>
-              <div><span class="text-slate-400 text-xs">联系方式：</span>{{ tl.dlg.current.contact }}</div>
-              <div><span class="text-slate-400 text-xs">来源渠道：</span>{{ tl.dlg.current.source }}</div>
-              <div><span class="text-slate-400 text-xs">有自媒体经验：</span>{{ tl.dlg.current.hasMedia ? '是' : '否' }}</div>
-              <div><span class="text-slate-400 text-xs">平台：</span>{{ tl.dlg.current.platforms.join(' / ') }}</div>
-              <div><span class="text-slate-400 text-xs">粉丝量：</span>{{ fmt(tl.dlg.current.fans) }}</div>
-              <div><span class="text-slate-400 text-xs">有寄拍/商单经验：</span>{{ tl.dlg.current.hasExp ? '是' : '否' }}</div>
-              <div class="col-span-2"><span class="text-slate-400 text-xs">合作品类：</span>{{ tl.dlg.current.coopCategories }}</div>
-              <div><span class="text-slate-400 text-xs">想做品类：</span>{{ tl.dlg.current.wantCategories }}</div>
-              <div class="col-span-2"><span class="text-slate-400 text-xs">出镜方式：</span>{{ tl.dlg.current.appearWay }}</div>
-              <div><span class="text-slate-400 text-xs">当前阶段：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('stage', tl.dlg.current.stage)">{{ tl.dlg.current.stage }}</span></div>
-              <div><span class="text-slate-400 text-xs">生命周期：</span><span class="px-1.5 py-0.5 rounded text-xs bg-violet-100 text-violet-700">{{ tl.TALENT_STATUS_LABEL[tl.dlg.current.talentStatus || 'lead'] }}</span><span v-if="tl.dlg.current.talentOperator" class="ml-1 text-[11px] text-slate-400">运营：{{ tl.dlg.current.talentOperator }}</span></div>
-              <div><span class="text-slate-400 text-xs">达人潜力：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('potential', tl.dlg.current.potential)">{{ tl.dlg.current.potential }}</span></div>
-              <div><span class="text-slate-400 text-xs">达人评级：</span><span class="px-1.5 py-0.5 rounded text-xs font-medium" :class="tl.levelTone(tl.dlg.current.talentLevel)">{{ tl.TALENT_LEVEL_LABEL[tl.dlg.current.talentLevel || 'C'] }}</span></div>
-              <div><span class="text-slate-400 text-xs">合作意愿：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('willing', tl.dlg.current.willing)">{{ tl.dlg.current.willing }}</span></div>
-              <div><span class="text-slate-400 text-xs">达人分类：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('category', tl.dlg.current.category)">{{ tl.dlg.current.category }}</span></div>
-              <div><span class="text-slate-400 text-xs">合作路径：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('path', tl.dlg.current.coopPath)">{{ tl.dlg.current.coopPath }}</span></div>
-              <div v-if="tl.dlg.current.coopPath==='付费孵化'"><span class="text-slate-400 text-xs">孵化服务费：</span>¥{{ fmt(tl.dlg.current.incubationFee) }}<span class="ml-1 px-1.5 py-0.5 rounded text-xs" :class="tl.dlg.current.feeStatus==='已收' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'">{{ tl.dlg.current.feeStatus || '未收' }}</span></div>
-              <div><span class="text-slate-400 text-xs">当前负责人：</span>{{ tl.dlg.current.owner }}</div>
-              <div v-if="tl.dlg.current.recruitBy" class="col-span-2"><span class="text-slate-400 text-xs">招募负责人：</span>{{ tl.dlg.current.recruitBy }}<span class="text-slate-300 text-[11px] ml-2">招募完成交接后固化，不随后续交接变化</span></div>
-              <div v-if="tl.dlg.current.opsBy" class="col-span-2"><span class="text-slate-400 text-xs">达人运营负责人：</span>{{ tl.dlg.current.opsBy }}<span class="text-slate-300 text-[11px] ml-2">转入运营时固化，与「当前负责人」区分（后续再交接也只记第一次）</span></div>
-              <div><span class="text-slate-400 text-xs">最近跟进：</span>{{ tl.dlg.current.lastFollow }}</div>
-              <div><span class="text-slate-400 text-xs">下次跟进：</span>{{ tl.dlg.current.nextFollow || '—' }}</div>
-              <div class="col-span-3"><span class="text-slate-400 text-xs">备注：</span>{{ tl.dlg.current.note || '—' }}</div>
+            <div v-if="tl.dlg.current">
+              <!-- 报名信息（来自报名表自动生成，不可编辑）：报名→线索的基础数据 -->
+              <div class="text-xs font-semibold text-slate-400 mb-2">报名信息 <span class="font-normal">（报名表自动生成）</span></div>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
+                <div><span class="text-slate-400 text-xs">达人昵称：</span>{{ tl.dlg.current.name }}</div>
+                <div><span class="text-slate-400 text-xs">联系方式：</span>{{ tl.dlg.current.contact }}</div>
+                <div><span class="text-slate-400 text-xs">来源渠道：</span>{{ tl.dlg.current.source }}</div>
+                <div><span class="text-slate-400 text-xs">自媒体情况：</span>{{ tl.dlg.current.hasMedia ? '有（' + tl.dlg.current.platforms.join(' / ') + '）' : '无' }}</div>
+                <div><span class="text-slate-400 text-xs">粉丝量：</span>{{ tl.dlg.current.fans > 0 ? fmt(tl.dlg.current.fans) : '—' }}</div>
+                <div><span class="text-slate-400 text-xs">报名/创建时间：</span>{{ tl.dlg.current.createdAt || tl.dlg.current.lastFollow || '—' }}</div>
+                <div><span class="text-slate-400 text-xs">寄拍/商单经验：</span>{{ tl.dlg.current.hasExp ? '有' : '无' }}</div>
+                <div class="col-span-2"><span class="text-slate-400 text-xs">合作过的品类：</span>{{ tl.dlg.current.coopCategories }}</div>
+                <div class="col-span-2"><span class="text-slate-400 text-xs">想接的品类（接拍类型）：</span>{{ tl.dlg.current.wantCategories }}</div>
+                <div class="col-span-2"><span class="text-slate-400 text-xs">出镜方式：</span>{{ tl.dlg.current.appearWay }}</div>
+                <div class="col-span-2"><span class="text-slate-400 text-xs">作品：</span><a v-if="tl.dlg.current.works" :href="tl.dlg.current.works" target="_blank" rel="noopener" class="text-sky-600 hover:underline break-all">{{ tl.dlg.current.works }}</a><span v-else class="text-slate-300">—</span></div>
+              </div>
+              <!-- 运营判断与跟进（线索阶段由运营填写；转正式达人后在达人档案模块管理） -->
+              <div class="text-xs font-semibold text-slate-400 mt-5 mb-2 pt-4 border-t border-slate-100">运营判断与跟进 <span class="font-normal">（运营/高级运营跟进后填写）</span></div>
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
+                <div><span class="text-slate-400 text-xs">招募阶段：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('stage', tl.dlg.current.stage)">{{ tl.dlg.current.stage }}</span></div>
+                <div><span class="text-slate-400 text-xs">当前负责人：</span>{{ tl.dlg.current.owner }}</div>
+                <div><span class="text-slate-400 text-xs">生命周期：</span><span class="px-1.5 py-0.5 rounded text-xs bg-violet-100 text-violet-700">{{ tl.TALENT_STATUS_LABEL[tl.dlg.current.talentStatus || 'lead'] }}</span><span v-if="tl.dlg.current.talentOperator" class="ml-1 text-[11px] text-slate-400">运营：{{ tl.dlg.current.talentOperator }}</span></div>
+                <div><span class="text-slate-400 text-xs">达人潜力：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('potential', tl.dlg.current.potential)">{{ tl.dlg.current.potential }}</span></div>
+                <div><span class="text-slate-400 text-xs">达人评级：</span><span class="px-1.5 py-0.5 rounded text-xs font-medium" :class="tl.levelTone(tl.dlg.current.talentLevel)">{{ tl.TALENT_LEVEL_LABEL[tl.dlg.current.talentLevel || 'C'] }}</span></div>
+                <div><span class="text-slate-400 text-xs">合作意愿：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('willing', tl.dlg.current.willing)">{{ tl.dlg.current.willing }}</span></div>
+                <div><span class="text-slate-400 text-xs">达人分类：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('category', tl.dlg.current.category)">{{ tl.dlg.current.category }}</span></div>
+                <div><span class="text-slate-400 text-xs">合作路径：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.tagClass('path', tl.dlg.current.coopPath)">{{ tl.dlg.current.coopPath }}</span></div>
+                <div v-if="tl.dlg.current.coopPath==='付费孵化'"><span class="text-slate-400 text-xs">孵化服务费：</span>¥{{ fmt(tl.dlg.current.incubationFee) }}<span class="ml-1 px-1.5 py-0.5 rounded text-xs" :class="tl.dlg.current.feeStatus==='已收' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'">{{ tl.dlg.current.feeStatus || '未收' }}</span></div>
+                <div v-if="tl.dlg.current.recruitBy" class="col-span-2"><span class="text-slate-400 text-xs">招募负责人：</span>{{ tl.dlg.current.recruitBy }}<span class="text-slate-300 text-[11px] ml-2">招募完成交接后固化，不随后续交接变化</span></div>
+                <div v-if="tl.dlg.current.opsBy" class="col-span-2"><span class="text-slate-400 text-xs">达人运营负责人：</span>{{ tl.dlg.current.opsBy }}<span class="text-slate-300 text-[11px] ml-2">转入运营时固化，与「当前负责人」区分（后续再交接也只记第一次）</span></div>
+                <div><span class="text-slate-400 text-xs">最近跟进：</span>{{ tl.dlg.current.lastFollow }}</div>
+                <div><span class="text-slate-400 text-xs">下次跟进：</span>{{ tl.dlg.current.nextFollow || '—' }}</div>
+                <div class="col-span-3"><span class="text-slate-400 text-xs">备注：</span>{{ tl.dlg.current.note || '—' }}</div>
+              </div>
             </div>
             <!-- 交接信息：待确认时提示原负责人 / 接收人 / 原因 -->
             <div v-if="tl.dlg.current.handoverStatus && tl.dlg.current.handoverStatus!=='none'" class="mt-4 pt-4 border-t border-slate-100">
@@ -3130,7 +3135,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260919c"></script>
-<script src="./app.js?v=20260919c"></script>
+<script src="./talent-leads.js?v=20260919d"></script>
+<script src="./app.js?v=20260919d"></script>
 </body>
 </html>
