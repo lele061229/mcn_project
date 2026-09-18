@@ -628,6 +628,55 @@ def main():
     chk('finance 看板面板：role=finance 且含 结算概览/收益统计',
         st == 200 and role == 'finance' and {'settle-overview', 'income-stats'} <= set(bkeys), (st, role, bkeys))
 
+    # ---------- 12.5 线索字段分层（2026-09-18）：报名只产映射字段；判断字段初始「待判断」；判断字段岗位权限 ----------
+    signup = {'nickname': 'APItest报名分层', 'source_channel': '小红书', 'phone': '13800001111',
+              'wechat_id': 'apitest_wx', 'self_media_status': '有账号在运营', 'business_experience': '接过寄拍',
+              'preferred_categories': '鞋类', 'appearance_style': '真人露脸出镜', 'works': 'https://example.com/w1',
+              'questions': '寄拍流程与费用'}
+    st, j = call(admin, '/api/leads', signup)
+    # 注意：公开报名接口返回 {code:0,data:{id}}（非标准 {ok:true} 包装）
+    sg = ((j.get('data') or {}).get('id')) if st == 200 and isinstance(j.get('data'), dict) else None
+    if sg: made['signup'] = sg
+    chk('报名表单提交成功（公开接口，回归自清理）', st == 200 and j.get('code') == 0 and bool(sg), (st, j.get('code'), (j.get('data') or {}).get('id')))
+    st, j = call(admin, '/api/mvp/leads/' + (sg or 'T0000'))
+    d = j.get('data') or {}
+    chk('报名映射：怎么称呼→昵称 / 来源渠道→channel / 联系方式→contact',
+        d.get('name') == 'APItest报名分层' and d.get('channel') == '小红书' and '13800001111' in (d.get('contact') or ''),
+        (d.get('name'), d.get('channel'), d.get('contact')))
+    rmap = d.get('recruit') or {}
+    chk('报名映射：自媒体/合作经历/想接品类/出镜方式/作品/想了解 落 recruit 结构',
+        rmap.get('selfMedia') == '有账号在运营' and rmap.get('hasExp') == '接过寄拍'
+        and rmap.get('preferredCategories') == '鞋类' and rmap.get('appearWay') == '真人露脸出镜'
+        and rmap.get('works') == 'https://example.com/w1' and rmap.get('questions') == '寄拍流程与费用', rmap)
+    chk('报名初始化：阶段=新线索 / 生命周期=lead / 评级=待判断',
+        d.get('status') == '新线索' and d.get('talentStatus') == 'lead' and d.get('talentLevel') == '待判断',
+        (d.get('status'), d.get('talentStatus'), d.get('talentLevel')))
+    chk('报名初始化：潜力/意愿=待判断、分类=待分类、路径=待判断',
+        d.get('potentialLevel') == '待判断' and d.get('intentLevel') == '待判断'
+        and d.get('talentClass') == '待分类' and d.get('coopPath') == '待判断',
+        (d.get('potentialLevel'), d.get('intentLevel'), d.get('talentClass'), d.get('coopPath')))
+
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % sg, {'owner': '李婷', 'ownerPosition': 'recruit'})
+    chk('报名线索分配给招募（权限用例前置）', st == 200, (st, (j or {}).get('error')))
+    st, j = call(recruit, '/api/mvp/leads/' + (sg or 'T0000'),
+                 {'potentialLevel': '高', 'intentLevel': '强', 'coopPath': '付费孵化'}, method='PUT')
+    chk('招募（负责人）改判断字段 → 403（字段分层，服务端收口）', st == 403, (st, (j or {}).get('error')))
+    st, j = call(recruit, '/api/mvp/talent-meta/' + (sg or 'T0000'), {'talentLevel': 'A'}, method='PUT')
+    chk('招募改达人评级 → 403', st == 403, (st, (j or {}).get('error')))
+    st, j = call(recruit, '/api/mvp/leads/%s/follow-ups' % sg, {'content': '招募岗位跟进不受影响', 'potentialLevel': '高'})
+    chk('招募仍可正常跟进（判断字段被剥离，不阻断跟进本身）', st == 200, (st, (j or {}).get('error')))
+    st, j = call(admin, '/api/mvp/leads/' + (sg or 'T0000'))
+    chk('招募跟进后潜力仍为待判断（未被写入）',
+        st == 200 and (j.get('data') or {}).get('potentialLevel') == '待判断', (st, (j.get('data') or {}).get('potentialLevel')))
+    st, j = call(staff, '/api/mvp/leads/' + (sg or 'T0000'), {'potentialLevel': '高'}, method='PUT')
+    chk('非负责人运营改判断字段 → 403（行级隔离优先）', st == 403, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/' + (sg or 'T0000'),
+                 {'potentialLevel': '高', 'intentLevel': '强', 'coopPath': '免费签约'}, method='PUT')
+    chk('高级运营改判断字段 → 200', st == 200 and (j.get('data') or {}).get('potentialLevel') == '高', (st, (j or {}).get('error')))
+    st, j = call(admin, '/api/mvp/leads/' + (sg or 'T0000'), {'potentialLevel': '中', 'talentLevel': '待判断'}, method='PUT')
+    chk('管理员改判断字段（含重置评级为待判断）→ 200',
+        st == 200 and (j.get('data') or {}).get('talentLevel') == '待判断', (st, (j or {}).get('error')))
+
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):
         # 转化过的记录已迁入达人库，先试线索池再试达人库

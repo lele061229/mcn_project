@@ -1596,7 +1596,7 @@ tailwind.config = {
                           <button v-if="(tl.isAdmin || tl.isSenior) && row.slaStatus==='overdue'" @click="tl.openReassign(row, showToast)" class="block w-full text-left px-3 py-1.5 text-rose-700 hover:bg-rose-50">重新分配</button>
                           <button v-if="row.slaStatus==='overdue' && (tl.isAdmin || row.owner===tl.myName)" @click="tl.openOverdueReason(row, showToast)" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">填写超时原因</button>
                           <button @click="tl.openEdit(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">编辑</button>
-                          <button @click="tl.openClassify(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">分类</button>
+                          <button v-if="tl.canJudge" @click="tl.openClassify(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">分类</button>
                           <button v-if="tl.isAdmin || tl.isSenior" @click="tl.openAssign(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-cyan-700 hover:bg-cyan-50">分配负责人</button>
                           <button @click="tl.openHandover(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">交接</button>
                           <button v-if="tl.isAdmin || row.owner === tl.myName" @click="tl.convertTalent(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50">转为正式达人</button>
@@ -1664,7 +1664,7 @@ tailwind.config = {
                     <button v-if="(tl.isAdmin || tl.isSenior) && row.slaStatus==='overdue'" @click="tl.openReassign(row, showToast)" class="block w-full text-left px-3 py-1.5 text-rose-700 hover:bg-rose-50">重新分配</button>
                     <button v-if="row.slaStatus==='overdue' && (tl.isAdmin || row.owner===tl.myName)" @click="tl.openOverdueReason(row, showToast)" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">填写超时原因</button>
                     <button @click="tl.openEdit(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">编辑</button>
-                    <button @click="tl.openClassify(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">分类</button>
+                    <button v-if="tl.canJudge" @click="tl.openClassify(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">分类</button>
                     <button v-if="tl.isAdmin || tl.isSenior" @click="tl.openAssign(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-cyan-700 hover:bg-cyan-50">分配负责人</button>
                     <button @click="tl.openHandover(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">交接</button>
                     <button v-if="tl.isAdmin || row.owner === tl.myName" @click="tl.convertTalent(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50">转为正式达人</button>
@@ -1968,12 +1968,12 @@ tailwind.config = {
               <div><label class="text-xs text-slate-500">昵称</label><input v-model="tl.forms.edit.name" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></div>
               <div><label class="text-xs text-slate-500">来源渠道</label><select v-model="tl.forms.edit.source" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.SOURCES" :key="s">{{ s }}</option></select></div>
               <div><label class="text-xs text-slate-500">当前阶段</label><select v-model="tl.forms.edit.stage" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select></div>
-              <div><label class="text-xs text-slate-500">达人潜力</label><select v-model="tl.forms.edit.potential" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select></div>
-              <div><label class="text-xs text-slate-500">合作意愿</label><select v-model="tl.forms.edit.willing" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select></div>
-              <div><label class="text-xs text-slate-500">达人分类</label><select v-model="tl.forms.edit.category" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select></div>
-              <div><label class="text-xs text-slate-500">合作路径</label><select v-model="tl.forms.edit.coopPath" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.PATHS" :key="s">{{ s }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">达人潜力</label><select v-model="tl.forms.edit.potential" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">合作意愿</label><select v-model="tl.forms.edit.willing" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">达人分类</label><select v-model="tl.forms.edit.category" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.CATEGORIES" :key="s">{{ s }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">合作路径</label><select v-model="tl.forms.edit.coopPath" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.PATHS" :key="s">{{ s }}</option></select></div>
               <div><label class="text-xs text-slate-500">达人生命周期</label><select v-model="tl.forms.edit.talentStatus" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="k in tl.TALENT_STATUS_LIST" :key="k" :value="k">{{ tl.TALENT_STATUS_LABEL[k] }}</option></select></div>
-              <div><label class="text-xs text-slate-500">达人评级</label><select v-model="tl.forms.edit.talentLevel" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="k in tl.TALENT_LEVEL_LIST" :key="k" :value="k">{{ tl.TALENT_LEVEL_LABEL[k] }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">达人评级</label><select v-model="tl.forms.edit.talentLevel" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="k in tl.TALENT_LEVEL_LIST" :key="k" :value="k">{{ tl.TALENT_LEVEL_LABEL[k] }}</option></select></div>
               <div><label class="text-xs text-slate-500">当前负责人</label><select v-model="tl.forms.edit.owner" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option v-for="s in tl.OWNERS" :key="s">{{ s }}</option></select></div>
               <div class="col-span-2"><label class="text-xs text-slate-500">下次跟进时间</label><input v-model="tl.forms.edit.nextFollow" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="YYYY-MM-DD HH:mm"></div>
               <div class="col-span-2"><label class="text-xs text-slate-500">备注</label><textarea v-model="tl.forms.edit.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
@@ -1994,8 +1994,8 @@ tailwind.config = {
               <div><label class="text-xs text-slate-500">跟进结果</label><select v-model="tl.forms.follow.result" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">请选择</option><option v-for="s in tl.FOLLOW_RESULTS" :key="s">{{ s }}</option></select></div>
               <div><label class="text-xs text-slate-500">当前阶段</label><select v-model="tl.forms.follow.stage" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">不修改</option><option v-for="s in tl.STAGES" :key="s">{{ s }}</option></select></div>
               <div><label class="text-xs text-slate-500">下次跟进时间</label><input v-model="tl.forms.follow.nextFollow" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="YYYY-MM-DD HH:mm"></div>
-              <div><label class="text-xs text-slate-500">达人潜力</label><select v-model="tl.forms.follow.potential" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">不修改</option><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select></div>
-              <div><label class="text-xs text-slate-500">合作意愿</label><select v-model="tl.forms.follow.willing" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">不修改</option><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">达人潜力</label><select v-model="tl.forms.follow.potential" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">不修改</option><option v-for="s in tl.POTENTIALS" :key="s">{{ s }}</option></select></div>
+              <div v-if="tl.canJudge"><label class="text-xs text-slate-500">合作意愿</label><select v-model="tl.forms.follow.willing" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white"><option value="">不修改</option><option v-for="s in tl.WILLINGS" :key="s">{{ s }}</option></select></div>
               <div class="col-span-2"><label class="text-xs text-slate-500">跟进内容</label><textarea v-model="tl.forms.follow.content" rows="3" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="沟通了什么、达人反馈如何、卡在哪里"></textarea></div>
               <div class="col-span-2"><label class="text-xs text-slate-500">下一步动作</label><input v-model="tl.forms.follow.nextAction" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200" placeholder="例：周五前交 2 条脚本 / 下周一约线下拍摄"></div>
               <div class="col-span-2"><label class="text-xs text-slate-500">备注</label><textarea v-model="tl.forms.follow.note" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200"></textarea></div>
@@ -3063,7 +3063,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260918c"></script>
-<script src="./app.js?v=20260918c"></script>
+<script src="./talent-leads.js?v=20260918d"></script>
+<script src="./app.js?v=20260918d"></script>
 </body>
 </html>

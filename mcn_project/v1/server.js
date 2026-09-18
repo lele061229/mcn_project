@@ -388,12 +388,13 @@ function seedTalentFields(t, isTalent) {
   }
   if (t.dewuSyncedAt === undefined) { t.dewuSyncedAt = ''; n++; }
   if (t.dewuSource === undefined) { t.dewuSource = t.dewuId ? 'manual' : ''; n++; }
-  // —— 达人评级（talentLevel）：老数据从既有 level 回填，没有 level 的按「正式达人=B / 线索=C」给默认 ——
-  if (!TALENT_LEVELS.includes(t.talentLevel)) {
-    t.talentLevel = TALENT_LEVELS.includes(t.level) ? t.level : (isTalent ? 'B' : 'C');
+  // —— 达人评级（talentLevel）：老数据从既有 level 回填；没有 level 的按「正式达人=B / 线索=待判断」给默认 ——
+  // 注意「待判断」是合法值（新报名线索初始态），不能被这里覆写回 C；存量已有评级的数据不受影响
+  if (!TALENT_LEVEL_ANY.includes(t.talentLevel)) {
+    t.talentLevel = TALENT_LEVEL_ANY.includes(t.level) ? t.level : (isTalent ? 'B' : TALENT_LEVEL_UNSET);
     n++;
   }
-  if (!TALENT_LEVELS.includes(t.level)) { t.level = t.talentLevel; n++; }   // level 镜像，保持 SLA 高潜口径与评级一致
+  if (!TALENT_LEVEL_ANY.includes(t.level)) { t.level = t.talentLevel; n++; }   // level 镜像，保持 SLA 高潜口径与评级一致
   return n;
 }
 function migrateDb() {
@@ -716,6 +717,10 @@ const TALENT_STATUS_LABEL = { lead: '线索达人', coaching: '陪跑达人', po
 // 与既有 level 字段关系：talentLevel 是展示主字段，写入时同步镜像到 level（SLA 高潜判定沿用 level，保持口径一致）。
 const TALENT_LEVELS = ['A', 'B', 'C', 'D'];
 const TALENT_LEVEL_LABEL = { A: 'A 高价值', B: 'B 培养中', C: 'C 普通', D: 'D 沉默' };
+// 「待判断」= 尚无运营判断（新报名/新线索初始态，2026-09-18 字段分层）；合法展示值，不参与 SLA 高潜口径（level==='A' 判定不受影响）
+const TALENT_LEVEL_UNSET = '待判断';
+const TALENT_LEVEL_ANY = TALENT_LEVELS.concat([TALENT_LEVEL_UNSET]);
+TALENT_LEVEL_LABEL[TALENT_LEVEL_UNSET] = '待判断';
 // —— 任务中心任务类型（2026-09-17）——
 // shoot 寄拍任务（达人本人完成，走寄拍状态机）/ content 内容任务（运营指导达人产出内容）/ growth 运营成长任务（高级运营分配，见 opsTasks 集合）
 const TASK_TYPES = ['shoot', 'content', 'growth'];
@@ -726,6 +731,8 @@ const OPS_TASK_STATUSES = ['待开始', '进行中', '已完成', '已取消'];
 // 主管视角：管理员（老板）或高级运营 —— 高级运营可跨运营负责人查看/管理达人，可催办/重新分配/分配任务
 const isSupervisor = ctx => ctx.roleCode === 'admin' || ctx.position === 'senior_ops';
 const posLabel = p => POSITION_LABEL[p] || '未设置';
+// 判断字段（评级/潜力/意愿/分类/路径）修改权限：普通运营 / 高级运营 / 管理员 —— 招募只收集报名信息，不做业务判断
+const canJudgeLead = ctx => isSupervisor(ctx) || ctx.position === 'ops';
 // 账号显示名：auth.json 的 displayName（与 talents.owner 存的人名对应），缺省退回账号名
 const nameOf = rec => (rec && (rec.displayName || rec.user)) || '';
 // 是否「我负责的」：优先按账号 ID 比对（ownerId ⇄ 登录账号），老数据回退到中文姓名比对
@@ -881,7 +888,7 @@ function toMvpLead(t) {
     ...slaOf(t),
     level: t.level || 'C',
     // 达人评级（A 高价值 / B 培养中 / C 普通 / D 沉默）：展示主字段，与 level 保持镜像
-    talentLevel: TALENT_LEVELS.includes(t.talentLevel) ? t.talentLevel : (TALENT_LEVELS.includes(t.level) ? t.level : 'C'),
+    talentLevel: TALENT_LEVEL_ANY.includes(t.talentLevel) ? t.talentLevel : (TALENT_LEVEL_ANY.includes(t.level) ? t.level : 'C'),
     talentLevelLabel: TALENT_LEVEL_LABEL[t.talentLevel] || TALENT_LEVEL_LABEL[t.level] || 'C 普通',
     status: MVP_STAGE_MAP[t.status] || '新线索',
     lastFollow: String(t.lastFollowAt || '').slice(0, 16),
@@ -946,13 +953,15 @@ route('POST', '/api/mvp/leads', async (ctx) => {
   const rec = {
     id: await nextId('leads', 'T', 4),
     name: b.name, douyin: '', contact: b.contact || '', channel: b.channel || '其他',
-    level: b.level || 'C', status: '待联系', contentTypes: [], categories: [],
+    // 评级=判断字段（2026-09-18 分层）：创建者可判（运营/高级运营/管理员）时接受显式指定，否则一律「待判断」
+    level: (canJudgeLead(ctx) && TALENT_LEVEL_ANY.includes(b.level)) ? b.level : TALENT_LEVEL_UNSET, status: '待联系', contentTypes: [], categories: [],
     fans: 0, coopCount: 0, fulfillmentRate: 0, owner, ownerId: uidByName(owner), ownerPosition,
     assignedAt: (owner && owner !== '未分配') ? nowStr() : '',
     tags: [], note: b.note || '', lastFollowAt: nowStr(), createdAt: nowStr(),
     potentialLevel: '待判断', intentLevel: '待判断', talentClass: '待分类',
     coopPath: '待判断', incubationFee: 0, feeStatus: '未收', nextFollowAt: '',
-    talentStatus: 'lead', talentOperator: (ownerPosition === 'ops' && owner && owner !== '未分配') ? owner : '',
+    talentStatus: 'lead', talentLevel: (canJudgeLead(ctx) && TALENT_LEVEL_ANY.includes(b.level)) ? b.level : TALENT_LEVEL_UNSET,
+    talentOperator: (ownerPosition === 'ops' && owner && owner !== '未分配') ? owner : '',
     rejectReason: '', auditAt: '', auditBy: '', isActive: true,
     ...emptyHandoverState(),
   };
@@ -1039,6 +1048,11 @@ route('PUT', '/api/mvp/leads/:id', async (ctx) => {
   const t = await db.get('leads', ctx.params.id);
   if (!t) return fail(ctx.res, 404, '线索不存在');
   if (!canTouchLead(t, ctx)) return fail(ctx.res, 403, '只能修改自己负责的线索');
+  // 判断字段分层（2026-09-18）：评级/潜力/意愿/分类/路径只能由运营/高级运营/管理员修改，招募只收集报名信息
+  const JUDGE_BODY_KEYS = ['talentLevel', 'potentialLevel', 'potential', 'intentLevel', 'willing', 'talentClass', 'category', 'coopPath'];
+  if (!canJudgeLead(ctx) && JUDGE_BODY_KEYS.some(k => (ctx.body || {})[k] !== undefined)) {
+    return fail(ctx.res, 403, '达人评级/潜力/合作意愿/分类/合作路径只能由运营或高级运营修改（招募岗只收集报名信息）');
+  }
   const patch = {};
   const b = ctx.body || {};
   if (b.status && MVP_STAGE_REVERSE[b.status]) patch.status = MVP_STAGE_REVERSE[b.status];
@@ -1062,7 +1076,7 @@ route('PUT', '/api/mvp/leads/:id', async (ctx) => {
   }
   // 达人评级（talentLevel）：A 高价值 / B 培养中 / C 普通 / D 沉默；写入时镜像到 level（保持 SLA 口径）
   if (b.talentLevel !== undefined) {
-    if (!TALENT_LEVELS.includes(b.talentLevel)) return fail(ctx.res, 400, '非法达人评级: ' + b.talentLevel);
+    if (!TALENT_LEVEL_ANY.includes(b.talentLevel)) return fail(ctx.res, 400, '非法达人评级: ' + b.talentLevel);
     patch.talentLevel = b.talentLevel;
     patch.level = b.talentLevel;
   }
@@ -1488,9 +1502,11 @@ route('PUT', '/api/mvp/talent-meta/:id', async (ctx) => {
   if (!t) return fail(ctx.res, 404, '线索 / 达人不存在');
   if (!canTouchLead(t, ctx)) return fail(ctx.res, 403, '只能修改自己负责的达人');
   const b = ctx.body || {};
+  // 达人评级=判断字段（2026-09-18 分层）：招募岗不可修改（生命周期仍归负责人/主管）
+  if (b.talentLevel !== undefined && !canJudgeLead(ctx)) return fail(ctx.res, 403, '达人评级只能由运营或高级运营修改（招募岗只收集报名信息）');
   const patch = {};
   if (b.talentLevel !== undefined) {
-    if (!TALENT_LEVELS.includes(b.talentLevel)) return fail(ctx.res, 400, '非法达人评级: ' + b.talentLevel);
+    if (!TALENT_LEVEL_ANY.includes(b.talentLevel)) return fail(ctx.res, 400, '非法达人评级: ' + b.talentLevel);
     patch.talentLevel = b.talentLevel; patch.level = b.talentLevel;     // level 镜像，SLA 高潜口径同步
   }
   if (b.talentStatus !== undefined) {
@@ -1684,6 +1700,8 @@ route('POST', '/api/mvp/leads/:id/follow-ups', async (ctx) => {
   if (!t) return fail(ctx.res, 404, '线索不存在');
   if (!canTouchLead(t, ctx)) return fail(ctx.res, 403, '只能跟进自己负责的线索');
   const b = ctx.body || {};
+  // 判断字段分层（2026-09-18）：招募跟进不写判断字段（潜力/意愿/分类只能由运营/高级运营修改），静默忽略，跟进本身照常落库
+  if (!canJudgeLead(ctx)) { b.potentialLevel = undefined; b.intentLevel = undefined; b.talentClass = undefined; }
   if (!b.content && !b.result) return fail(ctx.res, 400, '请填写跟进内容或结果');
   const nowT = nowStr();
   const patch = { lastFollowAt: nowT, lastFollowupAt: nowT };
@@ -2835,6 +2853,9 @@ route('POST', '/api/leads', async (ctx) => {
     channel: b.source_channel || '表单', level: 'C', status: '待联系',
     contentTypes: [], categories: [], fans: 0, coopCount: 0, fulfillmentRate: 0,
     owner: '未分配', tags: ['报名表单'], note: noteParts.join('；'),
+    // 字段分层（2026-09-18）：报名表只提供映射字段；判断字段一律「待判断」，由运营/高级运营跟进后判定
+    talentStatus: 'lead', talentLevel: TALENT_LEVEL_UNSET,
+    potentialLevel: '待判断', intentLevel: '待判断', talentClass: '待分类', coopPath: '待判断',
     profileScreenshot: b.profile_screenshot || '', works: b.works || '',
     recruit: {
       selfMedia: b.self_media_status || '', platforms: b.platforms || '', fansText: b.followers || '',

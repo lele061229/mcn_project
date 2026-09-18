@@ -148,15 +148,17 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     // 达人生命周期（talent_status）：线索达人 → 陪跑达人 → 重点培养达人 → 公司签约达人 → 公司直属达人
     const TALENT_STATUS_LIST = ['lead', 'coaching', 'potential', 'contracted', 'company_owned'];
     // 达人评级（talentLevel）：A 高价值 / B 培养中 / C 普通 / D 沉默 —— 纯展示与排序维度
-    const TALENT_LEVEL_LIST = ['A', 'B', 'C', 'D'];
-    const TALENT_LEVEL_LABEL = { A: 'A 高价值', B: 'B 培养中', C: 'C 普通', D: 'D 沉默' };
+    const TALENT_LEVEL_LIST = ['待判断', 'A', 'B', 'C', 'D'];
+    const TALENT_LEVEL_LABEL = { A: 'A 高价值', B: 'B 培养中', C: 'C 普通', D: 'D 沉默', 待判断: '待判断' };
     function levelTone(k) {
-      return ({ A: 'bg-rose-50 text-rose-600', B: 'bg-amber-50 text-amber-600', C: 'bg-slate-100 text-slate-500', D: 'bg-slate-100 text-slate-400' })[k] || 'bg-slate-100 text-slate-500';
+      return ({ A: 'bg-rose-50 text-rose-600', B: 'bg-amber-50 text-amber-600', C: 'bg-slate-100 text-slate-500', D: 'bg-slate-100 text-slate-400', 待判断: 'bg-slate-100 text-slate-400' })[k] || 'bg-slate-100 text-slate-500';
     }
     const TALENT_STATUS_LABEL = { lead: '线索达人', coaching: '陪跑达人', potential: '重点培养达人', contracted: '公司签约达人', company_owned: '公司直属达人' };
     const POSITION_LABEL_MAP = { promote: '推广', recruit: '招募', ops: '普通运营', senior_ops: '高级运营', finance: '财务', admin: '管理员' };
     const scope = ref(''); // '' = 自动（管理员 all / 其他人 mine）
     const isSenior = computed(() => myPosition.value === 'senior_ops');   // 高级运营=主管视角：跨运营负责人看全部
+    // 判断字段（评级/潜力/意愿/分类/路径）修改权限：普通运营/高级运营/管理员（与服务端 canJudgeLead 同口径，2026-09-18 分层）
+    const canJudge = computed(() => isAdmin.value || ['ops', 'senior_ops'].includes(myPosition.value));
     const effScope = computed(() => scope.value || ((isAdmin.value || myPosition.value === 'senior_ops') ? 'all' : 'mine'));
     function posOf(r) { return r.ownerPosition || OWNER_POS[r.owner] || ''; }
     function posLabelOf(r) { return POSITION_LABEL_MAP[posOf(r)] || '未分配'; }
@@ -467,7 +469,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       create: blankCreateForm(),
     });
 
-    function blankEditForm() { return { name: '', source: '', stage: '', potential: '', willing: '', category: '', coopPath: '', owner: '', nextFollow: '', note: '', talentStatus: 'lead', talentLevel: 'C' }; }
+    function blankEditForm() { return { name: '', source: '', stage: '', potential: '', willing: '', category: '', coopPath: '', owner: '', nextFollow: '', note: '', talentStatus: 'lead', talentLevel: '待判断' }; }
     // 跟进弹窗：覆盖「跟进方式 / 结果 / 内容 / 阶段 / 意愿 / 潜力 / 下次跟进 / 备注」八个字段
     function blankFollowForm() { return { method: '微信', result: '', content: '', stage: '', potential: '', willing: '', nextFollow: '', note: '', nextAction: '' }; }
     function blankClassifyForm() { return { potential: '', willing: '', category: '', coopPath: '', incubationFee: 0, feeStatus: '未收' }; }
@@ -482,7 +484,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     }
     function openEdit(row) {
       dlg.current = row;
-      Object.assign(forms.edit, { name: row.name, source: row.source, stage: row.stage, potential: row.potential, willing: row.willing, category: row.category, coopPath: row.coopPath, owner: row.owner, nextFollow: row.nextFollow, note: row.note, talentStatus: row.talentStatus || 'lead', talentLevel: row.talentLevel || 'C' });
+      Object.assign(forms.edit, { name: row.name, source: row.source, stage: row.stage, potential: row.potential, willing: row.willing, category: row.category, coopPath: row.coopPath, owner: row.owner, nextFollow: row.nextFollow, note: row.note, talentStatus: row.talentStatus || 'lead', talentLevel: row.talentLevel || '待判断' });
       dlg.show.edit = true;
     }
     function openFollow(row) {
@@ -688,7 +690,10 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           method: f.method, result: f.result, content: f.content,
-          stage: f.stage, potentialLevel: f.potential, intentLevel: f.willing,
+          stage: f.stage,
+          // 判断字段分层（2026-09-18）：只有运营/高级运营随跟进写判断字段，招募岗提交时忽略（服务端同步剥离）
+          potentialLevel: canJudge.value ? f.potential : undefined,
+          intentLevel: canJudge.value ? f.willing : undefined,
           nextFollowAt: f.nextFollow, note: f.note || undefined,
           nextAction: f.nextAction || undefined,          // 写进跟进时间轴 + 达人档案「下一步动作」
         }),
@@ -723,6 +728,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
 
     function saveClassify(onToast) {
       const r = dlg.current; if (!r) return;
+      if (!canJudge.value) { onToast && onToast('分类只能由运营/高级运营修改'); return; }
       Object.assign(r, forms.classify);
       r.incubationFee = Number(forms.classify.incubationFee) || 0;
       if (r.coopPath !== '付费孵化') { r.incubationFee = 0; r.feeStatus = '未收'; }
@@ -1067,7 +1073,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       ownerOptions, assignDlg, assignForm, openAssign, openBatchAssign, pickAssignOwner, saveAssign, convertTalent,
       // SLA 主管动作：催办 / 重新分配 / 超时原因 + 展示口径
       slaDlg, slaForm, openUrge, openOverdueReason, saveSlaAct, openReassign, slaInfo, slaActive,
-      isSenior, TALENT_STATUS_LIST, TALENT_STATUS_LABEL,
+      isSenior, canJudge, TALENT_STATUS_LIST, TALENT_STATUS_LABEL,
       TALENT_LEVEL_LIST, TALENT_LEVEL_LABEL, levelTone,
       // 交接流程与留痕
       targets, inbox, loadTargets, loadInbox, pickTarget, saveHandover, confirmHandover, rejectHandover, cancelHandover,
