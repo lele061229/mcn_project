@@ -18,3 +18,7 @@ vendor/*.map
 # 回归临时日志与核验截图（本地运行产物，不入库）
 _reg_*.log
 _shot_*.png
+
+# CDP 探针/线上对照临时文件（本地调试产物，不入库）
+_probe_ui*.js
+_online_index.html
