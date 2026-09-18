@@ -3028,7 +3028,7 @@ route('POST', '/api/leads', async (ctx) => {
     // 字段分层（2026-09-18）：报名表只提供映射字段；判断字段一律「待判断」，由运营/高级运营跟进后判定
     talentStatus: 'lead', talentLevel: TALENT_LEVEL_UNSET,
     potentialLevel: '待判断', intentLevel: '待判断', talentClass: '待分类', coopPath: '待判断',
-    profileScreenshot: b.profile_screenshot || '', works: b.works || '',
+    profileScreenshot: b.profile_screenshot || '',
     recruit: {
       selfMedia: b.self_media_status || '', platforms: b.platforms || '', fansText: b.followers || '',
       appearWay: b.appearance_style || '', hasExp: b.business_experience || '',
