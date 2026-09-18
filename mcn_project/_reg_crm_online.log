@@ -1,0 +1,201 @@
+PASS 回归线索创建成功（4 条）  {'ra': 'T0022', 'rb': 'T0023', 'oa': 'T0024', 'oc': 'T0025'}
+PASS 管理员可拉取全部线索  18
+PASS 线索带 ownerId（负责人按账号ID关联，非仅中文姓名）  14
+PASS 普通负责人默认只拿到自己负责的（+公海）  5
+PASS 普通负责人拿不到其他岗位的线索
+PASS 本岗位池只含本岗位  5
+PASS 越权读取他人线索（单条线索）→ 403  (403, {'ok': False, 'error': '无权查看该线索'})
+PASS 越权读取他人线索（流转历史）→ 403  (403, {'ok': False, 'error': '无权查看该线索的历史'})
+PASS 越权读取他人线索（跟进记录）→ 403  (403, {'ok': False, 'error': '无权查看该线索的跟进记录'})
+PASS 越权修改他人线索 → 403  (403, {'ok': False, 'error': '只能修改自己负责的线索'})
+PASS 越权跟进他人线索 → 403  (403, {'ok': False, 'error': '只能跟进自己负责的线索'})
+PASS 非管理员调用分配接口 → 403  (403, {'ok': False, 'error': '只有主管（管理员/高级运营）可以分配负责人'})
+PASS 管理员单条分配成功  (200, None)
+PASS 分配后 owner / ownerId / 岗位 一并更新  ('王浩', 'demo-staff', 'ops')
+PASS 分配后写入 assignedAt（分配时间）  2026-09-18 22:41
+PASS 管理员批量分配成功（2 条）  (200, None, 2)
+PASS 批量分配按岗位落库  [('李婷', 'recruit'), ('李婷', 'recruit')]
+PASS 批量分配给高级运营 → 400（高级运营不做达人负责人）  (400, '「高级运营」岗不做达人负责人（高级运营管质量、财务岗只管结算），请选招募或运营岗')
+PASS 批量分配空勾选 → 400  400
+PASS 批量分配无效负责人 → 400  (400, '负责人不存在：不存在的人')
+PASS 工作台接口可用且返回卡片结构  ['assigned', 'today', 'overdue', 'slaOverdue', 'slaRemind', 'pending', 'hot', 'handover', 'recruitDone', 'taskActive', 'taskOverdue', 'taskAudit', 'taskPublish', 'taskIssue', 'accStale', 'accLow', 'unassigned', 'total']
+PASS 刚分配 → 产生「新分配给我」待办  {'assigned': 4, 'today': 0, 'overdue': 0, 'slaOverdue': 0, 'slaRemind': 0, 'pending': 0, 'hot': 0, 'handover': 0, 'recruitDone': 0, 'taskActive': 4, 'taskOverdue': 1, 'taskAudit': 2, 'taskPublish': 0, 'taskIssue': 0, 'accStale': 6, 'accLow': 1, 'unassigned': 0, 'total': 18}
+PASS 新分配待办带 类型/优先级/动作/来源  {'kind': 'task', 'id': 'TK1017', 'talentId': 'T0006', 'name': '蕾蕾Lena · 车载香氛挂件', 'stage': '超时', 'type': '任务逾期', 'priority': '高', 'action': '任务已超时，联系寄拍同事处理', 'due': '2026-09-04', 'source': '我名下达人的任务'}
+PASS 普通负责人看不到「待分配」公海待办  {'assigned': 4, 'today': 0, 'overdue': 0, 'slaOverdue': 0, 'slaRemind': 0, 'pending': 0, 'hot': 0, 'handover': 0, 'recruitDone': 0, 'taskActive': 4, 'taskOverdue': 1, 'taskAudit': 2, 'taskPublish': 0, 'taskIssue': 0, 'accStale': 6, 'accLow': 1, 'unassigned': 0, 'total': 18}
+PASS 管理员工作台能看到全部待办（含待分配）  {'assigned': 0, 'today': 0, 'overdue': 0, 'slaOverdue': 0, 'slaRemind': 0, 'pending': 0, 'hot': 0, 'handover': 0, 'recruitDone': 0, 'taskActive': 0, 'taskOverdue': 0, 'taskAudit': 0, 'taskPublish': 0, 'taskIssue': 0, 'accStale': 0, 'accLow': 0, 'unassigned': 5, 'total': 5}
+PASS 财务角色工作台可用且带结算专属卡片  [{'label': '待核对结算单', 'value': 1, 'sub': '核对无误后确认', 'tone': 'text-amber-500'}, {'label': '待付款', 'value': 1, 'sub': '已确认、尚未结清', 'tone': 'text-indigo-600'}, {'label': '已结清', 'value': 1, 'sub': '历史累计', 'tone': 'text-emerald-600'}]
+PASS 高级运营工作台主管视角（接口可用 + 有达人待办）  200
+PASS 推广岗工作台带投放效果卡片  [{'label': '我的投放', 'value': 0, 'sub': '负责的推广活动 / 渠道', 'tone': 'text-cyan-600'}, {'label': '有效线索', 'value': 0, 'sub': '咨询 0 → 有效 0', 'tone': 'text-indigo-600'}, {'label': '线索转化率', 'value': '0%', 'sub': '签约 / 咨询', 'tone': 'text-emerald-600'}]
+PASS 负责人跟进「合作中」达人成功  (200, None)
+PASS 负责人把达人推进到「合作中」  (200, None)
+PASS 工作台出现「招募完成」待办（提示交接给运营）  ['SLA 已超时', '新分配', '新分配', '高潜强意愿', '招募完成', '招募完成']
+PASS 运营岗账号列表只含自己名下达人  ['王浩']
+PASS 账号行带 活跃度/粉丝数/更新频率/最近发布  ['id', 'name', 'status', 'owner', 'ownerPosition', 'dewuId', 'dewuFans', 'dewuActivity', 'dewuUpdateDays', 'dewuLastPublish', 'dewuSyncedAt', 'dewuSource', 'daysSincePublish', 'updateStale', 'contentDirection', 'opsPlan', 'weekGoal', 'nextAction', 'needShoot', 'opsNote']
+PASS 运营手动更新自己账号数据成功  (200, None, 68007)
+PASS 更新后数据落库（GET 读回一致）
+PASS 非负责人更新账号数据 → 403  (403, '只能更新自己负责达人的账号数据')
+PASS 管理员账号列表 ≥ 运营岗（全量视角）  (8, 5)
+PASS 测试后账号数据还原  200
+PASS 负责人提交跟进成功  (200, None)
+PASS 跟进后 nextFollowAt 落库（工作台据此算逾期/今日）  2026-12-01 10:00
+PASS 跟进后 lastFollowAt 刷新  2026-09-18 22:41
+PASS 跟进同时写入潜力/意愿/分类  ('高', '强', 'A')
+PASS 跟进记录接口可读回（≥1 条且含内容）  2
+PASS 发起交接成功（新语义路径 /leads/:id/handover）  (200, None)
+PASS 交接单记录 原负责人/接收人/岗位/说明  {'id': 'HO0130', 'talentId': 'T0022', 'talentName': 'APItest742478-招募A', 'fromUser': '王浩', 'fromUserId': 'demo-staff', 'fromPosition': 'ops', 'fromPositionLabel': '普通运营', 'toUser': '李婷', 'toUserId': 'demo-recruit', 'toPosition': 'recruit', 'toPositionLabel': '招募', 'reason': '转回招募继续孵化', 'note': '已完成初筛，达人愿意寄拍', 'status': 'pending', 'operator': '王浩', 'situation': '', 'accountState': '', 'coopWay': '', 'contentDirection': '', 'risk': '', 'nextSuggest': '', 'createdAt': '2026-09-18 22:41', 'confirmedAt': '', 'statusLabel': '待确认'}
+PASS 待确认期间 原负责人不变（current_owner 仍是发起人）  ('王浩', 'pending')
+PASS 接收人 inbox 能看到待确认交接  1
+PASS 非接收人确认交接 → 403  (403, {'ok': False, 'error': '只有接收人本人可以处理该交接'})
+PASS 发起人自己确认（非接收人）→ 403  (403, {'ok': False, 'error': '只有接收人本人可以处理该交接'})
+PASS 接收人 accept（别名）确认接收成功  (200, None)
+PASS 确认后 负责人 / 岗位 / ownerId 自动切换  ('李婷', 'recruit', 'demo-recruit')
+PASS 确认后记录 原负责人 / 原岗位 / 接收时间  ('王浩', 'ops', '2026-09-18 22:41')
+PASS 确认后 handoverStatus = confirmed（保留摘要供总表展示）  confirmed
+PASS 重复确认同一交接单 → 409  409
+PASS 第二条交接发起成功（招募岗 → 运营岗）  (200, None)
+PASS 接收人驳回成功  (200, None)
+PASS 驳回后负责人不变、状态=已驳回  ('李婷', 'rejected')
+PASS 交接给高级运营 → 400（高级运营不接手达人）  (400, '「高级运营」岗不做达人负责人（高级运营管质量、财务岗只管结算），请交接给招募或运营岗')
+PASS 第三条交接发起成功（招募完成 → 运营）  (200, None)
+PASS 管理员强制指派跳过确认  (200, None)
+PASS 招募→运营交接后 负责人切到运营岗  ('王浩', 'ops', 'demo-staff')
+PASS 招募负责人固化（recruitBy=李婷，不随后续交接变化）  ('李婷', 'demo-recruit')
+PASS 流转历史含 分配 / 跟进 / 交接-发起 / 交接-确认  ['新增线索', '线索分配', '线索跟进记录', '线索交接-发起', '线索交接-确认']
+PASS 历史记录带 操作人 / 时间 / 变更前后  {'id': 'LOG1611', 'at': '2026-09-18 22:41', 'operator': '管理员', 'type': '新增线索', 'before': '', 'after': '状态=待联系；负责人=李婷（招募）'}
+PASS 无关岗位查他人线索历史 → 403  403
+PASS 高级运营（主管）可查他人线索历史 → 200  200
+PASS GET /api/mvp/my/leads 只返回我负责的  5
+PASS 管理员可见全部投放数据  6
+PASS 推广岗只看到自己负责的投放（行级过滤生效）  (200, 0)
+PASS 他人名下的投放对推广岗不可见（李婷/王浩 的都被过滤掉）
+PASS 管理员能看到他人名下的投放（证明过滤不是「都返回空」）  6
+PASS 招募岗拉投放数据 → 403（不参与推广链路）  (403, {'ok': False, 'error': '仅推广岗与管理员可查看投放数据'})
+PASS 招募岗新增投放 → 403  (403, {'ok': False, 'error': '仅推广岗与管理员可新增投放'})
+PASS 高级运营（主管）可看全部寄拍任务  (200, 17)
+PASS 运营岗可拿到自己名下达人的任务  (200, 9)
+PASS 运营岗任务范围 ⊆ 我名下达人（无越权）  9
+PASS 招募岗拉寄拍任务 → 403（不参与执行链路）  (403, {'ok': False, 'error': '当前岗位不参与寄拍任务，无权查看'})
+PASS 原生达人接口也做行级过滤（招募可见 < 管理员全量）  (2, 8)
+PASS 非管理员拿不到其他岗位的达人（无王浩名下达人）  2
+PASS 操作日志非管理员只能看与自己相关的（我操作的 / 对象是我）  (200, 199)
+PASS 管理员可看全部操作留痕  200
+PASS 主链测试达人创建成功（归运营岗王浩）  (200, None)
+PASS 主链测试达人已迁入达人档案（转化不变式）  T0026
+PASS 测试达人已转为「已成为达人」  已成为达人
+PASS 任务归属人选财务岗 → 400（归属必须是招募/运营岗）  (400, '任务归属人必须是招募/运营岗（当前：财务）')
+PASS 招募岗发起寄拍 → 403（由运营发起）  (403, '寄拍任务由达人运营发起登记')
+PASS 运营发起寄拍（任务归属张萌/高级运营）→ 待确认  (200, None, '待确认')
+PASS 发起寄拍不改变达人负责人（仍是王浩 / 运营岗）  ('王浩', 'ops')
+PASS 该任务出现在运营的任务列表且带可用动作 actions  200
+PASS 任务归属人推进「confirm」→ 待寄出  (200, None, '待寄出')
+PASS 任务归属人推进「send」→ 已寄出  (200, None, '已寄出')
+PASS 任务归属人推进「sign」→ 已签收  (200, None, '已签收')
+PASS 任务归属人推进「startShoot」→ 待拍摄  (200, None, '待拍摄')
+PASS 任务归属人推进「submitContent」→ 待审核  (200, None, '待审核')
+PASS 无关岗位（推广）推进他人任务 → 403  (403, '只能推进自己名下达人的任务')
+PASS 高级运营（主管）质检退回 → 内容修改中  (200, None)
+PASS 任务归属人重新提交审核 → 待审核  (200, None)
+PASS 无关岗位推进他人任务 → 403  (403, '只能推进自己名下达人的任务')
+PASS 运营审核通过自己名下达人的寄拍内容 → 待发布  (200, None, '待发布')
+PASS 运营标记已发布（结果回流运营闭环）  (200, None)
+PASS 运营完成任务  (200, None)
+PASS 主链动作全部写入操作日志
+PASS 管理员可删除任务（清理回归数据）  (200, None)
+PASS 招募发起「转运营」交接  (200, None)
+PASS 运营确认接收  (200, None)
+PASS 确认后固化「达人运营负责人」opsBy=王浩  ('王浩', 'demo-staff')
+PASS 同时保留「招募负责人」recruitBy=李婷（两个角色可并存）  ('李婷', '王浩')
+PASS 再次改派后 当前负责人变李婷，但 opsBy 仍是王浩（固化不随后续变化）  ('李婷', '王浩')
+PASS 看板返回真实漏斗（线索进入→已分配→已跟进→有意向→已成为达人）  (200, ['线索进入', '已分配负责人', '已跟进', '有意向/已报名', '已成为达人'])
+PASS 漏斗逐级收敛（每一层都在上一层内再收窄）  [27, 22, 22, 9, 9]
+PASS 漏斗来自达人表实时推导（线索进入 > 0）  [27, 22, 22, 9, 9]
+PASS 高潜强意愿作为独立关注指标返回（不属于漏斗层级）  2
+PASS 看板返回负责人负载（含线索数 / 达人 / 任务 / 负载值）  [{'owner': '王浩', 'position': '普通运营', 'leads': 10, 'talents': 6, 'todayFollow': 0, 'overdueFollow': 0, 'tasks': 6, 'pending': 0, 'load': 22}, {'owner': '李婷', 'position': '招募', 'leads': 8, 'talents': 3, 'todayFollow': 0, 'overdueFollow': 0, 'tasks': 4, 'pending': 0, 'load': 16}]
+PASS 负载按 load 倒序（谁忙谁在前）  [22, 16, 8, 5]
+PASS 看板返回渠道效果聚合（真实渠道维度）  [{'channel': 'API回归', 'leads': 6, 'valid': 3, 'signed': 3, 'talents': 3, 'cost': 0, 'costPerTalent': 0, 'talentRate': 50}, {'channel': '抖音直播', 'leads': 4, 'valid': 3, 'signed': 2, 'talents': 2, 'cost': 0, 'costPerTalent': 0, 'talentRate': 50}]
+PASS 看板返回关注项（待分配 / 逾期 / 待审核）  {'unassigned': 5, 'slaOverdue': 1, 'slaRemind': 0, 'overdueFollow': 0, 'pendingHandover': 0, 'taskOverdue': 1, 'pendingAudit': 2}
+PASS 普通岗位看板已收口：recruit → 403（不再提供 mine 口径看板）  403
+PASS 管理员面板：成长漏斗+团队效率+渠道ROI+异常提醒  ['growth-funnel', 'team-efficiency', 'channel-roi', 'alerts']
+PASS 成长漏斗五层累计口径逐级单调递减  [27, 10, 0, 0, 0]
+PASS 高级运营面板：运营团队+漏斗+运营任务+爆款库  ['ops-team', 'growth-funnel', 'ops-tasks', 'hit-cases', 'unassigned-pool', 'senior-alerts']
+PASS 普通运营面板：我的达人+今日待办+成长列表  ['new-assigned', 'my-talents', 'today', 'follow-remind', 'task-overview', 'my-talent-list']
+PASS 招募面板：我的线索+SLA  ['my-leads', 'sla', 'today-judge']
+PASS 高级运营可看运营团队效率（逐人聚合）  (200, 2)
+PASS 团队效率只含运营岗（无招募/推广/财务）  ['ops', 'senior_ops']
+PASS 普通运营看运营团队 → 403  (403, '只有主管（管理员/高级运营）可以查看运营团队')
+PASS 招募看运营团队 → 403  (403, '只有主管（管理员/高级运营）可以查看运营团队')
+PASS 高级运营派发运营任务（归属运营负责人）→ 待开始  (200, None)
+PASS 普通运营只能看到派给自己的运营任务（数据隔离）  (200, ['王浩'])
+PASS 普通运营派发运营任务 → 403（只有主管可派）  (403, '只有主管（管理员/高级运营）可以创建运营任务')
+PASS 负责人更新自己运营任务进展 → 进行中  (200, None)
+PASS 招募读运营任务（仅看到空列表，无越权）  200
+PASS 高级运营沉淀爆款拆解  (200, None)
+PASS 普通运营可读爆款拆解库（含新拆解）  200
+PASS 普通运营写爆款拆解 → 403  (403, '只有主管（管理员/高级运营）可以沉淀爆款拆解')
+PASS 负责人改自己达人评级 → A 高价值  (200, None)
+PASS 非法达人评级 → 400  (400, '非法达人评级: X')
+PASS 非负责人改他人达人评级 → 403（ops 数据隔离）  (403, '只能修改自己负责的达人')
+PASS 负责人改生命周期 → 重点培养（talentStatus 流程）  (200, None)
+PASS 主管（高级运营）可改任意达人评级/生命周期  (200, None)
+PASS 跟进时间轴：登记含下一步动作的跟进  (200, None)
+PASS 跟进时间轴读回：时间/操作人/内容/下一步动作齐全  {'id': 'F0074', 'talentId': 'T0026', 'talentName': 'APItest742478-寄拍主链D', 'method': '其他', 'result': '', 'content': 'APItest 时间轴回归', 'stage': '合作中', 'potentialLevel': '待判断', 'intentLevel': '待判断', 'talentClass': '待分类', 'nextAt': '', 'nextAction': 'APItest 下一步动作', 'type': '其他', 'operator': '王浩', 'operatorId': 'demo-staff', 'createdAt': '2026-09-18 22:41'}
+PASS 非负责人对他人达人登记跟进 → 403  (403, '只能跟进自己负责的线索')
+PASS 登记内容任务（taskType=content）读回类型  (200, None)
+PASS 任务中心按类型筛选命中新任务  (200, 1)
+PASS 清理内容任务  (200, None)
+PASS 清理运营任务  (200, None)
+PASS 清理爆款拆解  (200, None)
+PASS 普通运营调「分配给运营」→ 403（isSupervisor 裁决）  (403, '只有主管（管理员/高级运营）可以分配负责人')
+PASS 高级运营分配给推广岗 → 400（OWNER_POSITIONS 边界）  (400, '「推广」岗不做达人负责人（高级运营管质量、财务岗只管结算），请选招募或运营岗')
+PASS 高级运营「分配给运营」成功（带备注）  (200, None)
+PASS 分配后 owner/ownerId/岗位 更新  ('王浩', 'demo-staff', 'ops')
+PASS 分配后 talentOperator = 被分配的普通运营  王浩
+PASS 分配记录独立接口读回  (200, 1)
+PASS 分配记录含 分配人/接收人/备注/类型  {'id': 'TA00005', 'talentId': 'T0028', 'talentName': 'APItest742478-分配F', 'fromOwner': '管理员', 'fromOwnerId': 'admin', 'fromPosition': 'admin', 'toOwner': '王浩', 'toOwnerId': 'demo-staff', 'toPosition': 'ops', 'type': '线索分配', 'remark': 'APItest 分配备注', 'assignedBy': '张萌', 'assignedById': 'demo-senior', 'assignedAt': '2026-09-18 22:41', 'isActive': True}
+PASS 分配后普通运营可见该达人（只看自己口径）  200
+PASS 跟进时间轴并入分配记录（交接历史可回看）  ['分配记录']
+PASS 临时普通运营账号创建成功  (200, None)
+PASS 重新分配给另一位普通运营成功  (200, None)
+PASS 重新分配后 talentOperator 跟随换人（回归 0918 修复）  ('API测试运营', 'apitestops742478')
+PASS 分配历史含 2 条（首次分配 + 重新分配）  (200, 2)
+PASS 清理临时运营账号  (200, None)
+PASS 重新分配回王浩（确认接收用例前置）  (200, None)
+PASS 分配给运营后 assignState=pending_assign 且 assignedBy=分配人  (200, 'pending_assign', '张萌')
+PASS 非运营岗确认接收 → 403（岗位守卫）  (403, '只有被分配的普通运营可以确认接收')
+PASS 运营确认接收分配成功 → assigned  (200, None)
+PASS 确认接收后 assignAckAt 落库  2026-09-18 22:41
+PASS 重复确认接收 → 409  (409, '该达人没有待接收的分配')
+PASS ops 达人档案：不回传负责人链路字段（服务端剥离，字段名不动）  (6, [])
+PASS ops 达人档案：仍含 assignState / lastTaskName / nextAction（陪跑视角字段）  6
+PASS senior_ops 达人档案：保留完整负责人链路（owner/招募负责人/转化人）  10
+PASS ops 工作台含「我的达人」「待跟进提醒」面板  ['new-assigned', 'my-talents', 'today', 'follow-remind', 'task-overview', 'my-talent-list']
+PASS ops 工作台含「新分配达人」面板  ['new-assigned', 'my-talents', 'today', 'follow-remind', 'task-overview', 'my-talent-list']
+PASS 新分配达人面板命中刚分配的达人（含分配人/时间/备注列）  [['APItest742478-招募A', '管理员', '2026-09-18 22:41', '—', '—', {'kind': 'assign-actions', 'talentId': 'T0022', 'ack': True}], ['APItest742478-分配F', '张萌', '2026-09-18 22:41', '新线索', 'APItest 分配备注', {'kind': 'assign-actions', 'talentId': 'T0028', 'ack': True}]]
+PASS 新分配达人面板含 当前阶段/操作 列且行尾带确认操作（20260918e）  (['达人', '分配人', '分配时间', '当前阶段', '备注', '操作'], [['APItest742478-招募A', '管理员', '2026-09-18 22:41', '—', '—', {'kind': 'assign-actions', 'talentId': 'T0022', 'ack': True}]])
+PASS 经营看板守卫：admin 200  200
+PASS 经营看板守卫：senior_ops 200  200
+PASS 经营看板守卫：普通岗位 promote → 403  403
+PASS 经营看板守卫：普通岗位 recruit → 403  403
+PASS 经营看板守卫：普通岗位 ops → 403  403
+PASS 经营看板守卫：普通岗位 finance → 403  403
+PASS promote 看板面板：role=promote 且含 我的活动/线索转化/渠道效果  (200, 'promote', ['my-campaigns', 'lead-convert', 'channel-effect'])
+PASS recruit 看板面板：含 今日与待判断（今日新增/待判断/SLA 提醒）  (200, 'recruit', ['my-leads', 'sla', 'today-judge'])
+PASS ops 看板面板：含 任务概览（寄拍/成长）  (200, 'ops', ['new-assigned', 'my-talents', 'today', 'follow-remind', 'task-overview', 'my-talent-list'])
+PASS senior_ops 看板面板：含 未分配达人池/异常达人提醒  (200, 'senior_ops', ['ops-team', 'growth-funnel', 'ops-tasks', 'hit-cases', 'unassigned-pool', 'senior-alerts'])
+PASS finance 看板面板：role=finance 且含 结算概览/收益统计  (200, 'finance', ['settle-overview', 'income-stats', 'settle-todo'])
+PASS 报名表单提交成功（公开接口，回归自清理）  (200, 0, 'T0029')
+PASS 报名映射：怎么称呼→昵称 / 来源渠道→channel / 联系方式→contact  ('APItest报名分层', '小红书', '13800001111 / apitest_wx')
+PASS 报名映射：自媒体/合作经历/想接品类/出镜方式/作品/想了解 落 recruit 结构  {'selfMedia': '有账号在运营', 'platforms': '', 'fansText': '', 'appearWay': '真人露脸出镜', 'hasExp': '接过寄拍', 'coopCategories': '', 'preferredCategories': '鞋类', 'questions': '寄拍流程与费用', 'profileScreenshot': '', 'works': 'https://example.com/w1'}
+PASS 报名初始化：阶段=新线索 / 生命周期=lead / 评级=待判断  ('新线索', 'lead', '待判断')
+PASS 报名初始化：潜力/意愿=待判断、分类=待分类、路径=待判断  ('待判断', '待判断', '待分类', '待判断')
+PASS 报名线索分配给招募（权限用例前置）  (200, None)
+PASS 招募（负责人）改判断字段 → 403（字段分层，服务端收口）  (403, '达人评级/潜力/合作意愿/分类/合作路径只能由运营或高级运营修改（招募岗只收集报名信息）')
+PASS 招募改达人评级 → 403  (403, '达人评级只能由运营或高级运营修改（招募岗只收集报名信息）')
+PASS 招募仍可正常跟进（判断字段被剥离，不阻断跟进本身）  (200, None)
+PASS 招募跟进后潜力仍为待判断（未被写入）  (200, '待判断')
+PASS 非负责人运营改判断字段 → 403（行级隔离优先）  (403, '只能修改自己负责的线索')
+PASS 高级运营改判断字段 → 200  (200, None)
+PASS 管理员改判断字段（含重置评级为待判断）→ 200  (200, None)
+PASS 清理本次回归创建的线索（8 条）  8
+
+结果：通过 199 项，失败 0 项

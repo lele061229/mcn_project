@@ -74,7 +74,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "A"
+      "talentLevel": "A",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0003",
@@ -152,7 +155,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "王浩",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0004",
@@ -210,7 +216,7 @@
       "dewuActivity": "低",
       "dewuUpdateDays": 2,
       "dewuLastPublish": "2026-09-14",
-      "dewuSyncedAt": "2026-09-18 07:14",
+      "dewuSyncedAt": "2026-09-18 07:38",
       "dewuSource": "manual",
       "opsBy": "王浩",
       "opsId": "demo-staff",
@@ -231,7 +237,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "王浩",
-      "talentLevel": "A"
+      "talentLevel": "A",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0005",
@@ -309,7 +318,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "王浩",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0006",
@@ -387,7 +399,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "王浩",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0014",
@@ -462,7 +477,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "王浩",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0021",
@@ -536,7 +554,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0033",
@@ -610,7 +631,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0035",
@@ -687,7 +711,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0036",
@@ -761,7 +788,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0037",
@@ -835,7 +865,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0038",
@@ -909,7 +942,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0039",
@@ -983,7 +1019,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0040",
@@ -1057,7 +1096,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0041",
@@ -1131,7 +1173,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0046",
@@ -1205,7 +1250,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0047",
@@ -1279,7 +1327,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0048",
@@ -1353,7 +1404,10 @@
       "slaExempt": true,
       "talentStatus": "coaching",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0049",
@@ -1427,7 +1481,10 @@
       "dewuLastPublish": "2026-09-17",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0050",
@@ -1501,7 +1558,10 @@
       "dewuLastPublish": "2026-08-28",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0051",
@@ -1575,7 +1635,10 @@
       "dewuLastPublish": "2026-09-17",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0052",
@@ -1649,7 +1712,10 @@
       "dewuLastPublish": "2026-09-16",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0053",
@@ -1723,7 +1789,10 @@
       "dewuLastPublish": "2026-09-15",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0054",
@@ -1797,7 +1866,10 @@
       "dewuLastPublish": "2026-09-14",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0055",
@@ -1871,7 +1943,10 @@
       "dewuLastPublish": "2026-09-14",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0056",
@@ -1945,7 +2020,10 @@
       "dewuLastPublish": "2026-09-13",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0057",
@@ -2019,7 +2097,10 @@
       "dewuLastPublish": "2026-09-12",
       "dewuSyncedAt": "",
       "dewuSource": "manual",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0058",
@@ -2093,7 +2174,181 @@
       "dewuUpdateDays": 14,
       "dewuLastPublish": "2026-09-11",
       "dewuSyncedAt": "",
-      "dewuSource": "manual"
+      "dewuSource": "manual",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
+    },
+    {
+      "id": "T0062",
+      "name": "APItest742253-合作C",
+      "douyin": "",
+      "contact": "",
+      "channel": "API回归",
+      "level": "待判断",
+      "status": "合作中",
+      "contentTypes": [],
+      "categories": [],
+      "fans": 0,
+      "coopCount": 0,
+      "fulfillmentRate": 0,
+      "owner": "李婷",
+      "ownerId": "demo-recruit",
+      "ownerPosition": "recruit",
+      "assignedAt": "2026-09-18 07:37",
+      "tags": [],
+      "note": "",
+      "lastFollowAt": "2026-09-18 07:37",
+      "createdAt": "2026-09-18 07:37",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "coopPath": "待判断",
+      "incubationFee": 0,
+      "feeStatus": "未收",
+      "nextFollowAt": "",
+      "talentStatus": "coaching",
+      "talentLevel": "待判断",
+      "talentOperator": "",
+      "rejectReason": "",
+      "auditAt": "",
+      "auditBy": "",
+      "isActive": true,
+      "handoverStatus": "none",
+      "handoverFrom": "",
+      "handoverFromId": "",
+      "handoverFromPosition": "",
+      "handoverTo": "",
+      "handoverToId": "",
+      "handoverToPosition": "",
+      "handoverReason": "",
+      "handoverNote": "",
+      "handoverAt": "",
+      "handoverReceivedAt": "",
+      "handoverBy": "",
+      "lastFollowupAt": "2026-09-18 07:37",
+      "firstContactAt": "2026-09-18 07:37",
+      "convertedBy": "李婷",
+      "convertedById": "demo-recruit",
+      "convertedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "T0063",
+      "name": "Split742312-转化链",
+      "douyin": "",
+      "contact": "",
+      "channel": "朋友圈",
+      "level": "待判断",
+      "status": "合作中",
+      "contentTypes": [],
+      "categories": [],
+      "fans": 0,
+      "coopCount": 0,
+      "fulfillmentRate": 0,
+      "owner": "李婷",
+      "ownerId": "demo-recruit",
+      "ownerPosition": "recruit",
+      "assignedAt": "2026-09-18 07:38",
+      "tags": [],
+      "note": "",
+      "lastFollowAt": "2026-09-18 07:38",
+      "createdAt": "2026-09-18 07:38",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "coopPath": "待判断",
+      "incubationFee": 0,
+      "feeStatus": "未收",
+      "nextFollowAt": "",
+      "talentStatus": "coaching",
+      "talentLevel": "待判断",
+      "talentOperator": "",
+      "rejectReason": "",
+      "auditAt": "",
+      "auditBy": "",
+      "isActive": true,
+      "handoverStatus": "none",
+      "handoverFrom": "",
+      "handoverFromId": "",
+      "handoverFromPosition": "",
+      "handoverTo": "",
+      "handoverToId": "",
+      "handoverToPosition": "",
+      "handoverReason": "",
+      "handoverNote": "",
+      "handoverAt": "",
+      "handoverReceivedAt": "",
+      "handoverBy": "",
+      "slaExempt": false,
+      "escalatedAt": "",
+      "overdueReason": "",
+      "overdueReasonAt": "",
+      "urgeCount": 0,
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": "",
+      "convertedBy": "李婷",
+      "convertedById": "demo-recruit",
+      "convertedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "T0064",
+      "name": "Split742498-转化链",
+      "douyin": "",
+      "contact": "",
+      "channel": "朋友圈",
+      "level": "待判断",
+      "status": "合作中",
+      "contentTypes": [],
+      "categories": [],
+      "fans": 0,
+      "coopCount": 0,
+      "fulfillmentRate": 0,
+      "owner": "李婷",
+      "ownerId": "demo-recruit",
+      "ownerPosition": "recruit",
+      "assignedAt": "2026-09-18 07:41",
+      "tags": [],
+      "note": "",
+      "lastFollowAt": "2026-09-18 07:41",
+      "createdAt": "2026-09-18 07:41",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "coopPath": "待判断",
+      "incubationFee": 0,
+      "feeStatus": "未收",
+      "nextFollowAt": "",
+      "talentStatus": "coaching",
+      "talentLevel": "待判断",
+      "talentOperator": "",
+      "rejectReason": "",
+      "auditAt": "",
+      "auditBy": "",
+      "isActive": true,
+      "handoverStatus": "none",
+      "handoverFrom": "",
+      "handoverFromId": "",
+      "handoverFromPosition": "",
+      "handoverTo": "",
+      "handoverToId": "",
+      "handoverToPosition": "",
+      "handoverReason": "",
+      "handoverNote": "",
+      "handoverAt": "",
+      "handoverReceivedAt": "",
+      "handoverBy": "",
+      "slaExempt": false,
+      "escalatedAt": "",
+      "overdueReason": "",
+      "overdueReasonAt": "",
+      "urgeCount": 0,
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": "",
+      "convertedBy": "李婷",
+      "convertedById": "demo-recruit",
+      "convertedAt": "2026-09-18 07:41"
     }
   ],
   "tasks": [
@@ -3391,23 +3646,6 @@
       "createdAt": "2026-09-18 06:51"
     },
     {
-      "id": "F0107",
-      "talentId": "T0063",
-      "talentName": "APItest740853-寄拍主链D",
-      "method": "其他",
-      "result": "",
-      "content": "APItest 时间轴回归",
-      "stage": "合作中",
-      "potentialLevel": "待判断",
-      "intentLevel": "待判断",
-      "talentClass": "待分类",
-      "nextAt": "",
-      "nextAction": "APItest 下一步动作",
-      "operator": "王浩",
-      "operatorId": "demo-staff",
-      "createdAt": "2026-09-18 07:14"
-    },
-    {
       "id": "F0108",
       "talentId": "T0028",
       "talentName": "APItest554861-运营A",
@@ -3423,6 +3661,57 @@
       "operator": "李婷",
       "operatorId": "demo-recruit",
       "createdAt": "2026-09-18 07:15"
+    },
+    {
+      "id": "F0109",
+      "talentId": "T0062",
+      "talentName": "APItest742253-合作C",
+      "method": "微信",
+      "result": "有兴趣",
+      "content": "确认合作意向，约定寄拍细节",
+      "stage": "待联系",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "nextAt": "2026-12-15 10:00",
+      "nextAction": "",
+      "operator": "李婷",
+      "operatorId": "demo-recruit",
+      "createdAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "F0110",
+      "talentId": "T0059",
+      "talentName": "APItest742253-招募A",
+      "method": "微信",
+      "result": "已加微信",
+      "content": "介绍寄拍流程与合作方式",
+      "stage": "待联系",
+      "potentialLevel": "高",
+      "intentLevel": "强",
+      "talentClass": "A",
+      "nextAt": "2026-12-01 10:00",
+      "nextAction": "",
+      "operator": "王浩",
+      "operatorId": "demo-staff",
+      "createdAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "F0117",
+      "talentId": "T0060",
+      "talentName": "APItest742253-招募B",
+      "method": "微信",
+      "result": "",
+      "content": "UI回归：已加微信，介绍寄拍流程",
+      "stage": "待联系",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "nextAt": "2026-09-20 10:00",
+      "nextAction": "",
+      "operator": "李婷",
+      "operatorId": "demo-recruit",
+      "createdAt": "2026-09-18 07:39"
     }
   ],
   "logs": [
@@ -30587,6 +30876,2040 @@
       "type": "删除线索",
       "before": "状态=待联系",
       "after": "已删除"
+    },
+    {
+      "id": "LOG3019",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3020",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3021",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-运营A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3022",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-合作C",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3023",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募A",
+      "type": "线索分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3024",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募B",
+      "type": "线索批量分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3025",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-运营A",
+      "type": "线索批量分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3026",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=李婷；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG3027",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-合作C",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=微信；结果=有兴趣；阶段=待联系→待联系；下次跟进=2026-12-15 10:00"
+    },
+    {
+      "id": "LOG3028",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-合作C",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=李婷；转化时间=2026-09-18 07:37"
+    },
+    {
+      "id": "LOG3029",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：桃子peach",
+      "type": "账号运营数据更新",
+      "before": "{\"fans\":152000,\"activity\":\"低\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}",
+      "after": "{\"fans\":152007,\"activity\":\"高\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}"
+    },
+    {
+      "id": "LOG3030",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：桃子peach",
+      "type": "账号运营数据更新",
+      "before": "{\"fans\":152007,\"activity\":\"高\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}",
+      "after": "{\"fans\":152000,\"activity\":\"低\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}"
+    },
+    {
+      "id": "LOG3031",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募A",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=微信；结果=已加微信；阶段=待联系→待联系；下次跟进=2026-12-01 10:00"
+    },
+    {
+      "id": "LOG3032",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募A",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=转回招募继续孵化；说明=已完成初筛，达人愿意寄拍"
+    },
+    {
+      "id": "LOG3033",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募A",
+      "type": "线索交接-确认",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；李婷 确认"
+    },
+    {
+      "id": "LOG3034",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募B",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=试驳回"
+    },
+    {
+      "id": "LOG3035",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-招募B",
+      "type": "线索交接-驳回",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人保持 李婷；接收人驳回"
+    },
+    {
+      "id": "LOG3036",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-运营A",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=招募完成，达人转长期运营"
+    },
+    {
+      "id": "LOG3037",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742253-运营A",
+      "type": "线索交接-强制指派",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）；管理员 确认"
+    },
+    {
+      "id": "LOG3038",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3039",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3040",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-运营A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3041",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-合作C",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3042",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募A",
+      "type": "线索分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3043",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募B",
+      "type": "线索批量分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3044",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-运营A",
+      "type": "线索批量分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3045",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=李婷；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG3046",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-合作C",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=微信；结果=有兴趣；阶段=待联系→待联系；下次跟进=2026-12-15 10:00"
+    },
+    {
+      "id": "LOG3047",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-合作C",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=李婷；转化时间=2026-09-18 07:37"
+    },
+    {
+      "id": "LOG3048",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：桃子peach",
+      "type": "账号运营数据更新",
+      "before": "{\"fans\":152000,\"activity\":\"低\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}",
+      "after": "{\"fans\":152007,\"activity\":\"高\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}"
+    },
+    {
+      "id": "LOG3049",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：桃子peach",
+      "type": "账号运营数据更新",
+      "before": "{\"fans\":152007,\"activity\":\"高\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}",
+      "after": "{\"fans\":152000,\"activity\":\"低\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}"
+    },
+    {
+      "id": "LOG3050",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募A",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=微信；结果=已加微信；阶段=待联系→待联系；下次跟进=2026-12-01 10:00"
+    },
+    {
+      "id": "LOG3051",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募A",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=转回招募继续孵化；说明=已完成初筛，达人愿意寄拍"
+    },
+    {
+      "id": "LOG3052",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募A",
+      "type": "线索交接-确认",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；李婷 确认"
+    },
+    {
+      "id": "LOG3053",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募B",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=试驳回"
+    },
+    {
+      "id": "LOG3054",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募B",
+      "type": "线索交接-驳回",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人保持 李婷；接收人驳回"
+    },
+    {
+      "id": "LOG3055",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-运营A",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=招募完成，达人转长期运营"
+    },
+    {
+      "id": "LOG3056",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-运营A",
+      "type": "线索交接-强制指派",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）；管理员 确认"
+    },
+    {
+      "id": "LOG3057",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3058",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=王浩",
+      "after": "正式进入达人库；转化人=管理员；转化时间=2026-09-18 07:37"
+    },
+    {
+      "id": "LOG3059",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "创建任务",
+      "before": "",
+      "after": "达人=APItest742261-寄拍主链D 佣金=300 运营负责人=张萌 发起=王浩"
+    },
+    {
+      "id": "LOG3060",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "确认接单",
+      "before": "待确认",
+      "after": "待寄出"
+    },
+    {
+      "id": "LOG3061",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "已寄出",
+      "before": "待寄出",
+      "after": "已寄出"
+    },
+    {
+      "id": "LOG3062",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "确认签收",
+      "before": "已寄出",
+      "after": "已签收"
+    },
+    {
+      "id": "LOG3063",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "开始拍摄",
+      "before": "已签收",
+      "after": "待拍摄"
+    },
+    {
+      "id": "LOG3064",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "提交内容",
+      "before": "待拍摄",
+      "after": "待审核"
+    },
+    {
+      "id": "LOG3065",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "审核不通过",
+      "before": "待审核",
+      "after": "内容修改中"
+    },
+    {
+      "id": "LOG3066",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "重新提交审核",
+      "before": "内容修改中",
+      "after": "待审核"
+    },
+    {
+      "id": "LOG3067",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "审核通过",
+      "before": "待审核",
+      "after": "待发布"
+    },
+    {
+      "id": "LOG3068",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "标记已发布",
+      "before": "待发布",
+      "after": "已发布"
+    },
+    {
+      "id": "LOG3069",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "完成任务",
+      "before": "已发布",
+      "after": "已完成"
+    },
+    {
+      "id": "LOG3070",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest742261寄拍商品",
+      "type": "删除任务",
+      "before": "已完成",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3071",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-双负责人E",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3072",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-双负责人E",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=管理员；转化时间=2026-09-18 07:37"
+    },
+    {
+      "id": "LOG3073",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-双负责人E",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=招募完成，转运营长期管理"
+    },
+    {
+      "id": "LOG3074",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-双负责人E",
+      "type": "线索交接-确认",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）；王浩 确认"
+    },
+    {
+      "id": "LOG3075",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-双负责人E",
+      "type": "线索分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3076",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "运营任务：OT0014 APItest 运营任务",
+      "type": "创建运营任务",
+      "before": "",
+      "after": "负责人=王浩 关联达人=0 人 截止=2030-01-01"
+    },
+    {
+      "id": "LOG3077",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "运营任务：OT0014 APItest 运营任务",
+      "type": "运营任务进行中",
+      "before": "待开始",
+      "after": "进行中"
+    },
+    {
+      "id": "LOG3078",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "爆款拆解：HC0014 APItest 爆款拆解",
+      "type": "新增爆款拆解",
+      "before": "",
+      "after": "痛点前置"
+    },
+    {
+      "id": "LOG3079",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "达人评级 / 生命周期",
+      "before": "评级=待判断；生命周期=陪跑达人",
+      "after": "评级=A；生命周期=陪跑达人"
+    },
+    {
+      "id": "LOG3080",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "达人评级 / 生命周期",
+      "before": "评级=A；生命周期=陪跑达人",
+      "after": "评级=A；生命周期=重点培养达人"
+    },
+    {
+      "id": "LOG3081",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "达人评级 / 生命周期",
+      "before": "评级=A；生命周期=重点培养达人",
+      "after": "评级=C；生命周期=陪跑达人"
+    },
+    {
+      "id": "LOG3082",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=其他；结果=—；阶段=合作中→合作中；下次跟进=未安排"
+    },
+    {
+      "id": "LOG3083",
+      "operator": "王浩",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest 内容任务",
+      "type": "创建任务",
+      "before": "",
+      "after": "达人=APItest742261-寄拍主链D 佣金=0 运营负责人=王浩 发起=王浩"
+    },
+    {
+      "id": "LOG3084",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "任务：TK1018 APItest 内容任务",
+      "type": "删除任务",
+      "before": "待确认",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3085",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "运营任务：OT0014",
+      "type": "删除运营任务",
+      "before": "",
+      "after": ""
+    },
+    {
+      "id": "LOG3086",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-分配F",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=管理员（管理员）"
+    },
+    {
+      "id": "LOG3087",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-分配F",
+      "type": "线索分配",
+      "before": "负责人=管理员（管理员）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3088",
+      "operator": "系统",
+      "at": "2026-09-18 07:37",
+      "target": "账号：apitestops742261",
+      "type": "新建账号",
+      "before": "角色=运营",
+      "after": "姓名=API测试运营；岗位=普通运营"
+    },
+    {
+      "id": "LOG3089",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-分配F",
+      "type": "线索分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=API测试运营（普通运营）"
+    },
+    {
+      "id": "LOG3090",
+      "operator": "系统",
+      "at": "2026-09-18 07:37",
+      "target": "账号：apitestops742261",
+      "type": "删除账号",
+      "before": "",
+      "after": "操作者后台"
+    },
+    {
+      "id": "LOG3091",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-分配F",
+      "type": "线索分配",
+      "before": "负责人=API测试运营（普通运营）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3092",
+      "operator": "报名表单",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest报名分层",
+      "type": "问卷报名",
+      "before": "",
+      "after": "来源=小红书"
+    },
+    {
+      "id": "LOG3093",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest报名分层",
+      "type": "线索分配",
+      "before": "负责人=未分配（未设置）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3094",
+      "operator": "李婷",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest报名分层",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=其他；结果=—；阶段=待联系→待联系；下次跟进=未安排"
+    },
+    {
+      "id": "LOG3095",
+      "operator": "张萌",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest报名分层",
+      "type": "线索潜力意愿",
+      "before": "阶段=待联系；潜力=待判断；意愿=待判断",
+      "after": "阶段=待联系；潜力=高；意愿=强"
+    },
+    {
+      "id": "LOG3096",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest报名分层",
+      "type": "线索潜力意愿",
+      "before": "阶段=待联系；潜力=高；意愿=强",
+      "after": "阶段=待联系；潜力=中；意愿=强"
+    },
+    {
+      "id": "LOG3097",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3098",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-招募B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3099",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-运营A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3100",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-合作C",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3101",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-分配F",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3102",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest报名分层",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3103",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-寄拍主链D",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3104",
+      "operator": "管理员",
+      "at": "2026-09-18 07:37",
+      "target": "达人：APItest742261-双负责人E",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3105",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3106",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3107",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-运营A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3108",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-合作C",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3109",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募A",
+      "type": "线索分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3110",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募B",
+      "type": "线索批量分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3111",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-运营A",
+      "type": "线索批量分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3112",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=李婷；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG3113",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-合作C",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:38",
+      "after": "方式=微信；结果=有兴趣；阶段=待联系→待联系；下次跟进=2026-12-15 10:00"
+    },
+    {
+      "id": "LOG3114",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-合作C",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=李婷；转化时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3115",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：桃子peach",
+      "type": "账号运营数据更新",
+      "before": "{\"fans\":152000,\"activity\":\"低\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}",
+      "after": "{\"fans\":152007,\"activity\":\"高\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}"
+    },
+    {
+      "id": "LOG3116",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：桃子peach",
+      "type": "账号运营数据更新",
+      "before": "{\"fans\":152007,\"activity\":\"高\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}",
+      "after": "{\"fans\":152000,\"activity\":\"低\",\"updateDays\":2,\"lastPublish\":\"2026-09-14\"}"
+    },
+    {
+      "id": "LOG3117",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募A",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:38",
+      "after": "方式=微信；结果=已加微信；阶段=待联系→待联系；下次跟进=2026-12-01 10:00"
+    },
+    {
+      "id": "LOG3118",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募A",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=转回招募继续孵化；说明=已完成初筛，达人愿意寄拍"
+    },
+    {
+      "id": "LOG3119",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募A",
+      "type": "线索交接-确认",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；李婷 确认"
+    },
+    {
+      "id": "LOG3120",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募B",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=试驳回"
+    },
+    {
+      "id": "LOG3121",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募B",
+      "type": "线索交接-驳回",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人保持 李婷；接收人驳回"
+    },
+    {
+      "id": "LOG3122",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-运营A",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=招募完成，达人转长期运营"
+    },
+    {
+      "id": "LOG3123",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-运营A",
+      "type": "线索交接-强制指派",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）；管理员 确认"
+    },
+    {
+      "id": "LOG3124",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3125",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=王浩",
+      "after": "正式进入达人库；转化人=管理员；转化时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3126",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "创建任务",
+      "before": "",
+      "after": "达人=APItest742290-寄拍主链D 佣金=300 运营负责人=张萌 发起=王浩"
+    },
+    {
+      "id": "LOG3127",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "确认接单",
+      "before": "待确认",
+      "after": "待寄出"
+    },
+    {
+      "id": "LOG3128",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "已寄出",
+      "before": "待寄出",
+      "after": "已寄出"
+    },
+    {
+      "id": "LOG3129",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "确认签收",
+      "before": "已寄出",
+      "after": "已签收"
+    },
+    {
+      "id": "LOG3130",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "开始拍摄",
+      "before": "已签收",
+      "after": "待拍摄"
+    },
+    {
+      "id": "LOG3131",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "提交内容",
+      "before": "待拍摄",
+      "after": "待审核"
+    },
+    {
+      "id": "LOG3132",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "审核不通过",
+      "before": "待审核",
+      "after": "内容修改中"
+    },
+    {
+      "id": "LOG3133",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "重新提交审核",
+      "before": "内容修改中",
+      "after": "待审核"
+    },
+    {
+      "id": "LOG3134",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "审核通过",
+      "before": "待审核",
+      "after": "待发布"
+    },
+    {
+      "id": "LOG3135",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "标记已发布",
+      "before": "待发布",
+      "after": "已发布"
+    },
+    {
+      "id": "LOG3136",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "完成任务",
+      "before": "已发布",
+      "after": "已完成"
+    },
+    {
+      "id": "LOG3137",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest742290寄拍商品",
+      "type": "删除任务",
+      "before": "已完成",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3138",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-双负责人E",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3139",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-双负责人E",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=管理员；转化时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3140",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-双负责人E",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=招募完成，转运营长期管理"
+    },
+    {
+      "id": "LOG3141",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-双负责人E",
+      "type": "线索交接-确认",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）；王浩 确认"
+    },
+    {
+      "id": "LOG3142",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-双负责人E",
+      "type": "线索分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3143",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "运营任务：OT0015 APItest 运营任务",
+      "type": "创建运营任务",
+      "before": "",
+      "after": "负责人=王浩 关联达人=0 人 截止=2030-01-01"
+    },
+    {
+      "id": "LOG3144",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "运营任务：OT0015 APItest 运营任务",
+      "type": "运营任务进行中",
+      "before": "待开始",
+      "after": "进行中"
+    },
+    {
+      "id": "LOG3145",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "爆款拆解：HC0015 APItest 爆款拆解",
+      "type": "新增爆款拆解",
+      "before": "",
+      "after": "痛点前置"
+    },
+    {
+      "id": "LOG3146",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "达人评级 / 生命周期",
+      "before": "评级=待判断；生命周期=陪跑达人",
+      "after": "评级=A；生命周期=陪跑达人"
+    },
+    {
+      "id": "LOG3147",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "达人评级 / 生命周期",
+      "before": "评级=A；生命周期=陪跑达人",
+      "after": "评级=A；生命周期=重点培养达人"
+    },
+    {
+      "id": "LOG3148",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "达人评级 / 生命周期",
+      "before": "评级=A；生命周期=重点培养达人",
+      "after": "评级=C；生命周期=陪跑达人"
+    },
+    {
+      "id": "LOG3149",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:38",
+      "after": "方式=其他；结果=—；阶段=合作中→合作中；下次跟进=未安排"
+    },
+    {
+      "id": "LOG3150",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest 内容任务",
+      "type": "创建任务",
+      "before": "",
+      "after": "达人=APItest742290-寄拍主链D 佣金=0 运营负责人=王浩 发起=王浩"
+    },
+    {
+      "id": "LOG3151",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 APItest 内容任务",
+      "type": "删除任务",
+      "before": "待确认",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3152",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "运营任务：OT0015",
+      "type": "删除运营任务",
+      "before": "",
+      "after": ""
+    },
+    {
+      "id": "LOG3153",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-分配F",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=管理员（管理员）"
+    },
+    {
+      "id": "LOG3154",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-分配F",
+      "type": "线索分配",
+      "before": "负责人=管理员（管理员）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3155",
+      "operator": "系统",
+      "at": "2026-09-18 07:38",
+      "target": "账号：apitestops742290",
+      "type": "新建账号",
+      "before": "角色=运营",
+      "after": "姓名=API测试运营；岗位=普通运营"
+    },
+    {
+      "id": "LOG3156",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-分配F",
+      "type": "线索分配",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=API测试运营（普通运营）"
+    },
+    {
+      "id": "LOG3157",
+      "operator": "系统",
+      "at": "2026-09-18 07:38",
+      "target": "账号：apitestops742290",
+      "type": "删除账号",
+      "before": "",
+      "after": "操作者后台"
+    },
+    {
+      "id": "LOG3158",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-分配F",
+      "type": "线索分配",
+      "before": "负责人=API测试运营（普通运营）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3159",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-分配F",
+      "type": "确认接收分配",
+      "before": "",
+      "after": "接收时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3160",
+      "operator": "报名表单",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest报名分层",
+      "type": "问卷报名",
+      "before": "",
+      "after": "来源=小红书"
+    },
+    {
+      "id": "LOG3161",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest报名分层",
+      "type": "线索分配",
+      "before": "负责人=未分配（未设置）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3162",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest报名分层",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:38",
+      "after": "方式=其他；结果=—；阶段=待联系→待联系；下次跟进=未安排"
+    },
+    {
+      "id": "LOG3163",
+      "operator": "张萌",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest报名分层",
+      "type": "线索潜力意愿",
+      "before": "阶段=待联系；潜力=待判断；意愿=待判断",
+      "after": "阶段=待联系；潜力=高；意愿=强"
+    },
+    {
+      "id": "LOG3164",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest报名分层",
+      "type": "线索潜力意愿",
+      "before": "阶段=待联系；潜力=高；意愿=强",
+      "after": "阶段=待联系；潜力=中；意愿=强"
+    },
+    {
+      "id": "LOG3165",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3166",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-招募B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3167",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-运营A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3168",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-合作C",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3169",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-分配F",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3170",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest报名分层",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3171",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-寄拍主链D",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3172",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：APItest742290-双负责人E",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3173",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=管理员（管理员）"
+    },
+    {
+      "id": "LOG3174",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "线索阶段变更",
+      "before": "阶段=待联系；潜力=待判断；意愿=待判断",
+      "after": "阶段=待审核；潜力=待判断；意愿=待判断"
+    },
+    {
+      "id": "LOG3175",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "转为正式达人",
+      "before": "线索阶段=待审核；负责人=管理员",
+      "after": "正式进入达人库；转化人=管理员；转化时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3176",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "线索交接-发起",
+      "before": "负责人=管理员（管理员）",
+      "after": "待 王浩（普通运营）确认；原因=回归交接；说明=备注B"
+    },
+    {
+      "id": "LOG3177",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "线索交接-确认",
+      "before": "负责人=管理员（管理员）",
+      "after": "负责人=王浩（普通运营）；管理员 确认"
+    },
+    {
+      "id": "LOG3178",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归拒绝-2026-09-18",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=管理员（管理员）"
+    },
+    {
+      "id": "LOG3179",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归拒绝-2026-09-18",
+      "type": "线索阶段变更",
+      "before": "阶段=待联系；潜力=待判断；意愿=待判断",
+      "after": "阶段=待审核；潜力=待判断；意愿=待判断"
+    },
+    {
+      "id": "LOG3180",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归拒绝-2026-09-18",
+      "type": "转为正式达人",
+      "before": "线索阶段=待审核；负责人=管理员",
+      "after": "正式进入达人库；转化人=管理员；转化时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3181",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归拒绝-2026-09-18",
+      "type": "线索交接-发起",
+      "before": "负责人=管理员（管理员）",
+      "after": "待 王浩（普通运营）确认；原因=拒绝测试"
+    },
+    {
+      "id": "LOG3182",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归拒绝-2026-09-18",
+      "type": "线索交接-驳回",
+      "before": "负责人=管理员（管理员）",
+      "after": "负责人保持 管理员；接收人驳回"
+    },
+    {
+      "id": "LOG3183",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "创建任务",
+      "before": "",
+      "after": "达人=主链回归-2026-09-18 佣金=88 运营负责人=张萌 发起=管理员 截止=2026-09-17"
+    },
+    {
+      "id": "LOG3184",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "账号运营数据更新",
+      "before": "{}",
+      "after": "{}"
+    },
+    {
+      "id": "LOG3185",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "确认接单",
+      "before": "待确认",
+      "after": "待寄出"
+    },
+    {
+      "id": "LOG3186",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "已寄出",
+      "before": "待寄出",
+      "after": "已寄出"
+    },
+    {
+      "id": "LOG3187",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "确认签收",
+      "before": "已寄出",
+      "after": "已签收"
+    },
+    {
+      "id": "LOG3188",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "开始拍摄",
+      "before": "已签收",
+      "after": "待拍摄"
+    },
+    {
+      "id": "LOG3189",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "提交内容",
+      "before": "待拍摄",
+      "after": "待审核"
+    },
+    {
+      "id": "LOG3190",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "审核通过",
+      "before": "待审核",
+      "after": "待发布"
+    },
+    {
+      "id": "LOG3191",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "标记已发布",
+      "before": "待发布",
+      "after": "已发布"
+    },
+    {
+      "id": "LOG3192",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "任务：TK1018 回归鞋",
+      "type": "删除任务",
+      "before": "已发布",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3193",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归-2026-09-18",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3194",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：主链回归拒绝-2026-09-18",
+      "type": "删除达人档案",
+      "before": "状态=合作中",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3195",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-公海",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3196",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-公海",
+      "type": "线索分配",
+      "before": "负责人=未分配（管理员）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3197",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-批量0",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3198",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-批量1",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3199",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-批量0",
+      "type": "线索批量分配",
+      "before": "负责人=未分配（管理员）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3200",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-批量1",
+      "type": "线索批量分配",
+      "before": "负责人=未分配（管理员）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3201",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=李婷；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG3202",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-越权观察",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3203",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-公海",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3204",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-批量0",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3205",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-批量1",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3206",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：V03core742306-越权观察",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3207",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：小王",
+      "type": "线索交接-发起",
+      "before": "负责人=李婷（招募）",
+      "after": "待 王浩（普通运营）确认；原因=该达人转向寄拍合作，转运营跟进"
+    },
+    {
+      "id": "LOG3208",
+      "operator": "王浩",
+      "at": "2026-09-18 07:38",
+      "target": "达人：小王",
+      "type": "线索交接-确认",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）；王浩 确认"
+    },
+    {
+      "id": "LOG3209",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：小王",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=管理员指派回招募"
+    },
+    {
+      "id": "LOG3210",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：小王",
+      "type": "线索交接-强制指派",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；管理员 确认"
+    },
+    {
+      "id": "LOG3211",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-普通线索",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3212",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-高潜严格",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3213",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-普通线索",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:38",
+      "after": "方式=微信；结果=已接通；阶段=待联系→待联系；下次跟进=未安排"
+    },
+    {
+      "id": "LOG3214",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-高潜严格",
+      "type": "SLA 重新分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3215",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-高潜严格",
+      "type": "SLA 重新分配",
+      "before": "原负责人=李婷（SLA=normal）",
+      "after": "新负责人=王浩；原因=SLA 回归：改派；分配时间已重置，SLA 重新计时"
+    },
+    {
+      "id": "LOG3216",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-超时原因",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3217",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-超时原因",
+      "type": "SLA 超时原因",
+      "before": "SLA=normal；已用 0 分钟",
+      "after": "原因=达人电话打不通"
+    },
+    {
+      "id": "LOG3218",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-普通线索",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3219",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-高潜严格",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3220",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：SLAtest-超时原因",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3221",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：Split742312-转化链",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3222",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：Split742312-转化链",
+      "type": "线索分配",
+      "before": "负责人=未分配（管理员）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3223",
+      "operator": "李婷",
+      "at": "2026-09-18 07:38",
+      "target": "达人：Split742312-转化链",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=李婷；转化时间=2026-09-18 07:38"
+    },
+    {
+      "id": "LOG3224",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：Split742312-残留",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3225",
+      "operator": "管理员",
+      "at": "2026-09-18 07:38",
+      "target": "达人：Split742312-残留",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3226",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "达人：UI回归355313-招募A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3227",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "达人：UI回归355313-招募B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3228",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "达人：UI回归355313-运营A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3229",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "达人：UI回归355313-运营B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3230",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "达人：UI回归355313-招募B",
+      "type": "线索批量分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3231",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "达人：UI回归355313-招募A",
+      "type": "线索批量分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG3232",
+      "operator": "管理员",
+      "at": "2026-09-18 07:39",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=王浩；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG3233",
+      "operator": "李婷",
+      "at": "2026-09-18 07:39",
+      "target": "达人：APItest742253-招募B",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 07:37",
+      "after": "方式=微信；结果=—；阶段=待联系→待联系；下次跟进=2026-09-20 10:00"
+    },
+    {
+      "id": "LOG3234",
+      "operator": "管理员",
+      "at": "2026-09-18 07:40",
+      "target": "达人：UI回归355313-运营A",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=UI 回归：交接给招募"
+    },
+    {
+      "id": "LOG3235",
+      "operator": "李婷",
+      "at": "2026-09-18 07:40",
+      "target": "达人：UI回归355313-运营A",
+      "type": "线索交接-确认",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；李婷 确认"
+    },
+    {
+      "id": "LOG3236",
+      "operator": "管理员",
+      "at": "2026-09-18 07:40",
+      "target": "达人：UI回归355313-招募A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3237",
+      "operator": "管理员",
+      "at": "2026-09-18 07:40",
+      "target": "达人：UI回归355313-招募B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3238",
+      "operator": "管理员",
+      "at": "2026-09-18 07:40",
+      "target": "达人：UI回归355313-运营A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3239",
+      "operator": "管理员",
+      "at": "2026-09-18 07:40",
+      "target": "达人：UI回归355313-运营B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG3240",
+      "operator": "管理员",
+      "at": "2026-09-18 07:41",
+      "target": "达人：Split742498-转化链",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3241",
+      "operator": "管理员",
+      "at": "2026-09-18 07:41",
+      "target": "达人：Split742498-转化链",
+      "type": "线索分配",
+      "before": "负责人=未分配（管理员）",
+      "after": "负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG3242",
+      "operator": "李婷",
+      "at": "2026-09-18 07:41",
+      "target": "达人：Split742498-转化链",
+      "type": "转为正式达人",
+      "before": "线索阶段=待联系；负责人=李婷",
+      "after": "正式进入达人库；转化人=李婷；转化时间=2026-09-18 07:41"
+    },
+    {
+      "id": "LOG3243",
+      "operator": "管理员",
+      "at": "2026-09-18 07:41",
+      "target": "达人：Split742498-残留",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=未分配（管理员）"
+    },
+    {
+      "id": "LOG3244",
+      "operator": "管理员",
+      "at": "2026-09-18 07:41",
+      "target": "达人：Split742498-残留",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
     }
   ],
   "campaigns": [
@@ -35788,6 +38111,374 @@
       "operator": "李婷",
       "createdAt": "2026-09-18 07:15",
       "confirmedAt": "2026-09-18 07:15"
+    },
+    {
+      "id": "HO0241",
+      "talentId": "T0059",
+      "talentName": "APItest742253-招募A",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "转回招募继续孵化",
+      "note": "已完成初筛，达人愿意寄拍",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "李婷",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0242",
+      "talentId": "T0060",
+      "talentName": "APItest742253-招募B",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "试驳回",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "rejected",
+      "operator": "王浩",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0243",
+      "talentId": "T0061",
+      "talentName": "APItest742253-运营A",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "招募完成，达人转长期运营",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "管理员",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0244",
+      "talentId": "T0063",
+      "talentName": "APItest742261-招募A",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "转回招募继续孵化",
+      "note": "已完成初筛，达人愿意寄拍",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "李婷",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0245",
+      "talentId": "T0064",
+      "talentName": "APItest742261-招募B",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "试驳回",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "rejected",
+      "operator": "王浩",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0246",
+      "talentId": "T0065",
+      "talentName": "APItest742261-运营A",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "招募完成，达人转长期运营",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "管理员",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0247",
+      "talentId": "T0068",
+      "talentName": "APItest742261-双负责人E",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "招募完成，转运营长期管理",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "王浩",
+      "createdAt": "2026-09-18 07:37",
+      "confirmedAt": "2026-09-18 07:37"
+    },
+    {
+      "id": "HO0248",
+      "talentId": "T0063",
+      "talentName": "APItest742290-招募A",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "转回招募继续孵化",
+      "note": "已完成初筛，达人愿意寄拍",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "李婷",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0249",
+      "talentId": "T0064",
+      "talentName": "APItest742290-招募B",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "试驳回",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "rejected",
+      "operator": "王浩",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0250",
+      "talentId": "T0065",
+      "talentName": "APItest742290-运营A",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "招募完成，达人转长期运营",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "管理员",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0251",
+      "talentId": "T0068",
+      "talentName": "APItest742290-双负责人E",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "招募完成，转运营长期管理",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "王浩",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0252",
+      "talentId": "T0063",
+      "talentName": "主链回归-2026-09-18",
+      "fromUser": "管理员",
+      "fromUserId": "admin",
+      "fromPosition": "admin",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "回归交接",
+      "note": "备注B",
+      "situation": "情况S",
+      "accountState": "账号X",
+      "coopWay": "寄拍",
+      "contentDirection": "开箱",
+      "risk": "风险R",
+      "nextSuggest": "建议N",
+      "status": "confirmed",
+      "operator": "管理员",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0253",
+      "talentId": "T0064",
+      "talentName": "主链回归拒绝-2026-09-18",
+      "fromUser": "管理员",
+      "fromUserId": "admin",
+      "fromPosition": "admin",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "拒绝测试",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "rejected",
+      "operator": "管理员",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0254",
+      "talentId": "T0001",
+      "talentName": "小王",
+      "fromUser": "李婷",
+      "fromUserId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toUser": "王浩",
+      "toUserId": "demo-staff",
+      "toPosition": "ops",
+      "reason": "该达人转向寄拍合作，转运营跟进",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "王浩",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0255",
+      "talentId": "T0001",
+      "talentName": "小王",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "管理员指派回招募",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "管理员",
+      "createdAt": "2026-09-18 07:38",
+      "confirmedAt": "2026-09-18 07:38"
+    },
+    {
+      "id": "HO0256",
+      "talentId": "T0066",
+      "talentName": "UI回归355313-运营A",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "UI 回归：交接给招募",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "李婷",
+      "createdAt": "2026-09-18 07:40",
+      "confirmedAt": "2026-09-18 07:40"
     }
   ],
   "leads": [
@@ -35827,10 +38518,10 @@
       "handoverStatus": "confirmed",
       "handoverTo": "李婷",
       "handoverToPosition": "recruit",
-      "handoverAt": "2026-09-18 07:12",
+      "handoverAt": "2026-09-18 07:38",
       "handoverBy": "管理员",
       "ownerId": "demo-recruit",
-      "assignedAt": "2026-09-18 07:12",
+      "assignedAt": "2026-09-18 07:38",
       "nextFollowAt": "",
       "potentialLevel": "待判断",
       "intentLevel": "待判断",
@@ -35841,7 +38532,7 @@
       "handoverToId": "demo-recruit",
       "handoverReason": "管理员指派回招募",
       "handoverNote": "",
-      "handoverReceivedAt": "2026-09-18 07:12",
+      "handoverReceivedAt": "2026-09-18 07:38",
       "recruitBy": "李婷",
       "recruitById": "demo-recruit",
       "dewuId": "DWU000001",
@@ -35873,7 +38564,10 @@
       "slaExempt": false,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0007",
@@ -35949,7 +38643,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0008",
@@ -36026,7 +38723,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0009",
@@ -36104,7 +38804,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0010",
@@ -36181,7 +38884,10 @@
       "slaExempt": false,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "A"
+      "talentLevel": "A",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0011",
@@ -36255,7 +38961,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0012",
@@ -36329,7 +39038,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0013",
@@ -36406,7 +39118,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0015",
@@ -36481,7 +39196,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0016",
@@ -36558,7 +39276,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "B"
+      "talentLevel": "B",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0017",
@@ -36625,7 +39346,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0018",
@@ -36698,7 +39422,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0019",
@@ -36769,7 +39496,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0020",
@@ -36842,7 +39572,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0022",
@@ -36918,7 +39651,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0023",
@@ -36991,7 +39727,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0024",
@@ -37064,7 +39803,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0026",
@@ -37140,7 +39882,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0027",
@@ -37213,7 +39958,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0028",
@@ -37286,7 +40034,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0042",
@@ -37362,7 +40113,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0043",
@@ -37438,7 +40192,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "王浩",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0044",
@@ -37511,7 +40268,10 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
     },
     {
       "id": "T0045",
@@ -37584,7 +40344,193 @@
       "slaExempt": true,
       "talentStatus": "lead",
       "talentOperator": "",
-      "talentLevel": "C"
+      "talentLevel": "C",
+      "assignState": "assigned",
+      "assignedBy": "",
+      "assignAckAt": ""
+    },
+    {
+      "id": "T0059",
+      "name": "APItest742253-招募A",
+      "douyin": "",
+      "contact": "",
+      "channel": "API回归",
+      "level": "待判断",
+      "status": "待联系",
+      "contentTypes": [],
+      "categories": [],
+      "fans": 0,
+      "coopCount": 0,
+      "fulfillmentRate": 0,
+      "owner": "李婷",
+      "ownerId": "demo-recruit",
+      "ownerPosition": "recruit",
+      "assignedAt": "2026-09-18 07:37",
+      "tags": [],
+      "note": "",
+      "lastFollowAt": "2026-09-18 07:37",
+      "createdAt": "2026-09-18 07:37",
+      "potentialLevel": "高",
+      "intentLevel": "强",
+      "talentClass": "A",
+      "coopPath": "待判断",
+      "incubationFee": 0,
+      "feeStatus": "未收",
+      "nextFollowAt": "2026-12-01 10:00",
+      "talentStatus": "lead",
+      "talentLevel": "待判断",
+      "talentOperator": "王浩",
+      "rejectReason": "",
+      "auditAt": "",
+      "auditBy": "",
+      "isActive": true,
+      "handoverStatus": "confirmed",
+      "handoverFrom": "王浩",
+      "handoverFromId": "demo-staff",
+      "handoverFromPosition": "ops",
+      "handoverTo": "李婷",
+      "handoverToId": "demo-recruit",
+      "handoverToPosition": "recruit",
+      "handoverReason": "转回招募继续孵化",
+      "handoverNote": "已完成初筛，达人愿意寄拍",
+      "handoverAt": "2026-09-18 07:37",
+      "handoverReceivedAt": "2026-09-18 07:37",
+      "handoverBy": "王浩",
+      "slaExempt": false,
+      "escalatedAt": "",
+      "overdueReason": "",
+      "overdueReasonAt": "",
+      "urgeCount": 0,
+      "opsBy": "王浩",
+      "opsId": "demo-staff",
+      "opsAt": "2026-09-18 07:37",
+      "assignState": "pending_assign",
+      "assignedBy": "管理员",
+      "assignAckAt": "",
+      "lastFollowupAt": "2026-09-18 07:37",
+      "firstContactAt": "2026-09-18 07:37",
+      "handoverRisk": ""
+    },
+    {
+      "id": "T0060",
+      "name": "APItest742253-招募B",
+      "douyin": "",
+      "contact": "",
+      "channel": "API回归",
+      "level": "待判断",
+      "status": "待联系",
+      "contentTypes": [],
+      "categories": [],
+      "fans": 0,
+      "coopCount": 0,
+      "fulfillmentRate": 0,
+      "owner": "李婷",
+      "ownerId": "demo-recruit",
+      "ownerPosition": "recruit",
+      "assignedAt": "2026-09-18 07:37",
+      "tags": [],
+      "note": "",
+      "lastFollowAt": "2026-09-18 07:39",
+      "createdAt": "2026-09-18 07:37",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "coopPath": "待判断",
+      "incubationFee": 0,
+      "feeStatus": "未收",
+      "nextFollowAt": "2026-09-20 10:00",
+      "talentStatus": "lead",
+      "talentLevel": "待判断",
+      "talentOperator": "王浩",
+      "rejectReason": "",
+      "auditAt": "",
+      "auditBy": "",
+      "isActive": true,
+      "handoverStatus": "rejected",
+      "handoverFrom": "李婷",
+      "handoverFromId": "demo-recruit",
+      "handoverFromPosition": "recruit",
+      "handoverTo": "王浩",
+      "handoverToId": "demo-staff",
+      "handoverToPosition": "ops",
+      "handoverReason": "试驳回",
+      "handoverNote": "",
+      "handoverAt": "2026-09-18 07:37",
+      "handoverReceivedAt": "",
+      "handoverBy": "李婷",
+      "slaExempt": false,
+      "escalatedAt": "",
+      "overdueReason": "",
+      "overdueReasonAt": "",
+      "urgeCount": 0,
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": "",
+      "handoverRisk": "",
+      "lastFollowupAt": "2026-09-18 07:39",
+      "firstContactAt": "2026-09-18 07:39"
+    },
+    {
+      "id": "T0061",
+      "name": "APItest742253-运营A",
+      "douyin": "",
+      "contact": "",
+      "channel": "API回归",
+      "level": "待判断",
+      "status": "待联系",
+      "contentTypes": [],
+      "categories": [],
+      "fans": 0,
+      "coopCount": 0,
+      "fulfillmentRate": 0,
+      "owner": "王浩",
+      "ownerId": "demo-staff",
+      "ownerPosition": "ops",
+      "assignedAt": "2026-09-18 07:37",
+      "tags": [],
+      "note": "",
+      "lastFollowAt": "2026-09-18 07:37",
+      "createdAt": "2026-09-18 07:37",
+      "potentialLevel": "待判断",
+      "intentLevel": "待判断",
+      "talentClass": "待分类",
+      "coopPath": "待判断",
+      "incubationFee": 0,
+      "feeStatus": "未收",
+      "nextFollowAt": "",
+      "talentStatus": "lead",
+      "talentLevel": "待判断",
+      "talentOperator": "王浩",
+      "rejectReason": "",
+      "auditAt": "",
+      "auditBy": "",
+      "isActive": true,
+      "handoverStatus": "confirmed",
+      "handoverFrom": "李婷",
+      "handoverFromId": "demo-recruit",
+      "handoverFromPosition": "recruit",
+      "handoverTo": "王浩",
+      "handoverToId": "demo-staff",
+      "handoverToPosition": "ops",
+      "handoverReason": "招募完成，达人转长期运营",
+      "handoverNote": "",
+      "handoverAt": "2026-09-18 07:37",
+      "handoverReceivedAt": "2026-09-18 07:37",
+      "handoverBy": "李婷",
+      "slaExempt": false,
+      "escalatedAt": "",
+      "overdueReason": "",
+      "overdueReasonAt": "",
+      "urgeCount": 0,
+      "assignState": "",
+      "assignedBy": "",
+      "assignAckAt": "",
+      "handoverRisk": "",
+      "recruitBy": "李婷",
+      "recruitById": "demo-recruit",
+      "opsBy": "王浩",
+      "opsId": "demo-staff",
+      "opsAt": "2026-09-18 07:37"
     }
   ],
   "opsTasks": [
@@ -37834,6 +40780,44 @@
       "isActive": false,
       "talentNames": [],
       "progress": "回归进展"
+    },
+    {
+      "id": "OT0014",
+      "title": "APItest 运营任务",
+      "contentDirection": "鞋类测评",
+      "productType": "鞋",
+      "reason": "回归",
+      "talentIds": [],
+      "owner": "王浩",
+      "ownerId": "demo-staff",
+      "status": "进行中",
+      "dueAt": "2030-01-01",
+      "note": "",
+      "createdBy": "张萌",
+      "createdById": "demo-senior",
+      "createdAt": "2026-09-18 07:37",
+      "isActive": false,
+      "talentNames": [],
+      "progress": "回归进展"
+    },
+    {
+      "id": "OT0015",
+      "title": "APItest 运营任务",
+      "contentDirection": "鞋类测评",
+      "productType": "鞋",
+      "reason": "回归",
+      "talentIds": [],
+      "owner": "王浩",
+      "ownerId": "demo-staff",
+      "status": "进行中",
+      "dueAt": "2030-01-01",
+      "note": "",
+      "createdBy": "张萌",
+      "createdById": "demo-senior",
+      "createdAt": "2026-09-18 07:38",
+      "isActive": false,
+      "talentNames": [],
+      "progress": "回归进展"
     }
   ],
   "hitCases": [
@@ -38018,6 +41002,34 @@
       "createdById": "demo-senior",
       "createdAt": "2026-09-18 07:14",
       "isActive": false
+    },
+    {
+      "id": "HC0014",
+      "title": "APItest 爆款拆解",
+      "contentDirection": "痛点前置",
+      "productType": "鞋",
+      "reason": "回归",
+      "fitTalents": "测评类",
+      "talentIds": [],
+      "refUrl": "",
+      "createdBy": "张萌",
+      "createdById": "demo-senior",
+      "createdAt": "2026-09-18 07:37",
+      "isActive": false
+    },
+    {
+      "id": "HC0015",
+      "title": "APItest 爆款拆解",
+      "contentDirection": "痛点前置",
+      "productType": "鞋",
+      "reason": "回归",
+      "fitTalents": "测评类",
+      "talentIds": [],
+      "refUrl": "",
+      "createdBy": "张萌",
+      "createdById": "demo-senior",
+      "createdAt": "2026-09-18 07:38",
+      "isActive": false
     }
   ],
   "talentAssignments": [
@@ -38087,6 +41099,91 @@
       "assignedBy": "管理员",
       "assignedById": "admin",
       "assignedAt": "2026-09-18 07:12",
+      "isActive": true
+    },
+    {
+      "id": "TA00013",
+      "talentId": "T0059",
+      "talentName": "APItest742253-招募A",
+      "fromOwner": "李婷",
+      "fromOwnerId": "demo-recruit",
+      "fromPosition": "recruit",
+      "toOwner": "王浩",
+      "toOwnerId": "demo-staff",
+      "toPosition": "ops",
+      "type": "线索分配",
+      "remark": "",
+      "assignedBy": "管理员",
+      "assignedById": "admin",
+      "assignedAt": "2026-09-18 07:37",
+      "isActive": true
+    },
+    {
+      "id": "TA00014",
+      "talentId": "T0060",
+      "talentName": "APItest742253-招募B",
+      "fromOwner": "王浩",
+      "fromOwnerId": "demo-staff",
+      "fromPosition": "ops",
+      "toOwner": "李婷",
+      "toOwnerId": "demo-recruit",
+      "toPosition": "recruit",
+      "type": "线索批量分配",
+      "remark": "",
+      "assignedBy": "管理员",
+      "assignedById": "admin",
+      "assignedAt": "2026-09-18 07:37",
+      "isActive": true
+    },
+    {
+      "id": "TA00015",
+      "talentId": "T0061",
+      "talentName": "APItest742253-运营A",
+      "fromOwner": "王浩",
+      "fromOwnerId": "demo-staff",
+      "fromPosition": "ops",
+      "toOwner": "李婷",
+      "toOwnerId": "demo-recruit",
+      "toPosition": "recruit",
+      "type": "线索批量分配",
+      "remark": "",
+      "assignedBy": "管理员",
+      "assignedById": "admin",
+      "assignedAt": "2026-09-18 07:37",
+      "isActive": true
+    },
+    {
+      "id": "TA00016",
+      "talentId": "T0063",
+      "talentName": "Split742312-转化链",
+      "fromOwner": "未分配",
+      "fromOwnerId": "",
+      "fromPosition": "admin",
+      "toOwner": "李婷",
+      "toOwnerId": "demo-recruit",
+      "toPosition": "recruit",
+      "type": "线索分配",
+      "remark": "",
+      "assignedBy": "管理员",
+      "assignedById": "admin",
+      "assignedAt": "2026-09-18 07:38",
+      "isActive": true
+    },
+    {
+      "id": "TA00017",
+      "talentId": "T0064",
+      "talentName": "Split742498-转化链",
+      "fromOwner": "未分配",
+      "fromOwnerId": "",
+      "fromPosition": "admin",
+      "toOwner": "李婷",
+      "toOwnerId": "demo-recruit",
+      "toPosition": "recruit",
+      "type": "线索分配",
+      "remark": "",
+      "assignedBy": "管理员",
+      "assignedById": "admin",
+      "assignedAt": "2026-09-18 07:41",
       "isActive": true
     }
   ]

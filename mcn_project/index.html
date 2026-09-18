@@ -342,7 +342,14 @@ tailwind.config = {
                   </tr></thead>
                   <tbody>
                     <tr v-for="(r,ri) in b.rows" :key="ri" class="border-b border-slate-50 hover:bg-slate-50/60">
-                      <td v-for="(cv,ci) in r" :key="ci" class="py-2 px-1 text-slate-600 whitespace-nowrap">{{ cv }}</td>
+                      <td v-for="(cv,ci) in r" :key="ci" class="py-2 px-1 text-slate-600 whitespace-nowrap">
+                        <template v-if="cv && typeof cv==='object' && cv.kind==='assign-actions'">
+                          <button @click="goPage('talent-pool')" class="text-indigo-600 hover:underline">查看达人</button>
+                          <button v-if="!cv.ack" @click="ackAssign(cv.talentId)" class="ml-2 text-cyan-600 hover:underline font-medium">确认接收</button>
+                          <span v-else class="text-emerald-600">已接收</span>
+                        </template>
+                        <template v-else>{{ cv }}</template>
+                      </td>
                     </tr>
                     <tr v-if="!b.rows.length"><td :colspan="b.columns.length" class="py-6 text-center text-slate-300">暂无数据</td></tr>
                   </tbody>
@@ -587,12 +594,16 @@ tailwind.config = {
                   <th class="text-left px-4 py-3 font-medium">状态</th>
                   <th class="text-left px-4 py-3 font-medium">生命周期</th>
                   <th class="text-left px-4 py-3 font-medium">评级</th>
-                  <th class="text-left px-4 py-3 font-medium">当前负责人</th>
-                  <th class="text-left px-4 py-3 font-medium hidden md:table-cell">招募负责人</th>
-                  <th class="text-left px-4 py-3 font-medium">转化人</th>
+                  <!-- 字段分层（20260918e）：普通运营只看陪跑视角，负责人链路（当前负责人/招募/转化人）仅主管与管理员可见 -->
+                  <th v-if="!amOps" class="text-left px-4 py-3 font-medium">当前负责人</th>
+                  <th v-if="!amOps" class="text-left px-4 py-3 font-medium hidden md:table-cell">招募负责人</th>
+                  <th v-if="!amOps" class="text-left px-4 py-3 font-medium">转化人</th>
+                  <th v-if="amOps" class="text-left px-4 py-3 font-medium">我的运营状态</th>
                   <th class="text-left px-4 py-3 font-medium hidden lg:table-cell">累计任务</th>
-                  <th class="text-left px-4 py-3 font-medium hidden lg:table-cell">累计收益</th>
-                  <th class="text-left px-4 py-3 font-medium hidden md:table-cell">转化时间</th>
+                  <th v-if="!amOps" class="text-left px-4 py-3 font-medium hidden lg:table-cell">累计收益</th>
+                  <th v-if="amOps" class="text-left px-4 py-3 font-medium">最近任务</th>
+                  <th v-if="!amOps" class="text-left px-4 py-3 font-medium hidden md:table-cell">转化时间</th>
+                  <th v-if="amOps" class="text-left px-4 py-3 font-medium">下一步行动</th>
                   <th class="text-right px-4 py-3 font-medium">操作</th>
                 </tr>
               </thead>
@@ -609,15 +620,27 @@ tailwind.config = {
                   </td>
                   <td class="px-4 py-3"><span class="text-[11px] px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 font-medium">{{ tl.TALENT_STATUS_LABEL[r.talentStatus || 'coaching'] }}</span></td>
                   <td class="px-4 py-3"><span class="text-[11px] px-2 py-0.5 rounded-full font-medium" :class="tl.levelTone(r.talentLevel)">{{ tl.TALENT_LEVEL_LABEL[r.talentLevel || 'C'] }}</span></td>
-                  <td class="px-4 py-3 text-slate-600">{{ r.owner }}<span class="text-[10px] text-slate-400 ml-1">{{ r.ownerPositionLabel }}</span></td>
-                  <td class="px-4 py-3 text-slate-600 hidden md:table-cell">{{ r.recruitBy || '—' }}</td>
-                  <td class="px-4 py-3">
+                  <td v-if="!amOps" class="px-4 py-3 text-slate-600">{{ r.owner }}<span class="text-[10px] text-slate-400 ml-1">{{ r.ownerPositionLabel }}</span></td>
+                  <td v-if="!amOps" class="px-4 py-3 text-slate-600 hidden md:table-cell">{{ r.recruitBy || '—' }}</td>
+                  <td v-if="!amOps" class="px-4 py-3">
                     <span v-if="r.convertedBy" class="text-emerald-700 font-medium">{{ r.convertedBy }}</span>
                     <span v-else class="text-slate-300 text-xs">迁移入库</span>
                   </td>
+                  <!-- 我的运营状态：主管分配后=待接收（可一键确认接收），接收后=运营中 -->
+                  <td v-if="amOps" class="px-4 py-3 whitespace-nowrap">
+                    <span v-if="r.assignState==='pending_assign'" class="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">待接收</span>
+                    <span v-else-if="r.assignState==='assigned'" class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-medium">运营中</span>
+                    <span v-else class="text-slate-300 text-xs">—</span>
+                    <button v-if="r.assignState==='pending_assign'" @click="ackAssign(r.id)" class="ml-1.5 text-cyan-600 hover:underline text-xs font-medium">确认接收</button>
+                  </td>
                   <td class="px-4 py-3 text-slate-600 text-xs hidden lg:table-cell">{{ r.taskTotal }}<span v-if="r.taskActive" class="text-indigo-500">（进行中 {{ r.taskActive }}）</span></td>
-                  <td class="px-4 py-3 text-slate-600 text-xs hidden lg:table-cell">¥{{ fmt(r.totalCommission) }}</td>
-                  <td class="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">{{ r.convertedAt ? r.convertedAt.slice(0,16) : '—' }}</td>
+                  <td v-if="!amOps" class="px-4 py-3 text-slate-600 text-xs hidden lg:table-cell">¥{{ fmt(r.totalCommission) }}</td>
+                  <td v-if="amOps" class="px-4 py-3 text-xs">
+                    <div class="text-slate-600">{{ r.lastTaskName || '—' }}</div>
+                    <div v-if="r.lastTaskStatus" class="text-[10px] text-slate-400">{{ r.lastTaskStatus }}</div>
+                  </td>
+                  <td v-if="!amOps" class="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">{{ r.convertedAt ? r.convertedAt.slice(0,16) : '—' }}</td>
+                  <td v-if="amOps" class="px-4 py-3 text-slate-600 text-xs max-w-[180px] truncate" :title="r.nextAction || ''">{{ r.nextAction || '—' }}</td>
                   <td class="px-4 py-3 text-right whitespace-nowrap">
                     <button @click="openTalentTimeline(r)" class="text-cyan-600 hover:underline text-xs font-medium">跟进时间轴</button>
                     <button v-if="canAssignOpsTask" @click="tl.openAssign(r, showToast)" class="ml-2 text-cyan-600 hover:underline text-xs font-medium">分配给运营</button>
@@ -1311,7 +1334,14 @@ tailwind.config = {
                   </tr></thead>
                   <tbody>
                     <tr v-for="(r,ri) in b.rows" :key="ri" class="border-b border-slate-50 hover:bg-slate-50/60">
-                      <td v-for="(cv,ci) in r" :key="ci" class="py-2 px-1 text-slate-600 whitespace-nowrap">{{ cv }}</td>
+                      <td v-for="(cv,ci) in r" :key="ci" class="py-2 px-1 text-slate-600 whitespace-nowrap">
+                        <template v-if="cv && typeof cv==='object' && cv.kind==='assign-actions'">
+                          <button @click="goPage('talent-pool')" class="text-indigo-600 hover:underline">查看达人</button>
+                          <button v-if="!cv.ack" @click="ackAssign(cv.talentId)" class="ml-2 text-cyan-600 hover:underline font-medium">确认接收</button>
+                          <span v-else class="text-emerald-600">已接收</span>
+                        </template>
+                        <template v-else>{{ cv }}</template>
+                      </td>
                     </tr>
                     <tr v-if="!b.rows.length"><td :colspan="b.columns.length" class="py-6 text-center text-slate-300">暂无数据</td></tr>
                   </tbody>
@@ -2272,7 +2302,7 @@ tailwind.config = {
               <button @click="talentTimelineDlg.open=false" class="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
             </div>
             <div class="text-xs text-slate-400 mb-4" v-if="talentTimelineDlg.row">
-              {{ talentTimelineDlg.row.name }} · {{ talentTimelineDlg.row.id }} · 运营负责人 {{ talentTimelineDlg.row.owner }} · 生命周期 {{ tl.TALENT_STATUS_LABEL[talentTimelineDlg.row.talentStatus || 'coaching'] }}
+              {{ talentTimelineDlg.row.name }} · {{ talentTimelineDlg.row.id }} · <template v-if="talentTimelineDlg.row.owner">运营负责人 {{ talentTimelineDlg.row.owner }} · </template>生命周期 {{ tl.TALENT_STATUS_LABEL[talentTimelineDlg.row.talentStatus || 'coaching'] }}
             </div>
             <div v-if="talentTimelineDlg.loading" class="text-xs text-slate-400 py-8 text-center">加载中…</div>
             <div v-else-if="!talentTimelineDlg.rows.length" class="text-xs text-slate-400 py-8 text-center border border-dashed border-slate-200 rounded-xl">还没有跟进记录</div>
@@ -3063,7 +3093,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260918d"></script>
-<script src="./app.js?v=20260918d"></script>
+<script src="./talent-leads.js?v=20260918e"></script>
+<script src="./app.js?v=20260918e"></script>
 </body>
 </html>

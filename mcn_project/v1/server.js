@@ -339,6 +339,11 @@ function seedTalentFields(t, isTalent) {
     if (p) { t.ownerPosition = p; n++; }
   }
   if (t.assignedAt === undefined) { t.assignedAt = (t.owner && t.owner !== '未分配') ? (t.createdAt || '') : ''; n++; }
+  // —— 分配确认状态（2026-09-18e）：主管分配给运营 → pending_assign；运营确认接收 → assigned ——
+  // 存量数据默认视为已接收（上线前就在名下的达人不再弹「待接收」，不折腾老数据）
+  if (t.assignState === undefined) { t.assignState = (t.ownerPosition === 'ops' || t.talentOperator || t.opsBy) ? 'assigned' : ''; n++; }
+  if (t.assignedBy === undefined) { t.assignedBy = ''; n++; }
+  if (t.assignAckAt === undefined) { t.assignAckAt = ''; n++; }
   // —— 跟进 SLA 字段（首次联系时限）——
   // 历史线索用 slaExempt 显式豁免（上线时由一次性脚本打标），不参与首次联系考核，
   // 避免「功能一上线，存量线索全部超时」的误伤；重新分配/重新指派会清掉这个标记。
@@ -884,6 +889,11 @@ function toMvpLead(t) {
     // 待运营接收：已转正式（合作中）但负责人还是招募岗、且没固化运营负责人 → 等待招募发起交接给运营
     opsPending: ['合作中', '暂停合作'].includes(t.status) && t.ownerPosition !== 'ops' && !t.opsId,
     assignedAt: String(t.assignedAt || ''),
+    // 分配确认状态（2026-09-18e）：pending_assign=主管已分配待运营确认 / assigned=运营已确认接收
+    assignState: t.assignState || (t.ownerPosition === 'ops' ? 'assigned' : ''),
+    assignedBy: t.assignedBy || '',
+    assignAckAt: String(t.assignAckAt || ''),
+    nextAction: t.nextAction || '',
     // 跟进 SLA：首次联系时限相关的派生字段（详见文件上方 slaOf 注释）
     ...slaOf(t),
     level: t.level || 'C',
@@ -996,7 +1006,15 @@ async function doAssign(ids, ownerName, ownerPosition, ctx, mode, remark) {
     const extra = {};
     // 管理员/高级运营把达人分配给运营 → 「达人运营负责人」始终跟随最新分配人（2026-09-18）：
     // 高级运营不是达人长期 owner，只做分配/重新分配；重新分给另一位普通运营时 talentOperator 同步换人
-    if (toPosition === 'ops') { extra.opsBy = nameOf(target); extra.opsId = target.user; extra.opsAt = nowStr(); extra.talentOperator = nameOf(target); }
+    if (toPosition === 'ops') {
+      extra.opsBy = nameOf(target); extra.opsId = target.user; extra.opsAt = nowStr(); extra.talentOperator = nameOf(target);
+      // 分配确认流（2026-09-18e）：主管分配给运营 ≠ 运营已接手，先落「待接收」，
+      // 由被分配的普通运营在工作台/达人档案点「确认接收」后才转 assigned
+      extra.assignState = 'pending_assign'; extra.assignedBy = ctx.displayName || ctx.operator; extra.assignAckAt = '';
+    } else {
+      // 达人转回招募等其他岗位时，分配确认状态随之失效（字段名不变，只清状态值）
+      extra.assignState = ''; extra.assignedBy = ''; extra.assignAckAt = '';
+    }
     const upd = await db.update(coll, id, Object.assign({
       owner: nameOf(target), ownerId: target.user, ownerPosition: toPosition, assignedAt: nowStr(),
       // 换人 = SLA 重新计时：清掉历史豁免 / 上报标记 / 催办计数（新负责人从零开始考核）
@@ -1042,6 +1060,25 @@ route('POST', '/api/mvp/leads/batch-assign', async (ctx) => {
   await addLog(ctx.operator, '线索批量分配', '线索批量分配', ids.length + ' 条', '负责人=' + b.owner + '；成功 ' + r.changed.length + ' / 跳过 ' + r.skipped.length);
   if (r.changed.length) notify('批量分配 ' + r.changed.length + ' 条线索给 ' + b.owner);
   ok(ctx.res, { assigned: r.changed.length, leads: r.changed, skipped: r.skipped });
+});
+// 确认接收分配（2026-09-18e）：主管分配生成 pending_assign → 被分配的普通运营确认后转 assigned
+// 权限：岗位必须是 ops，且只能确认 owner 是自己的达人（行级隔离，服务端裁决）
+route('POST', '/api/mvp/leads/:id/assign-ack', async (ctx) => {
+  if (ctx.position !== 'ops') return fail(ctx.res, 403, '只有被分配的普通运营可以确认接收');
+  const { rec: t, coll } = await findLeadOrTalent(ctx.params.id);
+  if (!t || t.isActive === false) return fail(ctx.res, 404, '达人不存在');
+  const mine = (t.ownerId && t.ownerId === ctx.authUser) || (!t.ownerId && t.owner === (ctx.displayName || ctx.operator));
+  if (!mine) return fail(ctx.res, 403, '只能确认分配给自己的达人');
+  if (t.assignState !== 'pending_assign') return fail(ctx.res, 409, '该达人没有待接收的分配');
+  const nowT = nowStr();
+  const upd = await db.update(coll, ctx.params.id, { assignState: 'assigned', assignAckAt: nowT });
+  await addLog(ctx.operator, '达人：' + t.name, '确认接收分配', '', '接收时间=' + nowT);
+  // 最近一条分给我的分配记录落接收回执（ackAt），交接历史可回溯
+  const tas = (await db.list('talentAssignments'))
+    .filter(a => a.talentId === t.id && a.isActive !== false && (a.toOwnerId === ctx.authUser || (!a.toOwnerId && a.toOwner === (ctx.displayName || ctx.operator))))
+    .sort((a, b) => String(b.assignedAt || '').localeCompare(String(a.assignedAt || '')));
+  if (tas[0]) await db.update('talentAssignments', tas[0].id, { ackAt: nowT, ack: true });
+  ok(ctx.res, toMvpLead(upd));
 });
 route('PUT', '/api/mvp/leads/:id', async (ctx) => {
   if (!ctx.role.mutate) return fail(ctx.res, 403, '当前角色无修改权限');
@@ -1326,11 +1363,15 @@ async function buildWorkbenchPanels(ctx, all) {
       .sort((a, b) => String(b.assignedAt || '').localeCompare(String(a.assignedAt || '')));
     blocks.push({
       key: 'new-assigned', title: '新分配达人', type: 'table', link: 'talent-pool',
-      hint: '近 7 天高级运营分配给我的达人，尽快首次触达建立联系',
-      columns: ['达人', '分配人', '分配时间', '备注'],
+      hint: '近 7 天主管分配给我的达人：先「确认接收」，再尽快首次触达建立联系',
+      columns: ['达人', '分配人', '分配时间', '当前阶段', '备注', '操作'],
       rows: myAssigns.slice(0, 8).map(a => {
         const t = mine.find(x => x.id === a.talentId);
-        return [t ? t.name : (a.talentName || a.talentId), a.assignedBy || '—', String(a.assignedAt || '').slice(0, 16) || '—', a.remark || '—'];
+        return [t ? t.name : (a.talentName || a.talentId), a.assignedBy || '—',
+          String(a.assignedAt || '').slice(0, 16) || '—',
+          t ? (MVP_STAGE_MAP[t.status] || t.status || '—') : '—', a.remark || '—',
+          // 行内操作由前端按 kind 渲染：查看达人 / 确认接收（已接收的不重复确认）
+          { kind: 'assign-actions', talentId: a.talentId, ack: t ? t.assignState !== 'pending_assign' : true }];
       }),
     });
     blocks.push({
@@ -1904,25 +1945,39 @@ route('GET', '/api/mvp/talents', async (ctx) => {
   // 高级运营：跨运营负责人查看全部达人（管理质量）；普通运营只看自己名下
   if (ctx.roleCode !== 'admin' && myPos !== 'senior_ops') arr = arr.filter(t => isMine(t, ctx) || isPendingForMe(t, ctx));
   if (q) arr = arr.filter(t => [t.name, t.contact].some(v => String(v || '').includes(q)));
-  // 寄拍结果回流汇总：累计任务数 / 进行中 / 累计佣金收益 / 最近发布时间（真实来自 tasks 集合）
+  // 寄拍结果回流汇总：累计任务数 / 进行中 / 累计佣金收益 / 最近发布时间 / 最近任务（真实来自 tasks 集合）
   const tasks = await db.list('tasks');
   const agg = {};
   for (const k of tasks) {
     if (k.isActive === false || !k.talentId) continue;
-    const a = (agg[k.talentId] = agg[k.talentId] || { taskTotal: 0, taskActive: 0, totalCommission: 0, lastPublish: '' });
+    const a = (agg[k.talentId] = agg[k.talentId] || { taskTotal: 0, taskActive: 0, totalCommission: 0, lastPublish: '', lastTaskAt: '', lastTaskName: '', lastTaskStatus: '' });
     a.taskTotal++;
     if (ACTIVE_TASK.includes(k.status)) a.taskActive++;
     a.totalCommission += Number(k.commission) || 0;
     const p = String(k.publishedAt || '').slice(0, 10);
     if (p && p > a.lastPublish) a.lastPublish = p;
+    const ca = String(k.createdAt || '');
+    if (ca >= a.lastTaskAt) { a.lastTaskAt = ca; a.lastTaskName = k.product || k.taskType || ''; a.lastTaskStatus = k.status || ''; }
   }
+  // 字段分层（2026-09-18e）：普通运营只陪跑自己名下达人，出参剥离负责人链路字段
+  // （字段名不动、库不动，只在接口出参收口；运营侧的「我的运营状态」用 assignState 表达）
+  const hideChain = ctx.roleCode !== 'admin' && myPos === 'ops';
   ok(ctx.res, arr
-    .map(t => Object.assign(toMvpLead(t), {
-      taskTotal: (agg[t.id] && agg[t.id].taskTotal) || 0,
-      taskActive: (agg[t.id] && agg[t.id].taskActive) || 0,
-      totalCommission: round2((agg[t.id] && agg[t.id].totalCommission) || 0),
-      lastPublish: (agg[t.id] && agg[t.id].lastPublish) || String(t.dewuLastPublish || '').slice(0, 10),
-    }))
+    .map(t => {
+      const row = Object.assign(toMvpLead(t), {
+        taskTotal: (agg[t.id] && agg[t.id].taskTotal) || 0,
+        taskActive: (agg[t.id] && agg[t.id].taskActive) || 0,
+        totalCommission: round2((agg[t.id] && agg[t.id].totalCommission) || 0),
+        lastPublish: (agg[t.id] && agg[t.id].lastPublish) || String(t.dewuLastPublish || '').slice(0, 10),
+        lastTaskName: (agg[t.id] && agg[t.id].lastTaskName) || '',
+        lastTaskStatus: (agg[t.id] && agg[t.id].lastTaskStatus) || '',
+      });
+      if (hideChain) {
+        for (const k of ['owner', 'ownerId', 'ownerPosition', 'ownerPositionLabel', 'recruitBy', 'recruitById',
+          'convertedBy', 'convertedById', 'opsBy', 'opsId', 'opsAt', 'talentOperator', 'assignedBy']) delete row[k];
+      }
+      return row;
+    })
     .sort((a, b) => String(b.convertedAt || b.createdAt || '').localeCompare(String(a.convertedAt || a.createdAt || ''))));
 });
 /* ============================================================

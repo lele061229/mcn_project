@@ -585,6 +585,35 @@ def main():
         chk('分配历史含 2 条（首次分配 + 重新分配）', st == 200 and len(arows2) >= 2, (st, len(arows2)))
         st, j = call(admin, '/api/users/' + TMPU, method='DELETE')
         chk('清理临时运营账号', st == 200, (st, (j or {}).get('error')))
+    # ---------- 12.6 达人档案字段分层 + 分配确认接收（2026-09-18e） ----------
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % asg_id, {'owner': '王浩', 'ownerPosition': 'ops', 'remark': '回分给王浩'})
+    chk('重新分配回王浩（确认接收用例前置）', st == 200, (st, (j or {}).get('error')))
+    st, j = call(staff, '/api/mvp/leads/%s' % asg_id)
+    d = j.get('data') or {}
+    chk('分配给运营后 assignState=pending_assign 且 assignedBy=分配人',
+        st == 200 and d.get('assignState') == 'pending_assign' and d.get('assignedBy') == '张萌',
+        (st, d.get('assignState'), d.get('assignedBy')))
+    st, j = call(recruit, '/api/mvp/leads/%s/assign-ack' % asg_id, {})
+    chk('非运营岗确认接收 → 403（岗位守卫）', st == 403, (st, (j or {}).get('error')))
+    st, j = call(staff, '/api/mvp/leads/%s/assign-ack' % asg_id, {})
+    chk('运营确认接收分配成功 → assigned', st == 200 and (j.get('data') or {}).get('assignState') == 'assigned', (st, (j or {}).get('error')))
+    chk('确认接收后 assignAckAt 落库', bool((j.get('data') or {}).get('assignAckAt')), (j.get('data') or {}).get('assignAckAt'))
+    st, j = call(staff, '/api/mvp/leads/%s/assign-ack' % asg_id, {})
+    chk('重复确认接收 → 409', st == 409, (st, (j or {}).get('error')))
+    # 达人档案出参分层：普通运营不回传负责人链路字段；高级运营保留完整视图
+    st, j = call(staff, '/api/mvp/talents')
+    trows = (j.get('data') or []) if j and j.get('ok') else []
+    HIDE_KEYS = ['owner', 'ownerId', 'ownerPosition', 'ownerPositionLabel', 'recruitBy', 'recruitById',
+                 'convertedBy', 'convertedById', 'opsBy', 'opsId', 'opsAt', 'talentOperator', 'assignedBy']
+    leaked = sorted({k for x in trows for k in HIDE_KEYS if k in x})
+    chk('ops 达人档案：不回传负责人链路字段（服务端剥离，字段名不动）',
+        bool(trows) and not leaked, (len(trows), leaked))
+    chk('ops 达人档案：仍含 assignState / lastTaskName / nextAction（陪跑视角字段）',
+        bool(trows) and all(all(k in x for k in ('assignState', 'lastTaskName', 'nextAction')) for x in trows), len(trows))
+    st, j = call(senior, '/api/mvp/talents')
+    srows = (j.get('data') or []) if j and j.get('ok') else []
+    chk('senior_ops 达人档案：保留完整负责人链路（owner/招募负责人/转化人）',
+        bool(srows) and all(all(k in x for k in ('owner', 'recruitBy', 'convertedBy')) for x in srows), len(srows))
     # ops 工作台 panels：新分配达人 / 我的达人 / 待跟进提醒
     st, j = call(staff, '/api/mvp/workbench')
     blocks = ((j.get('data') or {}).get('panels') or {}).get('blocks') or []
@@ -597,6 +626,10 @@ def main():
             any('APItest' in str(r[0]) for r in na.get('rows', []))
             and '分配人' in (na.get('columns') or []) and '备注' in (na.get('columns') or []),
             na.get('rows', [])[:2])
+        chk('新分配达人面板含 当前阶段/操作 列且行尾带确认操作（20260918e）',
+            '当前阶段' in (na.get('columns') or []) and '操作' in (na.get('columns') or [])
+            and any(isinstance(r[-1], dict) and r[-1].get('kind') == 'assign-actions' for r in na.get('rows', [])),
+            (na.get('columns'), na.get('rows', [])[:1]))
 
     # ---------- 12.5 岗位看板：dashboard 主管守卫 + 各岗位 panels（2026-09-18）----------
     st, j = call(admin, '/api/mvp/dashboard')

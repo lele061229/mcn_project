@@ -368,6 +368,21 @@ createApp({
       month: talentRows.filter(r => String(r.convertedAt || '').slice(0, 7) === today.slice(0, 7)).length,
       pending: talentRows.filter(r => r.opsPending).length,   // 待运营接收：已转正式但还没交接给运营（与服务端 opsPending 口径一致）
     }));
+    // 确认接收分配（2026-09-18e）：工作台「新分配达人」/ 达人档案「我的运营状态=待接收」一键确认，
+    // 服务端校验只有被分配的普通运营本人可确认（pending_assign → assigned）
+    async function ackAssign(talentId) {
+      if (!talentId) return;
+      try {
+        const r = await fetch('/api/mvp/leads/' + encodeURIComponent(talentId) + '/assign-ack', { method: 'POST' });
+        const j = await r.json();
+        if (j && j.ok) {
+          const i = talentRows.findIndex(x => x.id === talentId);
+          if (i >= 0) talentRows.splice(i, 1, Object.assign({}, talentRows[i], { assignState: 'assigned', assignAckAt: (j.data || {}).assignAckAt || '' }));
+          showToast('已确认接收，可以开始陪跑啦');
+          loadDashPanels();
+        } else showToast((j && j.error) || '确认失败');
+      } catch (e) { showToast('网络错误，确认失败'); }
+    }
     const dewuRows = reactive([]);
     const dewuReady = ref(false);
     function loadAccounts() {
@@ -420,6 +435,8 @@ createApp({
       const p = me.value.position || (me.value.role === 'admin' ? 'admin' : '');
       return MY_POSITION_LABEL[p] || '成员';
     });
+    // 达人档案字段分层（2026-09-18e）：普通运营只看陪跑视角字段，负责人链路仅主管/管理员可见
+    const amOps = computed(() => me.value.role !== 'admin' && me.value.position === 'ops');
     /* 经营看板按岗位分流：管理员=经营总览（原有 dashboard），其他岗位=岗位工作台视图（服务端按 position 装配 panels） */
     const dashPanels = reactive({ role: '', blocks: [], today: '' });
     const dashView = computed(() => (me.value.role === 'admin' ? 'admin' : 'position'));
@@ -1417,7 +1434,7 @@ createApp({
       leadView, leadKeyword, leadModal, leadForm, filteredLeads, leadsFiltered, isOverdue,
       openLeadModal, saveLead, onLeadMove,
       taskFilter, tasksFiltered, tasksLoaded, canLaunchShoot, shootDlg, openLaunchShoot, saveLaunchShoot, shootTalentOptions, taskDlg, openTaskAction, saveTaskAction, taskActionsOf, taskStatusTone,
-      taskTypeTab, TASK_TYPE_TABS, taskTypeOf, opsTasks, opsTasksLoaded, canAssignOpsTask, opsTargetOptions, opsTaskDlg, openOpsTask, saveOpsTask, myPositionLabel,
+      taskTypeTab, TASK_TYPE_TABS, taskTypeOf, opsTasks, opsTasksLoaded, canAssignOpsTask, opsTargetOptions, opsTaskDlg, openOpsTask, saveOpsTask, myPositionLabel, amOps, ackAssign,
       opsTaskProgDlg, openOpsTaskProgress, saveOpsTaskProgress, deleteOpsTask,
       hitCases, hitCasesLoaded, hitCaseQ, hitCasesFiltered, canEditHitCase, loadHitCases, hitCaseDlg, openHitCase, saveHitCase, deleteHitCase,
       board, loadBoard, boardReady, maxLoad, loadPct, boardFunnel, boardAttention, boardAlerts, canSeeCost, canTasks,
