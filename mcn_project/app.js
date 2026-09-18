@@ -439,7 +439,7 @@ createApp({
     const amOps = computed(() => me.value.role !== 'admin' && me.value.position === 'ops');
     /* ---- 站内消息中心（2026-09-19a）：右上角铃铛；新报名→高级运营 / 分配→运营 / SLA 超时→主管 ---- */
     const notif = reactive({ open: false, unread: 0, items: [] });
-    const NOTIF_TYPE_LABEL = { signup: '新报名', assign: '分配提醒', sla: 'SLA 超时', system: '系统' };
+    const NOTIF_TYPE_LABEL = { new_lead: '新报名', signup: '新报名', assign: '分配提醒', sla: 'SLA 超时', system: '系统' };
     function loadNotifs() {
       return fetch('/api/notifications').then(r => r.json()).then(j => {
         if (j && j.ok) { notif.unread = j.data.unread; notif.items.splice(0, notif.items.length, ...(j.data.items || [])); }

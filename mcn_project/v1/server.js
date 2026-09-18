@@ -311,7 +311,7 @@ async function pushMsg(toUser, type, title, body, link) {
   await db.insert('messages', {
     id: await nextId('messages', 'M', 5),
     toUser, toName: u ? nameOf(u) : toUser,
-    type: ['signup', 'assign', 'sla'].includes(type) ? type : 'system',
+    type: ['new_lead', 'signup', 'assign', 'sla'].includes(type) ? type : 'system',
     title: String(title || '').slice(0, 80), body: String(body || '').slice(0, 500),
     link: link || '', readAt: '', createdAt: nowStr(), isActive: true,
   });
@@ -934,6 +934,15 @@ function toMvpLead(t) {
     talentLevel: TALENT_LEVEL_ANY.includes(t.talentLevel) ? t.talentLevel : (TALENT_LEVEL_ANY.includes(t.level) ? t.level : 'C'),
     talentLevelLabel: TALENT_LEVEL_LABEL[t.talentLevel] || TALENT_LEVEL_LABEL[t.level] || 'C 普通',
     status: MVP_STAGE_MAP[t.status] || '新线索',
+    // 报名字段显式映射（2026-09-19b）：报名表单→线索的结构化留痕（老数据无这些字段时输出空串）
+    talentName: t.talentName || t.name || '',
+    source: t.source || t.channel || '',
+    contentExperience: t.contentExperience || '',
+    businessExperience: t.businessExperience || '',
+    categoryPreference: t.categoryPreference || '',
+    appearancePreference: t.appearancePreference || '',
+    remark: t.remark || '',
+    works: t.works || '',
     lastFollow: String(t.lastFollowAt || '').slice(0, 16),
     nextFollow: String(t.nextFollowAt || '').slice(0, 16),
     note: t.note || '',
@@ -3004,6 +3013,18 @@ route('POST', '/api/leads', async (ctx) => {
     channel: b.source_channel || '表单', level: 'C', status: '待联系',
     contentTypes: [], categories: [], fans: 0, coopCount: 0, fulfillmentRate: 0,
     owner: '未分配', tags: ['报名表单'], formSource: 'recruit.html', note: noteParts.join('；'),
+    // 报名字段显式映射（2026-09-19b）：talentName/source/contentExperience/businessExperience/
+    // categoryPreference/appearancePreference/works/remark/contact——现有 name/channel 等字段全部保留，
+    // 这里是报名表单→线索的结构化留痕，便于按字段检索（不动存量数据）
+    talentName: String(b.nickname || '').trim(),
+    source: b.source_channel || '表单',
+    contentExperience: b.self_media_status || '',
+    businessExperience: b.business_experience || '',
+    categoryPreference: b.preferred_categories || '',
+    appearancePreference: b.appearance_style || '',
+    remark: b.questions || '',
+    contact: contactParts.join(' / '),
+    works: b.works || '',
     // 字段分层（2026-09-18）：报名表只提供映射字段；判断字段一律「待判断」，由运营/高级运营跟进后判定
     talentStatus: 'lead', talentLevel: TALENT_LEVEL_UNSET,
     potentialLevel: '待判断', intentLevel: '待判断', talentClass: '待分类', coopPath: '待判断',
@@ -3021,7 +3042,7 @@ route('POST', '/api/leads', async (ctx) => {
   await addLog('报名表单', '达人：' + rec.name, '问卷报名', '', '来源=' + rec.channel);
   notify('新达人报名：' + rec.name + '（渠道：' + rec.channel + '）\n联系方式：' + rec.contact + '\n请在后台「达人线索」及时跟进');
   // 站内消息（2026-09-19a）：新达人报名 → 高级运营（消息中心，右上角铃铛）
-  await pushMsgPosition('senior_ops', 'signup', '新达人报名：' + rec.name,
+  await pushMsgPosition('senior_ops', 'new_lead', '新增达人报名：' + rec.name,
     '渠道：' + rec.channel + ' · 联系方式：' + (rec.contact || '未填写') + '，请在「达人线索」查看报名信息并分配负责人', 'talent-leads');
   json(ctx.res, 200, { code: 0, message: '提交成功', data: { id: rec.id } });
 });

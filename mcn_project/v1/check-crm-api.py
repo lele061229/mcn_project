@@ -726,11 +726,11 @@ def main():
     chk('报名提交成功（消息用例前置，公开接口）', st == 200 and j.get('code') == 0 and bool(msg_id), (st, msg_id))
     st, j = call(senior, '/api/notifications')
     nd = j.get('data') or {}
-    chk('新达人报名 → 高级运营收到 signup 消息（unread+1，含达人名）',
+    chk('新达人报名 → 高级运营收到 new_lead 消息（unread+1，标题=新增达人报名：达人名）',
         nd.get('unread', 0) >= nbase + 1
-        and any(m.get('type') == 'signup' and 'APItest消息中心' in (m.get('title') or '') for m in nd.get('items') or []),
+        and any(m.get('type') == 'new_lead' and ('新增达人报名：APItest消息中心' in (m.get('title') or '')) for m in nd.get('items') or []),
         (nbase, nd.get('unread')))
-    signup_msg = next((m for m in nd.get('items') or [] if m.get('type') == 'signup' and 'APItest消息中心' in (m.get('title') or '') and not m.get('readAt')), None)
+    signup_msg = next((m for m in nd.get('items') or [] if m.get('type') == 'new_lead' and 'APItest消息中心' in (m.get('title') or '') and not m.get('readAt')), None)
     st, j = call(senior, '/api/notifications/read', {'ids': [signup_msg['id']] if signup_msg else ['NONE']})
     chk('标记单条已读 → read>=1', st == 200 and ((j.get('data') or {}).get('read') or 0) >= 1, (st, j.get('data')))
     st, j = call(senior, '/api/notifications')
@@ -746,6 +746,17 @@ def main():
         st == 200 and 'staleMin' in ad and isinstance(cands, list) and 'recommend' in ad, (st, ad.get('staleMin'), len(cands)))
     chk('自动分配建议：candidates 按 load 升序（负载最低原则）',
         all(cands[k]['load'] <= cands[k + 1]['load'] for k in range(len(cands) - 1)), [(c.get('name'), c.get('load')) for c in cands])
+    st, j = call(senior, '/api/mvp/leads/' + (msg_id or 'T0000'))
+    ld = (j.get('data') or {}) if st == 200 else {}
+    chk('报名字段显式映射：talentName/source/contentExperience/businessExperience/categoryPreference/appearancePreference/remark/works/contact 落库',
+        ld.get('talentName') == 'APItest消息中心' and ld.get('source') == '朋友转介绍'
+        and 'contentExperience' in ld and 'businessExperience' in ld and 'categoryPreference' in ld
+        and 'appearancePreference' in ld and ld.get('remark') == '' and 'works' in ld and 'contact' in ld,
+        {k: ld.get(k) for k in ['talentName', 'source', 'remark', 'contact']})
+    chk('报名默认值：阶段=新线索 / 生命周期=lead / 评级=待判断 / 潜力·意愿=待判断 / 负责人=未分配',
+        ld.get('status') == '新线索' and ld.get('talentStatus') == 'lead' and ld.get('talentLevel') == '待判断'
+        and ld.get('potentialLevel') == '待判断' and ld.get('intentLevel') == '待判断' and ld.get('owner') == '未分配',
+        (ld.get('status'), ld.get('talentStatus'), ld.get('talentLevel'), ld.get('owner')))
     st, j = call(senior, '/api/mvp/leads/' + (msg_id or 'T0000'))
     chk('自动分配只生成建议：未分配线索负责人保持未分配（不覆盖主管决定）',
         st == 200 and (j.get('data') or {}).get('owner') == '未分配', (j.get('data') or {}).get('owner'))

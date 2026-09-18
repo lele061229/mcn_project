@@ -1,0 +1,31 @@
+const os = require('os'), path = require('path');
+const { spawn } = require('child_process');
+const EDGE = 'C://Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+const BASE = process.env.WS_BASE || 'http://127.0.0.1:3000';
+const PORT = 9298;
+const proc = spawn(EDGE, ['--headless=new','--disable-gpu','--no-first-run','--remote-debugging-port='+PORT,'--user-data-dir='+path.join(os.tmpdir(),'edge-probe2-'+Date.now()),'--window-size=1600,1040','about:blank'], { stdio: 'ignore' });
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+(async () => {
+  await sleep(2500);
+  const tabs = await (await fetch('http://127.0.0.1:' + PORT + '/json/list')).json();
+  const ws = new WebSocket(tabs.find(t => t.type === 'page').webSocketDebuggerUrl);
+  let id = 0; const pend = new Map(); const errs = [];
+  const send = (m, p) => new Promise(res => { const i = ++id; pend.set(i, res); ws.send(JSON.stringify({ id: i, method: m, params: p || {} })); });
+  ws.onmessage = e => { const m = JSON.parse(e.data);
+    if (m.method === 'Runtime.exceptionThrown') { const d = m.params.exceptionDetails; errs.push(((d.exception && d.exception.description) || d.text || '').slice(0, 500)); }
+    if (m.id && pend.has(m.id)) { pend.get(m.id)(m.result || m.error); pend.delete(m.id); } };
+  await new Promise(r => ws.onopen = r);
+  await send('Runtime.enable'); await send('Page.enable');
+  const ev = async ex => { const r = await send('Runtime.evaluate', { expression: ex, returnByValue: true, awaitPromise: true }); if (r.exceptionDetails) return 'EVAL_ERR: ' + ((r.exceptionDetails.exception && r.exceptionDetails.exception.description) || r.exceptionDetails.text).slice(0, 300); return r.result ? r.result.value : null; };
+  await send('Page.navigate', { url: BASE + '/' }); await sleep(1800);
+  console.log('login resp:', await ev(`fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:'admin',pass:'wsccbe9e7e38e3'})}).then(r=>r.json()).then(j=>JSON.stringify(j))`));
+  await send('Page.navigate', { url: BASE + '/' }); await sleep(4000);
+  console.log('errs-1:', JSON.stringify(errs)); errs.length = 0;
+  console.log('me:', await ev(`fetch('/api/me').then(r=>r.json()).then(j=>JSON.stringify(j))`));
+  console.log('sidebar:', await ev(`JSON.stringify({aside: !!document.querySelector('aside'), navN: document.querySelectorAll('nav').length, bodyKids: document.body.children.length, appHtml: (document.getElementById('app')||{}).innerHTML ? document.getElementById('app').innerHTML.length : -1})`));
+  console.log('nav click:', await ev(`(() => { const a=[...document.querySelectorAll('nav a')].find(a=>a.textContent.includes('达人线索')); if(!a) return 'NAV_NOT_FOUND'; a.click(); return 'ok'; })()`));
+  await sleep(2500);
+  console.log('errs-2:', JSON.stringify(errs));
+  console.log('state:', await ev(`JSON.stringify({hasRange: document.body.innerText.includes('数据范围'), hash: location.hash, tables: document.querySelectorAll('table').length, txt: document.body.innerText.slice(0,150)})`));
+  proc.kill(); process.exit(0);
+})().catch(e => { console.error('PROBE ERR', e); proc.kill(); process.exit(1); });
