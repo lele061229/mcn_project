@@ -420,6 +420,14 @@ createApp({
       const p = me.value.position || (me.value.role === 'admin' ? 'admin' : '');
       return MY_POSITION_LABEL[p] || '成员';
     });
+    /* 经营看板按岗位分流：管理员=经营总览（原有 dashboard），其他岗位=岗位工作台视图（服务端按 position 装配 panels） */
+    const dashPanels = reactive({ role: '', blocks: [], today: '' });
+    const dashView = computed(() => (me.value.role === 'admin' ? 'admin' : 'position'));
+    function loadDashPanels() {
+      return fetch('/api/mvp/workbench').then(r => r.json()).then(j => {
+        if (j && j.ok) { dashPanels.role = j.data.panels.role; dashPanels.blocks = j.data.panels.blocks || []; dashPanels.today = j.data.today || ''; }
+      }).catch(() => { });
+    }
     const accModal = ref(false), pwModal = ref(false);
     const accList = reactive([]);
     // 岗位决定账号能看到哪些线索（与 talents.ownerPosition 对应）
@@ -1374,7 +1382,7 @@ createApp({
       const p = NAV_POSITIONS[k];
       if (p && me.value.role !== 'admin' && me.value.position && !p.includes(me.value.position)) { toast.value = '该页面不在你的岗位职责内（' + (POSITIONS.find(x => x.key === me.value.position) || {}).label + '岗）'; setTimeout(() => (toast.value = ''), 2600); return; }
       page.value = k;
-      if (k === 'dashboard') { loadBoard(); setTimeout(renderCharts, 60); }
+      if (k === 'dashboard') { if (dashView.value === 'admin') { loadBoard(); setTimeout(renderCharts, 60); } else loadDashPanels(); }
       if (k === 'workbench') loadWorkbench();   // 待办按服务端规则实时重算
       if (k === 'account-ops') loadAccounts();  // 账号指标每次进入都刷新
       if (k === 'talent-pool') loadTalents(); // 达人档案：转化入库后实时刷新
@@ -1386,7 +1394,7 @@ createApp({
     return {
       page, nav, currentNav, today, toast, trendUp, trendFlat, tl, mnav, mobTabs, showToast,
       wbToday, wbOverdue, wbHandover, wbHot, wbInbox, wbTodos, wbOpen, wbCards, wbExtraCards, wbPanels, wbConfirm, wbReject, wbStartHandover, loadWorkbench,
-      funnelWidth, funnelRate, talentTimelineDlg, openTalentTimeline,
+      funnelWidth, funnelRate, talentTimelineDlg, openTalentTimeline, dashView, dashPanels, loadDashPanels,
       dewuRows, dewuStats, dewuReady, fansText, dewuDlg, dewuForm, openDewuEdit, saveDewu, loadAccounts,
       talentRows, talentStats, talentReady, loadTalents,
       me, canFin, accModal, pwModal, accList, accForm, pwForm, resetInfo, openAccounts, createAccount, removeAccount, resetAccount, updateAccount, POSITIONS, openPassword, changePassword, logout,

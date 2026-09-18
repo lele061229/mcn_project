@@ -429,13 +429,9 @@ def main():
         all(k in (d.get('attention') or {}) for k in ['unassigned', 'overdueFollow', 'pendingHandover', 'taskOverdue', 'pendingAudit']),
         d.get('attention'))
 
+    # 2026-09-18 岗位看板改版：经营看板升级为管理视图，普通岗位直接 403（改走岗位 panels，见 12.5 节）
     st, j = call(recruit, '/api/mvp/dashboard')
-    rd = j['data'] if st == 200 else {}
-    rvals = [x['value'] for x in (rd.get('funnel') or [])]
-    chk('非管理员看板只看自己（scope=mine，漏斗口径收窄）',
-        st == 200 and rd.get('scope') == 'mine' and rvals and rvals[0] <= vals[0], (rd.get('scope'), rvals[:1], vals[:1]))
-    rwl = rd.get('workload') or []
-    chk('非管理员负载不含他人名下达人（如王浩）', not any(w['owner'] == '王浩' for w in rwl), [w['owner'] for w in rwl])
+    chk('普通岗位看板已收口：recruit → 403（不再提供 mine 口径看板）', st == 403, st)
 
     # ---------- 12.5 运营中台：岗位面板 / 团队效率 / 运营任务 / 爆款拆解 / 达人评级 / 时间轴 ----------
     st, j = call(admin, '/api/mvp/workbench')
@@ -601,6 +597,36 @@ def main():
             any('APItest' in str(r[0]) for r in na.get('rows', []))
             and '分配人' in (na.get('columns') or []) and '备注' in (na.get('columns') or []),
             na.get('rows', [])[:2])
+
+    # ---------- 12.5 岗位看板：dashboard 主管守卫 + 各岗位 panels（2026-09-18）----------
+    st, j = call(admin, '/api/mvp/dashboard')
+    chk('经营看板守卫：admin 200', st == 200, st)
+    st, j = call(senior, '/api/mvp/dashboard')
+    chk('经营看板守卫：senior_ops 200', st == 200, st)
+    for u, lbl in ((promote, 'promote'), (recruit, 'recruit'), (staff, 'ops'), (fin, 'finance')):
+        st, j = call(u, '/api/mvp/dashboard')
+        chk('经营看板守卫：普通岗位 %s → 403' % lbl, st == 403, st)
+
+    def wb_keys(op):
+        st, j = call(op, '/api/mvp/workbench')
+        panels = (j.get('data') or {}).get('panels') or {}
+        return st, panels.get('role'), [b.get('key') for b in (panels.get('blocks') or [])]
+
+    st, role, bkeys = wb_keys(promote)
+    chk('promote 看板面板：role=promote 且含 我的活动/线索转化/渠道效果',
+        st == 200 and role == 'promote' and {'my-campaigns', 'lead-convert', 'channel-effect'} <= set(bkeys), (st, role, bkeys))
+    st, role, bkeys = wb_keys(recruit)
+    chk('recruit 看板面板：含 今日与待判断（今日新增/待判断/SLA 提醒）',
+        st == 200 and role == 'recruit' and 'today-judge' in bkeys, (st, role, bkeys))
+    st, role, bkeys = wb_keys(staff)
+    chk('ops 看板面板：含 任务概览（寄拍/成长）',
+        st == 200 and role == 'ops' and 'task-overview' in bkeys, (st, role, bkeys))
+    st, role, bkeys = wb_keys(senior)
+    chk('senior_ops 看板面板：含 未分配达人池/异常达人提醒',
+        st == 200 and role == 'senior_ops' and {'unassigned-pool', 'senior-alerts'} <= set(bkeys), (st, role, bkeys))
+    st, role, bkeys = wb_keys(fin)
+    chk('finance 看板面板：role=finance 且含 结算概览/收益统计',
+        st == 200 and role == 'finance' and {'settle-overview', 'income-stats'} <= set(bkeys), (st, role, bkeys))
 
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):
