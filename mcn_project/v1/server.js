@@ -1400,30 +1400,7 @@ async function buildWorkbenchPanels(ctx, all) {
     if (slaUp) alertsItems.push({ text: 'SLA 超时未联系', sub: slaUp + ' 条线索超过首次联系时限', page: 'talent-leads', tone: 'rose' });
     blocks.push({ key: 'alerts', title: '异常提醒', type: 'alerts', items: alertsItems });
   } else if (myPos === 'senior_ops') {
-    const members = await buildTeamMembers();
-    const opsTasksAll = (await db.list('opsTasks')).filter(k => k.isActive !== false);
-    const hitCases = (await db.list('hitCases')).filter(c => c.isActive !== false);
-    blocks.push({
-      key: 'ops-team', title: '运营团队', type: 'table', link: 'talent-pool',
-      hint: '谁手上多少达人、多少异常、任务完成率 —— 决定要不要重新分配',
-      columns: ['运营', '岗位', '负责达人', '异常', '任务完成率'],
-      rows: members.filter(m => m.position === 'ops').map(m => [m.name, m.positionLabel, m.talents, m.abnormal, m.taskRate + '%']),
-    });
-    blocks.push(funnelBlock());
-    blocks.push({
-      key: 'ops-tasks', title: '运营任务管理', type: 'stats', link: 'tasks',
-      items: [
-        { label: '我派发的运营任务', value: opsTasksAll.filter(k => k.createdById === ctx.authUser).length, sub: '方向验证 / 方法沉淀类任务' },
-        { label: '进行中', value: opsTasksAll.filter(k => k.status === '进行中').length, sub: '普通运营正在推进' },
-        { label: '逾期未完成', value: opsTasksAll.filter(k => k.dueAt && k.dueAt < today && !['已完成', '已取消'].includes(k.status)).length, sub: '已过截止时间', tone: 'text-rose-600' },
-      ],
-    });
-    blocks.push({
-      key: 'hit-cases', title: '爆款拆解库', type: 'list', link: 'hit-cases',
-      hint: '把跑通的内容方向沉淀下来，一线直接复用',
-      items: hitCases.slice(0, 5).map(c => ({ text: c.title, sub: (c.contentDirection || '') + (c.productType ? ' · ' + c.productType : '') })),
-    });
-    // 新线索提醒（2026-09-19a）：报名进来未分配的线索 + 负载最低的推荐负责人（只建议，不自动分配）
+    // 1) 待分配线索：报名进来未分配的线索 + 负载最低的推荐负责人（只建议，不自动分配）
     const newLeads = all.filter(t => statusOf(t) === 'lead' && (!t.ownerId || t.owner === '未分配'))
       .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     const recOps = (await opsLoadCandidates())[0] || null;
@@ -1435,22 +1412,21 @@ async function buildWorkbenchPanels(ctx, all) {
         recOps ? recOps.name + '（在管 ' + recOps.load + ' 条）' : '—',
         { kind: 'lead-actions', talentId: t.id, name: t.name, owner: t.owner || '未分配' }]),
     });
-    // 未分配达人池 + 异常提醒（管理台补全）：分配入口在达人档案页「分配给运营」
-    const unassignedAll = all.filter(t => !(t.ownerId || (t.owner && t.owner !== '未分配')));
+    // 2) 运营团队概览：每个普通运营的负责达人数 / 异常数 / 任务完成率 —— 决定要不要重新分配
+    const members = await buildTeamMembers();
     blocks.push({
-      key: 'unassigned-pool', title: '未分配达人池', type: 'stats', link: 'talent-pool',
-      hint: '在达人档案页点「分配给运营」把达人落给具体负责人',
-      items: [
-        { label: '未分配线索', value: unassignedAll.filter(t => statusOf(t) === 'lead').length, sub: '需要指派招募 / 运营跟进' },
-        { label: '未分配达人', value: unassignedAll.filter(t => statusOf(t) !== 'lead').length, sub: '正式达人还没落到负责人名下' },
-        { label: '待处理交接单', value: (await db.list('handovers')).filter(h => h.status === 'pending').length, sub: '等待双方确认', tone: 'text-amber-500' },
-      ],
+      key: 'ops-team', title: '运营团队概览', type: 'table', link: 'talent-pool',
+      hint: '谁手上多少达人、多少异常、任务完成率 —— 决定要不要重新分配',
+      columns: ['运营', '岗位', '负责达人', '异常', '任务完成率'],
+      rows: members.filter(m => m.position === 'ops').map(m => [m.name, m.positionLabel, m.talents, m.abnormal, m.taskRate + '%']),
     });
+    // 3) 达人成长漏斗（累计口径，与管理员共用 funnelBlock）
+    blocks.push(funnelBlock());
     const abnAcc = (await db.list('talents')).filter(t => t.isActive !== false && accRowOf(t).updateStale).length;
     const abnFollow = all.filter(t => t.owner && t.owner !== '未分配' && !WB_DONE_STATUS.includes(t.status) && t.lastFollowAt && daysAgo(t.lastFollowAt) > 2).length;
     const abnSla = all.filter(t => slaOf(t).slaStatus === 'overdue').length;
     blocks.push({
-      key: 'senior-alerts', title: '异常达人提醒', type: 'alerts', items: [
+      key: 'senior-alerts', title: '异常提醒', type: 'alerts', items: [
         abnFollow ? { text: '超时未跟进', sub: abnFollow + ' 条线索超过 2 天未跟进', page: 'talent-leads', tone: 'rose' } : null,
         abnAcc ? { text: '账号久未更新', sub: abnAcc + ' 个达人账号超过更新周期未发内容', page: 'account-ops', tone: 'amber' } : null,
         abnSla ? { text: 'SLA 超时未联系', sub: abnSla + ' 条线索超过首次联系时限', page: 'talent-leads', tone: 'rose' } : null,
@@ -1458,7 +1434,6 @@ async function buildWorkbenchPanels(ctx, all) {
     });
   } else if (myPos === 'ops') {
     const mine = all.filter(t => isMine(t, ctx));
-    const cnt = k => mine.filter(t => statusOf(t) === k).length;
     const myOpsTasks = (await db.list('opsTasks')).filter(k => k.isActive !== false
       && (k.ownerId === ctx.authUser || k.owner === (ctx.displayName || ctx.operator)));
     // 新分配达人（2026-09-18）：近 7 天主管（管理员/高级运营）分配给我的达人，来自独立分配记录
@@ -1480,15 +1455,6 @@ async function buildWorkbenchPanels(ctx, all) {
       }),
     });
     blocks.push({
-      key: 'my-talents', title: '我的达人', type: 'stats', link: 'talent-pool',
-      items: [
-        { label: '陪跑达人', value: cnt('coaching'), sub: '正在陪着成长' },
-        { label: '重点培养', value: cnt('potential'), sub: '潜力已被验证', tone: 'text-violet-600' },
-        { label: '签约 / 直属', value: cnt('contracted') + cnt('company_owned'), sub: '公司签约 + 公司直属', tone: 'text-emerald-600' },
-        { label: '公司账号', value: mine.filter(t => t.dewuId).length, sub: '有得物账号在运营' },
-      ],
-    });
-    blocks.push({
       key: 'today', title: '今日待办', type: 'stats',
       items: [
         { label: '7 天未更新达人', value: mine.filter(t => accRowOf(t).daysSincePublish >= 7).length, sub: '该安排新内容了', tone: 'text-amber-500' },
@@ -1496,31 +1462,9 @@ async function buildWorkbenchPanels(ctx, all) {
         { label: '待完成运营任务', value: myOpsTasks.filter(k => !['已完成', '已取消'].includes(k.status)).length, sub: '主管派发的方向验证任务' },
       ],
     });
-    // 待跟进提醒（2026-09-18）：逾期未跟进 / 今日待跟进 / 新分配未触达，只统计我名下达人
-    const followDue = t => String(t.nextFollowAt || '').slice(0, 10);
-    const overdueFollow = mine.filter(t => followDue(t) && followDue(t) < today);
-    const dueToday = mine.filter(t => followDue(t) === today);
-    const assignedUntouched = myAssigns.filter(a => { const t = mine.find(x => x.id === a.talentId); return t && !t.lastFollowAt; });
-    blocks.push({
-      key: 'follow-remind', title: '待跟进提醒', type: 'alerts',
-      items: [
-        overdueFollow.length ? { text: '逾期未跟进', sub: overdueFollow.length + ' 位达人已过计划跟进时间（' + overdueFollow.slice(0, 3).map(t => t.name).join('、') + (overdueFollow.length > 3 ? ' 等' : '') + '）', page: 'talent-pool', tone: 'rose' } : null,
-        dueToday.length ? { text: '今日待跟进', sub: dueToday.length + ' 位达人计划今天跟进', page: 'talent-pool', tone: 'amber' } : null,
-        assignedUntouched.length ? { text: '新分配未触达', sub: assignedUntouched.length + ' 位新分配达人还没首次联系', page: 'talent-pool', tone: 'amber' } : null,
-      ].filter(Boolean),
-    });
-    // 任务概览：寄拍执行单 + 成长任务分开看（内容 / 成长任务是运营成长任务体系）
+    // 我的达人列表：成长与下一步动作（陪跑视角核心面板，只看 talentOperator/owner=当前用户）
     const myTasks = (await db.list('tasks')).filter(k => k.isActive !== false
       && (k.ownerId === ctx.authUser || k.owner === (ctx.displayName || ctx.operator)));
-    blocks.push({
-      key: 'task-overview', title: '任务概览（寄拍 / 成长）', type: 'stats', link: 'tasks',
-      items: [
-        { label: '进行中寄拍任务', value: myTasks.filter(k => ACTIVE_TASK.includes(k.status)).length, sub: '我名下达人的执行单' },
-        { label: '逾期寄拍', value: myTasks.filter(k => k.status === '超时' || (k.dueAt && k.dueAt < today && ACTIVE_TASK.includes(k.status))).length, sub: '该催达人交付了', tone: 'text-rose-600' },
-        { label: '进行中成长任务', value: myOpsTasks.filter(k => k.status === '进行中').length, sub: '主管派发的内容 / 成长任务' },
-        { label: '内容方向待定', value: mine.filter(t => !(t.contentTypes || []).length || t.coopPath === '待判断').length, sub: '先定方向再安排任务' },
-      ],
-    });
     blocks.push({
       key: 'my-talent-list', title: '我的达人 · 成长与下一步动作', type: 'table', link: 'talent-pool',
       columns: ['达人', '生命周期', '评级', '最近更新', '成长趋势', '下一步动作'],
@@ -1536,63 +1480,93 @@ async function buildWorkbenchPanels(ctx, all) {
         ];
       }),
     });
+    // 异常提醒（20260920a 分岗位改版）：跟进异常 + 任务异常 + 账号异常，只统计我名下达人
+    const followDue = t => String(t.nextFollowAt || '').slice(0, 10);
+    const overdueFollow = mine.filter(t => followDue(t) && followDue(t) < today);
+    const dueToday = mine.filter(t => followDue(t) === today);
+    const assignedUntouched = myAssigns.filter(a => { const t = mine.find(x => x.id === a.talentId); return t && !t.lastFollowAt; });
+    const taskIssue = myTasks.filter(k => k.status === '超时' || ['商品异常', '内容不合格', '达人拒绝'].includes(k.status)
+      || (ACTIVE_TASK.includes(k.status) && k.dueAt && k.dueAt < today)).length;
+    const accStale = mine.filter(t => accRowOf(t).updateStale).length;
+    blocks.push({
+      key: 'ops-alerts', title: '异常提醒', type: 'alerts',
+      items: [
+        overdueFollow.length ? { text: '逾期未跟进', sub: overdueFollow.length + ' 位达人已过计划跟进时间（' + overdueFollow.slice(0, 3).map(t => t.name).join('、') + (overdueFollow.length > 3 ? ' 等' : '') + '）', page: 'talent-pool', tone: 'rose' } : null,
+        dueToday.length ? { text: '今日待跟进', sub: dueToday.length + ' 位达人计划今天跟进', page: 'talent-pool', tone: 'amber' } : null,
+        assignedUntouched.length ? { text: '新分配未触达', sub: assignedUntouched.length + ' 位新分配达人还没首次联系', page: 'talent-pool', tone: 'amber' } : null,
+        taskIssue ? { text: '寄拍任务异常', sub: taskIssue + ' 个任务逾期 / 异常，该催达人交付了', page: 'tasks', tone: 'rose' } : null,
+        accStale ? { text: '账号久未更新', sub: accStale + ' 个我的达人账号超过更新周期未发内容', page: 'account-ops', tone: 'amber' } : null,
+      ].filter(Boolean),
+    });
   } else if (myPos === 'recruit') {
-    const mine = (await db.list('leads')).filter(t => t.isActive !== false && isMine(t, ctx));
-    const st = s => mine.filter(t => t.status === s).length;
+    // 招募工作台（20260920a 分岗位改版）：看新线索、沟通、初筛、交接。
+    // 可见范围=服务端行级过滤（leadVisibleTo position 池）：我负责的 + 招募同岗池，
+    // 不含运营团队数据 / 财务数据 / 深度账号运营数据。
+    const universe = all.filter(t => leadVisibleTo(t, ctx, 'position'));
+    // 1) 新线索列表
     blocks.push({
-      key: 'my-leads', title: '我的线索', type: 'stats', link: 'talent-leads',
-      items: [
-        { label: '待联系', value: st('待联系'), sub: '还没首次触达' },
-        { label: '跟进中', value: st('已联系') + st('有意向'), sub: '已联系 / 已有意向' },
-        { label: '高意愿', value: mine.filter(t => t.intentLevel === '强').length, sub: '意愿=强，优先推进', tone: 'text-emerald-600' },
-        { label: '待转运营', value: mine.filter(t => ['合作中', '暂停合作'].includes(t.status)).length, sub: '已合作，尽快交接运营' },
-      ],
+      key: 'new-lead-list', title: '新线索列表', type: 'table', link: 'talent-leads',
+      hint: '按报名时间倒序：新线索先首次触达，再判断潜力与意愿',
+      columns: ['达人', '渠道', '报名时间', '意愿', '当前阶段'],
+      rows: universe.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10)
+        .map(t => [t.name, t.channel || '—', String(t.createdAt || '').slice(0, 16) || '—',
+          t.intentLevel || '待判断', MVP_STAGE_MAP[t.status] || '新线索']),
     });
-    const over = mine.filter(t => slaOf(t).slaStatus === 'overdue');
-    const remind = mine.filter(t => slaOf(t).slaStatus === 'remind');
+    // 2) 跟进待办（含 SLA 首次联系时限：分配即计时，超时自动上报主管）
+    const over = universe.filter(t => slaOf(t).slaStatus === 'overdue');
+    const remind = universe.filter(t => slaOf(t).slaStatus === 'remind');
+    const recOverdueFollow = universe.filter(t => { const d = String(t.nextFollowAt || '').slice(0, 10); return d && d < today; });
+    const recDueToday = universe.filter(t => String(t.nextFollowAt || '').slice(0, 10) === today);
     blocks.push({
-      key: 'sla', title: 'SLA 首次联系时限', type: 'list', link: 'talent-leads',
-      hint: '分配即开始计时，超时会自动上报主管',
-      items: over.map(t => ({ text: t.name, sub: '已超时 · ' + (slaOf(t).slaRuleLabel || ''), tone: 'rose' }))
-        .concat(remind.map(t => ({ text: t.name, sub: '剩余 ' + slaOf(t).slaRemainMin + ' 分钟', tone: 'amber' }))),
+      key: 'follow-todo', title: '跟进待办', type: 'alerts', link: 'talent-leads',
+      hint: 'SLA 超时会自动上报主管；逾期 / 今日待跟进按计划跟进时间推导',
+      items: over.slice(0, 5).map(t => ({ text: t.name, sub: 'SLA 已超时 · ' + (slaOf(t).slaRuleLabel || ''), page: 'talent-leads', tone: 'rose' }))
+        .concat(remind.slice(0, 5).map(t => ({ text: t.name, sub: 'SLA 剩余 ' + slaOf(t).slaRemainMin + ' 分钟', page: 'talent-leads', tone: 'amber' })))
+        .concat([
+          recOverdueFollow.length ? { text: '逾期未跟进', sub: recOverdueFollow.length + ' 条已过计划跟进时间', page: 'talent-leads', tone: 'rose' } : null,
+          recDueToday.length ? { text: '今日待跟进', sub: recDueToday.length + ' 条计划今天跟进', page: 'talent-leads', tone: 'amber' } : null,
+        ]).filter(Boolean),
     });
+    // 3) 高意向池
+    const hot = universe.filter(t => t.intentLevel === '强' || t.potentialLevel === '高');
     blocks.push({
-      key: 'today-judge', title: '今日与待判断', type: 'stats', link: 'talent-leads',
-      items: [
-        { label: '今日新增线索', value: mine.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '按线索创建时间' },
-        { label: '待判断达人', value: mine.filter(t => t.coopPath === '待判断' || !(t.contentTypes || []).length).length, sub: '合作路径 / 内容方向未定' },
-        { label: 'SLA 即将超时', value: remind.length, sub: '已进提醒档，抓紧联系', tone: 'text-amber-500' },
-      ],
+      key: 'hot-pool', title: '高意向池', type: 'table', link: 'talent-leads',
+      hint: '意愿强或潜力高的线索：优先推进转化，尽快推到合作',
+      columns: ['达人', '渠道', '潜力', '意愿', '评级', '最近跟进'],
+      rows: hot.slice(0, 10).map(t => [t.name, t.channel || '—', t.potentialLevel || '待判断', t.intentLevel || '待判断',
+        TALENT_LEVEL_LABEL[t.talentLevel] || t.talentLevel || '待判断',
+        t.lastFollowAt ? String(t.lastFollowAt).slice(0, 10) : '未跟进']),
+    });
+    // 4) 待交接列表：已合作但还没交接给运营的达人
+    const hPend = (await db.list('handovers')).filter(h => h.status === 'pending');
+    const toHandover = universe.filter(t => ['合作中', '暂停合作'].includes(t.status)
+      && !hPend.some(h => h.talentId === t.id));
+    blocks.push({
+      key: 'handover-list', title: '待交接列表', type: 'table', link: 'talent-pool',
+      hint: '已合作但还没交接给运营的达人：在达人档案页发起交接，交出后转长期管理',
+      columns: ['达人', '当前阶段', '负责人', '创建时间', '最近跟进'],
+      rows: toHandover.slice(0, 10).map(t => [t.name, MVP_STAGE_MAP[t.status] || t.status, t.owner || '未分配',
+        String(t.createdAt || '').slice(0, 10) || '—', t.lastFollowAt ? String(t.lastFollowAt).slice(0, 10) : '未跟进']),
     });
   } else if (myPos === 'promote') {
-    // 推广工作台：我的活动 → 我负责渠道的线索转化 → 渠道效果
+    // 推广工作台（20260920a 分岗位改版）：看渠道、活动、投入产出；不显示达人运营类执行任务。
+    // 活动口径=我名下投放（与 /api/mvp/campaigns 同一隔离规则）；线索口径=我负责渠道覆盖的线索。
     const camps = (await db.list('campaigns')).filter(c => c.isActive !== false);
     const mineCamps = camps.filter(c => c.owner === (ctx.displayName || ctx.operator));
     const myChannels = [...new Set(mineCamps.map(c => c.channel).filter(Boolean))];
     const chLeads = myChannels.length ? all.filter(t => myChannels.includes(t.channel || '')) : [];
     const stgOf = t => MVP_STAGE_MAP[t.status] || '新线索';
+    // 1) 推广活动列表
     blocks.push({
-      key: 'my-campaigns', title: '我的推广活动', type: 'stats', link: 'channels',
-      hint: '只统计我名下的投放活动与其覆盖的渠道',
-      items: [
-        { label: '活动数', value: mineCamps.length, sub: '我名下的投放活动' },
-        { label: '总投入', value: '¥' + mineCamps.reduce((s, c) => s + (Number(c.cost) || 0), 0), sub: '活动成本合计' },
-        { label: '覆盖渠道', value: myChannels.length, sub: myChannels.join(' / ') || '暂无渠道，去推广获客创建' },
-        { label: '带来线索', value: chLeads.length, sub: '我负责渠道的线索总量' },
-      ],
+      key: 'campaign-list', title: '推广活动列表', type: 'table', link: 'channels',
+      hint: '我名下的投放活动：投入与产出在推广获客页维护',
+      columns: ['活动', '渠道', '投入', '有效线索', '签约'],
+      rows: mineCamps.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 8)
+        .map(c => [c.name, c.channel || '—', '¥' + (Number(c.cost) || 0), Number(c.validLeads) || 0, Number(c.signed) || 0]),
     });
+    // 2) 渠道效果对比
     blocks.push({
-      key: 'lead-convert', title: '线索转化', type: 'stats', link: 'talent-leads',
-      hint: '我负责渠道线索的实时转化进度',
-      items: [
-        { label: '新增线索（30 天）', value: chLeads.filter(t => daysAgo(t.createdAt) <= 30).length, sub: '按线索创建时间' },
-        { label: '有效线索', value: chLeads.filter(t => t.lastFollowAt).length, sub: '已建立联系' },
-        { label: '报名 / 成达人', value: chLeads.filter(t => ['已报名', '已成为达人'].includes(stgOf(t))).length, sub: '进入报名及之后阶段', tone: 'text-emerald-600' },
-        { label: '线索→达人转化率', value: chLeads.length ? Math.round(chLeads.filter(t => stgOf(t) === '已成为达人').length / chLeads.length * 100) + '%' : '—', sub: '我负责渠道的整体转化' },
-      ],
-    });
-    blocks.push({
-      key: 'channel-effect', title: '渠道效果', type: 'table', link: 'channels',
+      key: 'channel-effect', title: '渠道效果对比', type: 'table', link: 'channels',
       hint: '按我负责的渠道逐个聚合，看哪个渠道值得续投',
       columns: ['渠道', '线索', '有效', '报名', '达人', '转化率'],
       rows: myChannels.map(ch => {
@@ -1602,6 +1576,36 @@ async function buildWorkbenchPanels(ctx, all) {
         const tal = rows.filter(t => stgOf(t) === '已成为达人').length;
         return [ch, rows.length, valid, signed, tal, rows.length ? Math.round(tal / rows.length * 100) + '%' : '—'];
       }),
+    });
+    // 3) 来源追踪：报名表单（formSource=recruit.html）自动进线索池，其余为渠道录入 / 手动创建
+    const srcRow = (label, rows) => [label, rows.length,
+      rows.filter(t => ['已报名', '已成为达人'].includes(stgOf(t))).length,
+      rows.filter(t => stgOf(t) === '已成为达人').length];
+    blocks.push({
+      key: 'source-tracking', title: '来源追踪', type: 'table', link: 'talent-leads',
+      hint: '我负责渠道线索的来源构成：报名表单转化最直接，渠道录入需招募同事初筛',
+      columns: ['来源', '线索', '报名', '成为达人'],
+      rows: [
+        srcRow('报名表单', chLeads.filter(t => t.formSource === 'recruit.html')),
+        srcRow('渠道录入 / 手动', chLeads.filter(t => t.formSource !== 'recruit.html')),
+      ],
+    });
+    // 4) 优化建议：按当前投放与线索数据自动生成
+    const tips = [];
+    if (!mineCamps.length) tips.push({ text: '还没有我名下的推广活动', sub: '去「推广获客」创建投放活动，线索与转化会自动回到工作台', tone: 'amber', page: 'channels' });
+    const chStat = myChannels.map(ch => {
+      const rows = chLeads.filter(t => (t.channel || '') === ch);
+      const tal = rows.filter(t => stgOf(t) === '已成为达人').length;
+      return { ch, leads: rows.length, rate: rows.length ? tal / rows.length : 0 };
+    }).filter(x => x.leads > 0).sort((a, b) => b.rate - a.rate);
+    if (chStat.length) tips.push({ text: '「' + chStat[0].ch + '」转化率最高（' + Math.round(chStat[0].rate * 100) + '%）', sub: '表现最好的渠道，可考虑加大投放力度', page: 'channels' });
+    if (chStat.length > 1) tips.push({ text: '「' + chStat[chStat.length - 1].ch + '」转化率最低（' + Math.round(chStat[chStat.length - 1].rate * 100) + '%）', sub: '建议复盘素材与定向，或降低该渠道预算', tone: 'amber', page: 'channels' });
+    const noContact = chLeads.filter(t => !t.lastFollowAt).length;
+    if (noContact) tips.push({ text: noContact + ' 条渠道线索还没建立联系', sub: '推动招募同事尽快首次触达，避免线索浪费', tone: 'rose', page: 'talent-leads' });
+    blocks.push({
+      key: 'optimize-tips', title: '优化建议', type: 'list', link: 'channels',
+      hint: '按当前投放与线索数据自动生成',
+      items: tips,
     });
   } else if (myPos === 'finance' || ctx.roleCode === 'finance') {
     // 财务工作台：结算进度 + 收益概览（明细与操作在「收益结算」页）
@@ -2411,7 +2415,7 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
   const order = { '高': 0, '中': 1, '低': 2 };
   rows.sort((a, b) => (order[a.priority] - order[b.priority]) || String(a.due).localeCompare(String(b.due)));
   const byType = tp => rows.filter(r => r.type === tp).length;
-  // —— 岗位专属卡片：推广 / 寄拍 / 财务 的链路口径（招募 / 运营 / 管理员沿用 5 张达人卡）——
+  // —— 岗位专属卡片（20260920a 分岗位改版）：高级运营 / 推广 / 招募 / 普通运营 / 财务 各自的顶部口径（管理员沿用经营卡）——
   let extraCards = [];
   if (isAdmin) {
     // 管理员工作台：哪里需要处理（未分配 / 超时线索 / 待运营接收 / 异常任务 / 逾期结算 / 待确认交接）
@@ -2436,15 +2440,45 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       { label: '异常任务', value: abTasks, sub: '逾期 / 超时的寄拍任务', tone: 'text-rose-600' },
       { label: '逾期结算', value: settleOverdue, sub: '到期未结清的结算单', tone: 'text-rose-600' },
     ];
-  } else if (myPos === 'promote' && !isAdmin) {
-    const cs = (await db.list('campaigns')).filter(c => c.owner === meName);
-    const consult = cs.reduce((s, c) => s + (Number(c.consult) || 0), 0);
-    const leads = cs.reduce((s, c) => s + (Number(c.validLeads) || 0), 0);
-    const signed = cs.reduce((s, c) => s + (Number(c.signed) || 0), 0);
+  } else if (myPos === 'senior_ops' && !isAdmin) {
+    // 高级运营工作台卡片（20260920a 分岗位改版）：看全局 / 看分配 / 看异常
+    const senTalents = (await db.list('talents')).filter(t => t.isActive !== false);
     extraCards = [
-      { label: '我的投放', value: cs.length, sub: '负责的推广活动 / 渠道', tone: 'text-cyan-600' },
-      { label: '有效线索', value: leads, sub: '咨询 ' + consult + ' → 有效 ' + leads, tone: 'text-indigo-600' },
-      { label: '线索转化率', value: (consult ? Math.round(signed / consult * 100) : 0) + '%', sub: '签约 / 咨询', tone: 'text-emerald-600' },
+      { label: '待分配新线索', value: all.filter(t => !(t.ownerId || (t.owner && t.owner !== '未分配'))).length, sub: '公海新线索，尽快指派负责人', tone: 'text-rose-600' },
+      { label: '今日新增报名', value: all.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '今天报名进入线索池的达人', tone: 'text-cyan-600' },
+      { label: '超时未处理线索', value: all.filter(t => slaOf(t).slaStatus === 'overdue').length, sub: '超首次联系时限，需催办或重新分配', tone: 'text-rose-600' },
+      { label: '团队在管达人总数', value: senTalents.length, sub: '正式达人库在管总量', tone: 'text-indigo-600' },
+      { label: '重点培养达人数量', value: senTalents.filter(t => (t.talentStatus || '') === 'potential').length, sub: '生命周期=重点培养达人', tone: 'text-violet-600' },
+    ];
+  } else if (myPos === 'promote' && !isAdmin) {
+    // 推广工作台卡片（20260920a 分岗位改版）：活动口径来自投放表，线索口径来自我负责渠道的实时数据
+    const cs = (await db.list('campaigns')).filter(c => c.isActive !== false && c.owner === meName);
+    const csMonth = cs.filter(c => String(c.createdAt || '').slice(0, 7) === today.slice(0, 7));
+    const myChannels = [...new Set(cs.map(c => c.channel).filter(Boolean))];
+    const chLeads = myChannels.length ? all.filter(t => myChannels.includes(t.channel || '')) : [];
+    const valid = chLeads.filter(t => t.lastFollowAt).length;
+    const signedUp = chLeads.filter(t => ['待审核', '已通过', '合作中', '暂停合作'].includes(t.status)).length;
+    const toTalent = chLeads.filter(t => ['合作中', '暂停合作'].includes(t.status)).length;
+    extraCards = [
+      { label: '本月推广活动数', value: csMonth.length, sub: today.slice(0, 7) + ' 创建的投放活动（名下共 ' + cs.length + ' 个）', tone: 'text-cyan-600' },
+      { label: '总投入', value: '¥' + cs.reduce((s, c) => s + (Number(c.cost) || 0), 0), sub: '名下活动成本合计', tone: 'text-indigo-600' },
+      { label: '有效线索数', value: valid, sub: '我负责渠道已建立联系的线索', tone: 'text-indigo-600' },
+      { label: '报名人数', value: signedUp, sub: '我负责渠道进入报名及之后的线索', tone: 'text-slate-800' },
+      { label: '新增达人数', value: toTalent, sub: '我负责渠道已转正式的达人', tone: 'text-emerald-600' },
+      { label: '报名转化率', value: valid ? Math.round(signedUp / valid * 100) + '%' : '—', sub: '报名人数 / 有效线索数', tone: 'text-cyan-600' },
+      { label: '最终转化率', value: signedUp ? Math.round(toTalent / signedUp * 100) + '%' : '—', sub: '新增达人数 / 报名人数', tone: 'text-emerald-600' },
+    ];
+  } else if (myPos === 'recruit' && !isAdmin) {
+    // 招募工作台卡片（20260920a 分岗位改版）：看新线索、沟通、初筛、交接
+    // 数据范围=服务端行级过滤（leadVisibleTo position 池）：我负责的 + 招募同岗池，不含运营 / 财务数据
+    const universe = all.filter(t => leadVisibleTo(t, ctx, 'position'));
+    extraCards = [
+      { label: '待处理新线索', value: universe.filter(t => t.status === '待联系').length, sub: '还没首次触达的新线索', tone: 'text-rose-600' },
+      { label: '今日待跟进', value: universe.filter(t => String(t.nextFollowAt || '').slice(0, 10) === today).length, sub: '下次跟进时间=今天', tone: 'text-cyan-600' },
+      { label: '高意向达人', value: universe.filter(t => t.intentLevel === '强').length, sub: '意愿=强，优先推进转化', tone: 'text-emerald-600' },
+      { label: '待交接达人', value: universe.filter(t => ['合作中', '暂停合作'].includes(t.status) && !hoOf(t.id)).length, sub: '已合作，尽快交接给运营', tone: 'text-teal-600' },
+      { label: '首次联系SLA超时数', value: universe.filter(t => slaOf(t).slaStatus === 'overdue').length, sub: '超首次联系时限，会被上报主管', tone: 'text-rose-600' },
+      { label: '今日新增报名', value: universe.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '今天报名进入线索池', tone: 'text-indigo-600' },
     ];
   } else if (myPos === 'finance' && !isAdmin) {
     const ss = await db.list('settlements');
@@ -2453,29 +2487,25 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       { label: '待付款', value: ss.filter(s => s.status === '已确认').length, sub: '已确认、尚未结清', tone: 'text-indigo-600' },
       { label: '已结清', value: ss.filter(s => s.status === '已结清').length, sub: '历史累计', tone: 'text-emerald-600' },
     ];
-  } else if (isOps) {
-    // 运营工作台卡片：我的达人 / 待制定内容方向 / 待发布 / 数据异常 / 待发起寄拍
-    //（账号指标见「账号运营」页；这里聚焦运营岗每天要推进的事）
+  } else if (myPos === 'ops') {
+    // 运营工作台卡片（20260920a 分岗位改版）：看「我负责谁、我今天做什么」——只统计我名下达人
     const mineTalents = all.filter(t => isMine(t, ctx));
     const myIds = new Set(mineTalents.map(t => t.id));
     const myTasks = (await db.list('tasks')).filter(k => k.isActive !== false && myIds.has(k.talentId));
-    const noDirection = mineTalents.filter(t => !(t.contentTypes || []).length || t.coopPath === '待判断').length;
+    const todayAssigned = mineTalents.filter(t => String(t.assignedAt || '').slice(0, 10) === today).length;
+    const toFollow = mineTalents.filter(t => { const d = String(t.nextFollowAt || '').slice(0, 10); return d && d <= today; }).length;
     const toPublish = myTasks.filter(k => k.status === '待发布' || k.status === '待审核').length;
     const abnormal = myTasks.filter(k => ['超时', '商品异常', '内容不合格', '达人拒绝'].includes(k.status)).length
       + mineTalents.map(accRowOf).filter(a => a.updateStale).length;
     const needShoot = mineTalents.filter(t => (MVP_STAGE_MAP[t.status] || '') === '合作中'
       && !myTasks.some(k => ACTIVE_TASK.includes(k.status))).length;
-    // 新接收达人：7 天内通过交接确认接收的（运营接手初期要重点看交接单里的风险与建议）
-    const rTs = s => { const n = new Date(String(s || '').replace(' ', 'T')).getTime(); return isNaN(n) ? 0 : n; };
-    const newReceived = mineTalents.filter(t => t.handoverStatus === 'confirmed' && t.handoverReceivedAt
-      && (Date.now() - rTs(t.handoverReceivedAt)) <= 7 * 86400000).length;
     extraCards = [
-      { label: '我的达人', value: mineTalents.length, sub: '我名下长期管理的达人（已从招募交接给我）', tone: 'text-cyan-600' },
-      { label: '新接收达人', value: newReceived, sub: '7 天内交接给我的，先看交接单风险与建议', tone: 'text-teal-600' },
-      { label: '待制定内容方向', value: noDirection, sub: '还没定内容方向 / 合作路径的达人', tone: 'text-indigo-600' },
-      { label: '待发布', value: toPublish, sub: '含待我审核的寄拍内容', tone: 'text-amber-500' },
-      { label: '数据异常', value: abnormal, sub: '任务超时 / 商品异常 / 账号久未更新', tone: 'text-rose-600' },
-      { label: '待发起寄拍', value: needShoot, sub: '合作中但当前没有进行中寄拍任务', tone: 'text-emerald-600' },
+      { label: '我的达人数', value: mineTalents.length, sub: '我名下长期管理的达人', tone: 'text-cyan-600' },
+      { label: '今日新分配达人', value: todayAssigned, sub: '今天分配到我名下，先确认接收再首次联系', tone: 'text-emerald-600' },
+      { label: '待跟进达人', value: toFollow, sub: '今日该跟进 + 已逾期未跟进', tone: 'text-indigo-600' },
+      { label: '待发布内容', value: toPublish, sub: '含待我审核的寄拍内容', tone: 'text-amber-500' },
+      { label: '待寄拍（待起拍）', value: needShoot, sub: '合作中但当前没有进行中寄拍任务', tone: 'text-teal-600' },
+      { label: '数据异常达人数', value: abnormal, sub: '任务超时 / 商品异常 / 账号久未更新', tone: 'text-rose-600' },
     ];
   }
   // 岗位面板（中台化）：管理员=经营视角，高级运营=管理视角，普通运营=陪跑视角，招募=线索视角

@@ -102,8 +102,12 @@ const N = {
 
   console.log('== B. 管理员总表（列 / 统计卡 / 筛选）==');
   await clickBtn('总表'); await sleep(1200);
-  const master = await ev(`(() => { const t=document.body.innerText; return { hasPos: t.includes('当前岗位'), hasHo: t.includes('交接状态'), hasContact: t.includes('联系方式'), hasFans: t.includes('粉丝量'), hasCats: t.includes('接拍类型'), hasAppear: t.includes('出镜方式'), hasWorks: t.includes('作品'), hasRegAt: t.includes('报名时间'), noPot: !t.includes('达人潜力'), noWill: !t.includes('合作意愿'), noPath: !t.includes('合作路径'), noLevel: !t.includes('达人评级'), noStatus: !t.includes('生命周期'), noClass: !t.includes('达人分类'), hasRecruitStat: t.includes('招募岗'), hasFinanceStat: t.includes('财务岗') }; })()`);
-  check('总表列分层（20260919d：报名数据列齐全；判断字段列不下发）',
+  const master = await ev(`(() => {
+    let hs = ''; for (const tb of document.querySelectorAll('table')) { if (!tb.offsetParent) continue; hs += [...tb.querySelectorAll('thead th')].map(t => (t.innerText || '').trim()).join('|') + '\\n'; }
+    const t = document.body.innerText;
+    return { hasPos: t.includes('当前岗位'), hasHo: t.includes('交接状态'), hasContact: t.includes('联系方式'), hasFans: t.includes('粉丝量'), hasCats: t.includes('接拍类型'), hasAppear: t.includes('出镜方式'), hasWorks: t.includes('作品'), hasRegAt: t.includes('报名时间'), noPot: !hs.includes('达人潜力'), noWill: !hs.includes('合作意愿'), noPath: !hs.includes('合作路径'), noLevel: !hs.includes('达人评级'), noStatus: !hs.includes('生命周期'), noClass: !hs.includes('达人分类'), hasRecruitStat: t.includes('招募岗'), hasFinanceStat: t.includes('财务岗') };
+  })()`);
+  check('总表列分层（20260920a：报名数据列齐全；判断字段列头不下发；导航文案不算）',
     master.hasPos && master.hasHo && master.hasContact && master.hasFans && master.hasCats && master.hasAppear && master.hasWorks && master.hasRegAt
     && master.noPot && master.noWill && master.noPath && master.noLevel && master.noStatus && master.noClass, master);
   check('总表顶部有按岗位的统计卡', master.hasRecruitStat && master.hasFinanceStat, master);
@@ -204,10 +208,12 @@ const N = {
   })()`);
   await sleep(900);
   const followModal = await ev(`(() => { const t=document.body.innerText; return { title: t.includes('跟进登记'), method: t.includes('跟进方式'), result: t.includes('跟进结果'), stage: t.includes('当前阶段'), pot: t.includes('达人潜力'), will: t.includes('合作意愿'), content: t.includes('跟进内容'), next: t.includes('下次跟进时间'), note: t.includes('备注') }; })()`);
-  check('跟进弹窗包含 方式/结果/内容/阶段/意愿/潜力/下次跟进/备注',
+  check('跟进弹窗包含 方式/结果/内容/阶段/下次跟进/备注（20260918 字段分层：招募岗无判断字段）',
     openFollow === 'ok' && followModal.title && followModal.method && followModal.result && followModal.stage
-    && followModal.pot && followModal.will && followModal.content && followModal.next && followModal.note,
+    && followModal.content && followModal.next && followModal.note,
     { openFollow, followModal });
+  check('招募岗跟进弹窗不出现判断字段编辑（潜力/意愿归运营/高级运营，canJudge 口径）',
+    openFollow === 'ok' && !followModal.pot && !followModal.will, { openFollow, followModal });
   // 真提交一条跟进：填内容 + 选阶段 + 下次跟进，验证落库
   await ev(`(() => {
     const ta=[...document.querySelectorAll('textarea')].find(x=>x.placeholder && x.placeholder.includes('沟通了什么'));
@@ -229,8 +235,8 @@ const N = {
 
   console.log('== G. 工作台（规则待办 + 招募完成提示）==');
   await clickNav('我的工作台'); await sleep(2000);
-  const wb = await ev(`(() => { const t=document.body.innerText; return { c1:t.includes('新分配给我'), c2:t.includes('今日待跟进'), c3:t.includes('逾期未跟进'), c4:t.includes('待我接收交接'), c5:t.includes('高潜强意愿未推进'), todo:t.includes('待办列表'), src:t.includes('来源'), done:t.includes('招募完成'), handoverBtn:t.includes('发起交接') }; })()`);
-  check('工作台 5 张待办卡齐全（新分配/今日/逾期/待接收/高潜）',
+  const wb = await ev(`(() => { const t=document.body.innerText; return { c1:t.includes('待处理新线索'), c2:t.includes('今日待跟进'), c3:t.includes('高意向达人'), c4:t.includes('待交接达人'), c5:t.includes('首次联系SLA超时数'), todo:t.includes('待办列表'), src:t.includes('来源'), done:t.includes('招募完成'), handoverBtn:t.includes('发起交接') }; })()`);
+  check('招募工作台岗位卡齐全（待处理新线索/今日待跟进/高意向达人/待交接达人/SLA 超时，20260920a 分岗位改版）',
     wb.c1 && wb.c2 && wb.c3 && wb.c4 && wb.c5, wb);
   check('工作台待办列表存在且含「来源」列', wb.todo && wb.src, wb);
   // 招募岗位职责的终点提示：名下有「合作中」达人且未交接 → 出现「招募完成」待办与「发起交接」按钮

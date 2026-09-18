@@ -446,18 +446,21 @@ def main():
 
     st, j = call(senior, '/api/mvp/workbench')
     wp2 = ((j or {}).get('data') or {}).get('panels') or {}
-    chk('高级运营面板：运营团队+漏斗+运营任务+爆款库',
-        st == 200 and set(['ops-team', 'growth-funnel', 'ops-tasks', 'hit-cases']).issubset(set(b['key'] for b in (wp2.get('blocks') or []))),
-        [b.get('key') for b in (wp2.get('blocks') or [])])
+    senKeys = set(b['key'] for b in (wp2.get('blocks') or []))
+    chk('高级运营面板：待分配线索+运营团队概览+成长漏斗+异常提醒（20260920a 改版，不含任务/爆款库面板）',
+        st == 200 and {'pending-leads', 'ops-team', 'growth-funnel', 'senior-alerts'} <= senKeys
+        and not {'ops-tasks', 'hit-cases', 'unassigned-pool'} & senKeys,
+        sorted(senKeys))
     st, j = call(staff, '/api/mvp/workbench')
     wp3 = ((j or {}).get('data') or {}).get('panels') or {}
-    chk('普通运营面板：我的达人+今日待办+成长列表',
-        st == 200 and set(['my-talents', 'today', 'my-talent-list']).issubset(set(b['key'] for b in (wp3.get('blocks') or []))),
-        [b.get('key') for b in (wp3.get('blocks') or [])])
+    opsKeys = set(b['key'] for b in (wp3.get('blocks') or []))
+    chk('普通运营面板：新分配达人+今日待办+我的达人列表+异常提醒（不含团队概览，20260920a 改版）',
+        st == 200 and {'new-assigned', 'today', 'my-talent-list', 'ops-alerts'} <= opsKeys and 'ops-team' not in opsKeys,
+        sorted(opsKeys))
     st, j = call(recruit, '/api/mvp/workbench')
     wp4 = ((j or {}).get('data') or {}).get('panels') or {}
-    chk('招募面板：我的线索+SLA',
-        st == 200 and set(['my-leads', 'sla']).issubset(set(b['key'] for b in (wp4.get('blocks') or []))),
+    chk('招募面板：新线索列表+跟进待办+高意向池+待交接列表（20260920a 改版）',
+        st == 200 and {'new-lead-list', 'follow-todo', 'hot-pool', 'handover-list'} <= set(b['key'] for b in (wp4.get('blocks') or [])),
         [b.get('key') for b in (wp4.get('blocks') or [])])
 
     st, j = call(senior, '/api/mvp/team')
@@ -614,11 +617,11 @@ def main():
     srows = (j.get('data') or []) if j and j.get('ok') else []
     chk('senior_ops 达人档案：保留完整负责人链路（owner/招募负责人/转化人）',
         bool(srows) and all(all(k in x for k in ('owner', 'recruitBy', 'convertedBy')) for x in srows), len(srows))
-    # ops 工作台 panels：新分配达人 / 我的达人 / 待跟进提醒
+    # ops 工作台 panels：新分配达人 / 今日待办 / 我的达人列表 / 异常提醒（20260920a 分岗位改版）
     st, j = call(staff, '/api/mvp/workbench')
     blocks = ((j.get('data') or {}).get('panels') or {}).get('blocks') or []
     bkeys = [b.get('key') for b in blocks]
-    chk('ops 工作台含「我的达人」「待跟进提醒」面板', 'my-talents' in bkeys and 'follow-remind' in bkeys, bkeys)
+    chk('ops 工作台含「我的达人列表」「异常提醒」面板（20260920a 改版）', 'my-talent-list' in bkeys and 'ops-alerts' in bkeys, bkeys)
     na = next((b for b in blocks if b.get('key') == 'new-assigned'), None)
     chk('ops 工作台含「新分配达人」面板', na is not None, bkeys)
     if na:
@@ -646,20 +649,73 @@ def main():
         return st, panels.get('role'), [b.get('key') for b in (panels.get('blocks') or [])]
 
     st, role, bkeys = wb_keys(promote)
-    chk('promote 看板面板：role=promote 且含 我的活动/线索转化/渠道效果',
-        st == 200 and role == 'promote' and {'my-campaigns', 'lead-convert', 'channel-effect'} <= set(bkeys), (st, role, bkeys))
+    chk('promote 看板面板：role=promote 且含 活动列表/渠道效果对比/来源追踪/优化建议（20260920a 改版）',
+        st == 200 and role == 'promote' and {'campaign-list', 'channel-effect', 'source-tracking', 'optimize-tips'} <= set(bkeys)
+        and not {'task-overview', 'my-talents'} & set(bkeys), (st, role, bkeys))
     st, role, bkeys = wb_keys(recruit)
-    chk('recruit 看板面板：含 今日与待判断（今日新增/待判断/SLA 提醒）',
-        st == 200 and role == 'recruit' and 'today-judge' in bkeys, (st, role, bkeys))
+    chk('recruit 看板面板：含 新线索列表/待交接列表（20260920a 改版）',
+        st == 200 and role == 'recruit' and {'new-lead-list', 'handover-list'} <= set(bkeys), (st, role, bkeys))
     st, role, bkeys = wb_keys(staff)
-    chk('ops 看板面板：含 任务概览（寄拍/成长）',
-        st == 200 and role == 'ops' and 'task-overview' in bkeys, (st, role, bkeys))
+    chk('ops 看板面板：含 异常提醒（20260920a 改版）',
+        st == 200 and role == 'ops' and 'ops-alerts' in bkeys, (st, role, bkeys))
     st, role, bkeys = wb_keys(senior)
-    chk('senior_ops 看板面板：含 未分配达人池/异常达人提醒',
-        st == 200 and role == 'senior_ops' and {'unassigned-pool', 'senior-alerts'} <= set(bkeys), (st, role, bkeys))
+    chk('senior_ops 看板面板：含 待分配线索/异常提醒（20260920a 改版，未分配达人池面板已并入待分配线索）',
+        st == 200 and role == 'senior_ops' and {'pending-leads', 'senior-alerts'} <= set(bkeys)
+        and 'unassigned-pool' not in set(bkeys), (st, role, bkeys))
     st, role, bkeys = wb_keys(fin)
     chk('finance 看板面板：role=finance 且含 结算概览/收益统计',
         st == 200 and role == 'finance' and {'settle-overview', 'income-stats'} <= set(bkeys), (st, role, bkeys))
+
+    # ---------- 12.6 分岗位工作台顶部卡片与数据隔离（20260920a）----------
+    st, j = call(senior, '/api/mvp/workbench')
+    sen = (j.get('data') or {})
+    senLabels = [c.get('label') for c in (sen.get('extraCards') or [])]
+    chk('senior 顶部卡片 5 张：待分配新线索/今日新增报名/超时未处理线索/团队在管达人总数/重点培养达人数量',
+        st == 200 and {'待分配新线索', '今日新增报名', '超时未处理线索', '团队在管达人总数', '重点培养达人数量'} <= set(senLabels)
+        and len(senLabels) == 5, senLabels)
+    senTeam = next((b for b in ((sen.get('panels') or {}).get('blocks') or []) if b.get('key') == 'ops-team'), None)
+    chk('senior 运营团队概览面板有运营行（团队视角：看到每个普通运营的负载/异常/完成率）',
+        senTeam is not None and isinstance(senTeam.get('rows'), list) and len(senTeam.get('rows')) >= 1,
+        (senTeam or {}).get('rows'))
+
+    st, j = call(staff, '/api/mvp/workbench')
+    stf = (j.get('data') or {})
+    stfLabels = [c.get('label') for c in (stf.get('extraCards') or [])]
+    stfTodos = stf.get('todos') or []
+    stfKeys = set(b.get('key') for b in ((stf.get('panels') or {}).get('blocks') or []))
+    chk('ops 顶部卡片 6 张：我的达人数/今日新分配达人/待跟进达人/待发布内容/待寄拍（待起拍）/数据异常达人数',
+        st == 200 and {'我的达人数', '今日新分配达人', '待跟进达人', '待发布内容', '待寄拍（待起拍）', '数据异常达人数'} <= set(stfLabels)
+        and len(stfLabels) == 6, stfLabels)
+    chk('ops 工作台待办只来自自己名下（行级隔离：达人待办 owner=王浩，任务/账号待办无他人 owner）',
+        all(t.get('owner') in ('王浩', None, '') for t in stfTodos),
+        sorted({str(t.get('owner')) for t in stfTodos}))
+    chk('ops 面板不含团队概览 / 他人视角面板', not {'ops-team', 'pending-leads'} & stfKeys, sorted(stfKeys))
+
+    st, j = call(promote, '/api/mvp/workbench')
+    pro = (j.get('data') or {})
+    proLabels = [c.get('label') for c in (pro.get('extraCards') or [])]
+    proKeys = set(b.get('key') for b in ((pro.get('panels') or {}).get('blocks') or []))
+    chk('promote 顶部卡片 7 张：本月推广活动数/总投入/有效线索数/报名人数/新增达人数/报名转化率/最终转化率',
+        st == 200 and {'本月推广活动数', '总投入', '有效线索数', '报名人数', '新增达人数', '报名转化率', '最终转化率'} <= set(proLabels)
+        and len(proLabels) == 7, proLabels)
+    chk('promote 活动类卡片口径来自投放表（活动列表面板列含 活动/渠道/投入）',
+        next((b for b in ((pro.get('panels') or {}).get('blocks') or []) if b.get('key') == 'campaign-list'), {}).get('columns')
+        and {'活动', '渠道', '投入'} <= set(next((b for b in ((pro.get('panels') or {}).get('blocks') or []) if b.get('key') == 'campaign-list')).get('columns') or []),
+        next((b.get('columns') for b in ((pro.get('panels') or {}).get('blocks') or []) if b.get('key') == 'campaign-list'), None))
+    chk('promote 面板不含达人运营执行任务类面板', not {'task-overview', 'my-talents', 'my-talent-list'} & proKeys, sorted(proKeys))
+
+    st, j = call(recruit, '/api/mvp/workbench')
+    rec = (j.get('data') or {})
+    recLabels = [c.get('label') for c in (rec.get('extraCards') or [])]
+    recKeys = set(b.get('key') for b in ((rec.get('panels') or {}).get('blocks') or []))
+    recTodos = rec.get('todos') or []
+    chk('recruit 顶部卡片 6 张：待处理新线索/今日待跟进/高意向达人/待交接达人/首次联系SLA超时数/今日新增报名',
+        st == 200 and {'待处理新线索', '今日待跟进', '高意向达人', '待交接达人', '首次联系SLA超时数', '今日新增报名'} <= set(recLabels)
+        and len(recLabels) == 6, recLabels)
+    chk('recruit 面板不含运营团队 / 财务 / 深度账号运营数据面板',
+        not {'ops-team', 'settle-overview', 'income-stats', 'team-efficiency'} & recKeys, sorted(recKeys))
+    chk('recruit 待办无运营团队视角类型（不出现 待分配 公海待办）',
+        all(t.get('type') != '待分配' for t in recTodos), [t.get('type') for t in recTodos[:5]])
 
     # ---------- 12.5 线索字段分层（2026-09-18）：报名只产映射字段；判断字段初始「待判断」；判断字段岗位权限 ----------
     signup = {'nickname': 'APItest报名分层', 'source_channel': '小红书', 'phone': '13800001111',
