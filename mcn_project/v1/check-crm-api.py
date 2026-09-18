@@ -746,6 +746,9 @@ def main():
         st == 200 and 'staleMin' in ad and isinstance(cands, list) and 'recommend' in ad, (st, ad.get('staleMin'), len(cands)))
     chk('自动分配建议：candidates 按 load 升序（负载最低原则）',
         all(cands[k]['load'] <= cands[k + 1]['load'] for k in range(len(cands) - 1)), [(c.get('name'), c.get('load')) for c in cands])
+    chk('分配弹窗负载展示数据源：candidates 每项含 name+数字 load（position=ops）',
+        all(c.get('name') and isinstance(c.get('load'), int) for c in cands),
+        [(c.get('name'), c.get('load')) for c in cands[:3]])
     st, j = call(senior, '/api/mvp/leads/' + (msg_id or 'T0000'))
     ld = (j.get('data') or {}) if st == 200 else {}
     chk('报名字段显式映射：talentName/source/contentExperience/businessExperience/categoryPreference/appearancePreference/remark/works/contact 落库',
@@ -765,8 +768,9 @@ def main():
     chk('分配给运营成功（assign 消息用例前置）', st == 200, (st, (j or {}).get('error')))
     st, j = call(staff, '/api/notifications')
     sitems = ((j.get('data') or {}).get('items') or [])
-    chk('分配后 ops 收到 assign 消息（含达人名与分配人）',
-        any(m.get('type') == 'assign' and 'APItest消息中心' in (m.get('title') or '') and '张萌' in (m.get('body') or '') for m in sitems),
+    chk('分配后 ops 收到 talent_assigned 消息（内容=xxx 给你分配了新达人「达人名」）',
+        any(m.get('type') == 'talent_assigned' and 'APItest消息中心' in (m.get('title') or '')
+            and '张萌' in (m.get('body') or '') and '给你分配了新达人' in (m.get('body') or '') for m in sitems),
         [(m.get('type'), m.get('title')) for m in sitems[:3]])
     st, j = call(senior, '/api/mvp/workbench')
     blocks = (((j.get('data') or {}).get('panels') or {}).get('blocks') or [])

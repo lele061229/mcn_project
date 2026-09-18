@@ -311,7 +311,7 @@ async function pushMsg(toUser, type, title, body, link) {
   await db.insert('messages', {
     id: await nextId('messages', 'M', 5),
     toUser, toName: u ? nameOf(u) : toUser,
-    type: ['new_lead', 'signup', 'assign', 'sla'].includes(type) ? type : 'system',
+    type: ['new_lead', 'signup', 'assign', 'talent_assigned', 'sla'].includes(type) ? type : 'system',
     title: String(title || '').slice(0, 80), body: String(body || '').slice(0, 500),
     link: link || '', readAt: '', createdAt: nowStr(), isActive: true,
   });
@@ -1097,9 +1097,9 @@ async function doAssign(ids, ownerName, ownerPosition, ctx, mode, remark) {
     });
     if (toPosition === 'ops') {
       // 站内消息（2026-09-19a）：分配提醒 → 被分配的普通运营（工作台「新分配达人」确认接收）
-      await pushMsg(target.user, 'assign', '新分配达人：' + t.name,
-        (ctx.displayName || ctx.operator) + ' 把「' + t.name + '」分配给你' + (remark ? '（备注：' + remark + '）' : '')
-        + '，请确认接收后尽快首次联系', 'workbench');
+      await pushMsg(target.user, 'talent_assigned', '新分配达人：' + t.name,
+        (ctx.displayName || ctx.operator) + ' 给你分配了新达人「' + t.name + '」' + (remark ? '（备注：' + remark + '）' : '')
+        + '，请到工作台确认接收后尽快首次联系', 'workbench');
     }
     changed.push(toMvpLead(upd));
   }

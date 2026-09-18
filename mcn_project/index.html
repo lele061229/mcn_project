@@ -157,7 +157,7 @@ tailwind.config = {
                 <div v-for="m in notif.items" :key="m.id" @click="readNotif(m)" class="px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50" :class="m.readAt ? 'opacity-60' : ''">
                   <div class="flex items-center gap-2">
                     <span class="text-[10px] px-1.5 py-0.5 rounded shrink-0"
-                          :class="m.type==='sla' ? 'bg-rose-50 text-rose-600' : m.type==='assign' ? 'bg-indigo-50 text-indigo-600' : (m.type==='signup'||m.type==='new_lead') ? 'bg-cyan-50 text-cyan-700' : 'bg-slate-100 text-slate-500'">{{ NOTIF_TYPE_LABEL[m.type] || '系统' }}</span>
+                          :class="m.type==='sla' ? 'bg-rose-50 text-rose-600' : (m.type==='assign'||m.type==='talent_assigned') ? 'bg-indigo-50 text-indigo-600' : (m.type==='signup'||m.type==='new_lead') ? 'bg-cyan-50 text-cyan-700' : 'bg-slate-100 text-slate-500'">{{ NOTIF_TYPE_LABEL[m.type] || '系统' }}</span>
                     <span class="text-xs font-medium text-slate-700 truncate">{{ m.title }}</span>
                     <span v-if="!m.readAt" class="ml-auto w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
                   </div>
@@ -2092,7 +2092,7 @@ tailwind.config = {
                   <button v-if="tl.isSenior" @click="tl.suggestOwner(showToast)" class="ml-2 text-[11px] text-cyan-600 hover:underline font-normal">⚡ 智能推荐（负载最低）</button></label>
                 <select :value="tl.assignForm.owner" @change="tl.pickAssignOwner($event.target.value)" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white">
                   <option value="">请选择负责人</option>
-                  <option v-for="o in tl.ownerOptions" :key="o.user" :value="o.name">{{ o.name }}（{{ o.positionLabel || '未设岗位' }}）</option>
+                  <option v-for="o in tl.ownerOptions" :key="o.user" :value="o.name">{{ o.name }}（{{ o.positionLabel || '未设岗位' }}{{ o.position==='ops' && o.load !== undefined ? ' · 在管 ' + o.load + ' 条' : '' }}）</option>
                 </select>
               </div>
               <div><label class="text-xs text-slate-500">所属岗位</label>
@@ -3130,7 +3130,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260919b"></script>
-<script src="./app.js?v=20260919b"></script>
+<script src="./talent-leads.js?v=20260919c"></script>
+<script src="./app.js?v=20260919c"></script>
 </body>
 </html>

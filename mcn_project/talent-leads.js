@@ -303,7 +303,23 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     function clearChecked() { checked.splice(0, checked.length); }
     // 负责人候选：来自账号库（登录账号 + 姓名 + 岗位）。
     // 岗位职责边界：达人只能给 招募 / 运营 岗 —— 推广管投放、寄拍只执行任务、财务管结算
-    const ownerOptions = computed(() => targets.value.filter(t => ['recruit', 'ops'].includes(t.position || '')));
+    // 分配弹窗展示 ops 当前在管数量（2026-09-19c）：复用 auto-assign-suggest 的负载统计（仅主管可调，非主管 403 静默）
+    const opsLoads = ref({});
+    async function loadOpsLoads() {
+      try {
+        const r = await fetch('/api/mvp/leads/auto-assign-suggest');
+        const j = await r.json();
+        if (j && j.ok) {
+          const m = {};
+          for (const c of (j.data.candidates || [])) m[c.name] = c.load;
+          opsLoads.value = m;
+        }
+      } catch (e) { /* 非主管或网络异常：弹窗只不显示在管数，不影响分配 */ }
+    }
+    const ownerOptions = computed(() => targets.value
+      .filter(t => ['recruit', 'ops'].includes(t.position || ''))
+      .map(t => (t.position === 'ops' && opsLoads.value[t.name] !== undefined)
+        ? Object.assign({}, t, { load: opsLoads.value[t.name] }) : t));
 
     const assignDlg = reactive({ show: false, mode: 'single', ids: [], busy: false, rows: [] });
     const assignForm = reactive({ owner: '', ownerPosition: '', reason: '', remark: '' });
@@ -313,6 +329,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       assignDlg.rows = [{ id: row.id, name: row.name, owner: row.owner }];
       assignForm.owner = ''; assignForm.ownerPosition = ''; assignForm.reason = ''; assignForm.remark = '';
       loadTargets(row.owner === '未分配' ? '' : row.owner);
+      loadOpsLoads();
       assignDlg.show = true;
       if (!row) onToast && onToast('未找到线索');
     }
@@ -326,6 +343,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         ? '分配后 ' + (row.slaUsedMin || 0) + ' 分钟未首次联系（时限 ' + (row.slaOverdueMin || 0) + ' 分钟）'
         : '';
       loadTargets(row.owner === '未分配' ? '' : row.owner, 'recruit,ops');   // 达人负责人只能是招募/运营
+      loadOpsLoads();
       assignDlg.show = true;
     }
     function openBatchAssign(onToast) {
