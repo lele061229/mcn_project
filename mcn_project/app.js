@@ -437,6 +437,34 @@ createApp({
     });
     // 达人档案字段分层（2026-09-18e）：普通运营只看陪跑视角字段，负责人链路仅主管/管理员可见
     const amOps = computed(() => me.value.role !== 'admin' && me.value.position === 'ops');
+    /* ---- 站内消息中心（2026-09-19a）：右上角铃铛；新报名→高级运营 / 分配→运营 / SLA 超时→主管 ---- */
+    const notif = reactive({ open: false, unread: 0, items: [] });
+    const NOTIF_TYPE_LABEL = { signup: '新报名', assign: '分配提醒', sla: 'SLA 超时', system: '系统' };
+    function loadNotifs() {
+      return fetch('/api/notifications').then(r => r.json()).then(j => {
+        if (j && j.ok) { notif.unread = j.data.unread; notif.items.splice(0, notif.items.length, ...(j.data.items || [])); }
+      }).catch(() => { });
+    }
+    function toggleNotif() { notif.open = !notif.open; if (notif.open) loadNotifs(); }
+    function readNotif(m) {
+      if (!m.readAt) fetch('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: [m.id] }) }).then(loadNotifs).catch(() => { });
+      if (m.link) { notif.open = false; goPage(m.link); }
+    }
+    function readAllNotifs() {
+      fetch('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) }).then(loadNotifs).catch(() => { });
+    }
+    setInterval(loadNotifs, 60000);
+    loadNotifs();
+    // 工作台「新线索提醒（待分配）」行内操作（2026-09-19a）：查看→达人线索页；分配→跳页后打开分配弹窗（复用线索页分配流）
+    function panelLeadAct(cv, act) {
+      if (act === 'view') { goPage('talent-leads'); return; }
+      if (act === 'assign') {
+        goPage('talent-leads');
+        setTimeout(() => {
+          if (tl && tl.openAssign) tl.openAssign({ id: cv.talentId, name: cv.name || '', owner: cv.owner || '未分配' }, showToast);
+        }, 350);
+      }
+    }
     /* 经营看板按岗位分流：管理员=经营总览（原有 dashboard），其他岗位=岗位工作台视图（服务端按 position 装配 panels） */
     const dashPanels = reactive({ role: '', blocks: [], today: '' });
     const dashView = computed(() => (me.value.role === 'admin' ? 'admin' : 'position'));
@@ -1435,6 +1463,7 @@ createApp({
       openLeadModal, saveLead, onLeadMove,
       taskFilter, tasksFiltered, tasksLoaded, canLaunchShoot, shootDlg, openLaunchShoot, saveLaunchShoot, shootTalentOptions, taskDlg, openTaskAction, saveTaskAction, taskActionsOf, taskStatusTone,
       taskTypeTab, TASK_TYPE_TABS, taskTypeOf, opsTasks, opsTasksLoaded, canAssignOpsTask, opsTargetOptions, opsTaskDlg, openOpsTask, saveOpsTask, myPositionLabel, amOps, ackAssign,
+      notif, NOTIF_TYPE_LABEL, toggleNotif, readNotif, readAllNotifs, panelLeadAct,
       opsTaskProgDlg, openOpsTaskProgress, saveOpsTaskProgress, deleteOpsTask,
       hitCases, hitCasesLoaded, hitCaseQ, hitCasesFiltered, canEditHitCase, loadHitCases, hitCaseDlg, openHitCase, saveHitCase, deleteHitCase,
       board, loadBoard, boardReady, maxLoad, loadPct, boardFunnel, boardAttention, boardAlerts, canSeeCost, canTasks,

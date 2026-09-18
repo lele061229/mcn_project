@@ -142,6 +142,32 @@ tailwind.config = {
         <h1 class="text-base md:text-lg font-semibold text-slate-900">{{ currentNav.label }}</h1>
         <span class="ml-3 text-xs text-slate-400 hidden lg:inline">{{ currentNav.desc }}</span>
         <div class="ml-auto flex items-center gap-3">
+          <!-- 消息中心（20260919a）：新报名→高级运营 / 分配→运营 / SLA 超时→主管；未读角标 + 弹窗 -->
+          <div class="relative">
+            <button @click="toggleNotif()" class="relative p-2 rounded-lg hover:bg-slate-100 transition" aria-label="消息中心">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 text-slate-600"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+              <span v-if="notif.unread" class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">{{ notif.unread > 99 ? '99+' : notif.unread }}</span>
+            </button>
+            <div v-if="notif.open" class="absolute right-0 mt-1 w-80 bg-white rounded-xl border border-slate-200 shadow-xl z-20 overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 bg-slate-50/60">
+                <span class="text-sm font-semibold text-slate-800">消息中心</span>
+                <button v-if="notif.unread" @click="readAllNotifs()" class="text-xs text-cyan-600 hover:underline">全部已读</button>
+              </div>
+              <div class="max-h-80 overflow-y-auto">
+                <div v-for="m in notif.items" :key="m.id" @click="readNotif(m)" class="px-4 py-3 border-b border-slate-50 cursor-pointer hover:bg-slate-50" :class="m.readAt ? 'opacity-60' : ''">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] px-1.5 py-0.5 rounded shrink-0"
+                          :class="m.type==='sla' ? 'bg-rose-50 text-rose-600' : m.type==='assign' ? 'bg-indigo-50 text-indigo-600' : m.type==='signup' ? 'bg-cyan-50 text-cyan-700' : 'bg-slate-100 text-slate-500'">{{ NOTIF_TYPE_LABEL[m.type] || '系统' }}</span>
+                    <span class="text-xs font-medium text-slate-700 truncate">{{ m.title }}</span>
+                    <span v-if="!m.readAt" class="ml-auto w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+                  </div>
+                  <div class="text-xs text-slate-500 mt-1 leading-relaxed">{{ m.body }}</div>
+                  <div class="text-[10px] text-slate-400 mt-1">{{ m.createdAt }}</div>
+                </div>
+                <div v-if="!notif.items.length" class="px-4 py-8 text-center text-xs text-slate-400">暂无消息</div>
+              </div>
+            </div>
+          </div>
           <button @click="goPage('talent-leads'); tl.openCreate()" class="hidden sm:block px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition">+ 新增线索</button>
           <div class="hidden md:block text-sm text-slate-500">{{ today }}</div>
           <div class="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-sm font-medium" :title="me.displayName || me.user">{{ (me.displayName || me.user || '我').slice(0, 1) }}</div>
@@ -347,6 +373,11 @@ tailwind.config = {
                           <button @click="goPage('talent-pool')" class="text-indigo-600 hover:underline">查看达人</button>
                           <button v-if="!cv.ack" @click="ackAssign(cv.talentId)" class="ml-2 text-cyan-600 hover:underline font-medium">确认接收</button>
                           <span v-else class="text-emerald-600">已接收</span>
+                        </template>
+                        <template v-else-if="cv && typeof cv==='object' && cv.kind==='lead-actions'">
+                          <!-- 新线索提醒行内操作（20260919a）：查看报名信息 / 去分配 -->
+                          <button @click="panelLeadAct(cv,'view')" class="text-indigo-600 hover:underline">查看</button>
+                          <button @click="panelLeadAct(cv,'assign')" class="ml-2 text-cyan-600 hover:underline font-medium">分配</button>
                         </template>
                         <template v-else>{{ cv }}</template>
                       </td>
@@ -1340,6 +1371,11 @@ tailwind.config = {
                           <button v-if="!cv.ack" @click="ackAssign(cv.talentId)" class="ml-2 text-cyan-600 hover:underline font-medium">确认接收</button>
                           <span v-else class="text-emerald-600">已接收</span>
                         </template>
+                        <template v-else-if="cv && typeof cv==='object' && cv.kind==='lead-actions'">
+                          <!-- 新线索提醒行内操作（20260919a）：查看报名信息 / 去分配 -->
+                          <button @click="panelLeadAct(cv,'view')" class="text-indigo-600 hover:underline">查看</button>
+                          <button @click="panelLeadAct(cv,'assign')" class="ml-2 text-cyan-600 hover:underline font-medium">分配</button>
+                        </template>
                         <template v-else>{{ cv }}</template>
                       </td>
                     </tr>
@@ -2052,7 +2088,8 @@ tailwind.config = {
               </div>
             </div>
             <div class="space-y-3 text-sm">
-              <div><label class="text-xs text-slate-500">负责人 *</label>
+              <div><label class="text-xs text-slate-500">负责人 *
+                  <button v-if="tl.isSenior" @click="tl.suggestOwner(showToast)" class="ml-2 text-[11px] text-cyan-600 hover:underline font-normal">⚡ 智能推荐（负载最低）</button></label>
                 <select :value="tl.assignForm.owner" @change="tl.pickAssignOwner($event.target.value)" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 bg-white">
                   <option value="">请选择负责人</option>
                   <option v-for="o in tl.ownerOptions" :key="o.user" :value="o.name">{{ o.name }}（{{ o.positionLabel || '未设岗位' }}）</option>
@@ -3093,7 +3130,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260918e"></script>
-<script src="./app.js?v=20260918e"></script>
+<script src="./talent-leads.js?v=20260919a"></script>
+<script src="./app.js?v=20260919a"></script>
 </body>
 </html>

@@ -710,6 +710,60 @@ def main():
     chk('管理员改判断字段（含重置评级为待判断）→ 200',
         st == 200 and (j.get('data') or {}).get('talentLevel') == '待判断', (st, (j or {}).get('error')))
 
+    # ---------- 12.7 线索流转消息中心 + 自动分配建议（2026-09-19a） ----------
+    st, j = call(senior, '/api/notifications')
+    nbase = ((j.get('data') or {}).get('unread') or 0) if st == 200 else 0
+    chk('消息中心：senior 可读消息（unread/items 结构）',
+        st == 200 and 'unread' in (j.get('data') or {}) and isinstance((j.get('data') or {}).get('items'), list), (st, nbase))
+    st, j = call(staff, '/api/notifications')
+    sitems = ((j.get('data') or {}).get('items') or []) if st == 200 else [{'toUser': 'x'}]
+    chk('消息中心：ops 只能读到自己的消息（toUser 行级过滤）',
+        st == 200 and all(m.get('toUser') == 'demo-staff' for m in sitems), (st, len(sitems)))
+    # 报名 → senior 收到「新达人报名」站内消息
+    st, j = call(admin, '/api/leads', {'nickname': 'APItest消息中心', 'source_channel': '朋友转介绍', 'phone': '13800002222'})
+    msg_id = ((j.get('data') or {}).get('id')) if st == 200 and isinstance(j.get('data'), dict) else None
+    if msg_id: made['msg'] = msg_id
+    chk('报名提交成功（消息用例前置，公开接口）', st == 200 and j.get('code') == 0 and bool(msg_id), (st, msg_id))
+    st, j = call(senior, '/api/notifications')
+    nd = j.get('data') or {}
+    chk('新达人报名 → 高级运营收到 signup 消息（unread+1，含达人名）',
+        nd.get('unread', 0) >= nbase + 1
+        and any(m.get('type') == 'signup' and 'APItest消息中心' in (m.get('title') or '') for m in nd.get('items') or []),
+        (nbase, nd.get('unread')))
+    signup_msg = next((m for m in nd.get('items') or [] if m.get('type') == 'signup' and 'APItest消息中心' in (m.get('title') or '') and not m.get('readAt')), None)
+    st, j = call(senior, '/api/notifications/read', {'ids': [signup_msg['id']] if signup_msg else ['NONE']})
+    chk('标记单条已读 → read>=1', st == 200 and ((j.get('data') or {}).get('read') or 0) >= 1, (st, j.get('data')))
+    st, j = call(senior, '/api/notifications')
+    chk('已读后 unread 回落到基线（该消息不再计数）',
+        st == 200 and (j.get('data') or {}).get('unread') == nbase, (nbase, (j.get('data') or {}).get('unread')))
+    # 自动分配建议：负载最低、只推荐不执行
+    st, j = call(staff, '/api/mvp/leads/auto-assign-suggest')
+    chk('普通运营拉分配建议 → 403（isSupervisor 裁决）', st == 403, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/auto-assign-suggest')
+    ad = (j.get('data') or {}) if st == 200 else {}
+    cands = ad.get('candidates') or []
+    chk('自动分配建议：senior 200（含 staleMin/candidates/recommend）',
+        st == 200 and 'staleMin' in ad and isinstance(cands, list) and 'recommend' in ad, (st, ad.get('staleMin'), len(cands)))
+    chk('自动分配建议：candidates 按 load 升序（负载最低原则）',
+        all(cands[k]['load'] <= cands[k + 1]['load'] for k in range(len(cands) - 1)), [(c.get('name'), c.get('load')) for c in cands])
+    st, j = call(senior, '/api/mvp/leads/' + (msg_id or 'T0000'))
+    chk('自动分配只生成建议：未分配线索负责人保持未分配（不覆盖主管决定）',
+        st == 200 and (j.get('data') or {}).get('owner') == '未分配', (j.get('data') or {}).get('owner'))
+    # 分配 → ops 收到 assign 消息；senior 工作台新线索面板
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % msg_id, {'owner': '王浩', 'ownerPosition': 'ops', 'remark': '消息中心分配用例'})
+    chk('分配给运营成功（assign 消息用例前置）', st == 200, (st, (j or {}).get('error')))
+    st, j = call(staff, '/api/notifications')
+    sitems = ((j.get('data') or {}).get('items') or [])
+    chk('分配后 ops 收到 assign 消息（含达人名与分配人）',
+        any(m.get('type') == 'assign' and 'APItest消息中心' in (m.get('title') or '') and '张萌' in (m.get('body') or '') for m in sitems),
+        [(m.get('type'), m.get('title')) for m in sitems[:3]])
+    st, j = call(senior, '/api/mvp/workbench')
+    blocks = (((j.get('data') or {}).get('panels') or {}).get('blocks') or [])
+    pl = next((b for b in blocks if b.get('key') == 'pending-leads'), None)
+    chk('senior 工作台含「新线索提醒（待分配）」面板（列含 报名时间/推荐负责人/操作）',
+        pl is not None and {'达人', '报名时间', '推荐负责人', '操作'} <= set(pl.get('columns') or []),
+        [b.get('key') for b in blocks])
+
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):
         # 转化过的记录已迁入达人库，先试线索池再试达人库

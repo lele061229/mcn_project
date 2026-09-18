@@ -341,6 +341,21 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       assignForm.owner = name;
       assignForm.ownerPosition = t ? (t.position || '') : '';
     }
+    // 智能推荐（2026-09-19a）：负载最低原则生成推荐负责人 —— 只填表单不直接分配，由高级运营确认后提交
+    async function suggestOwner(onToast) {
+      try {
+        const r2 = await fetch('/api/mvp/leads/auto-assign-suggest');
+        const j = await r2.json();
+        if (j && j.ok) {
+          const rec = j.data.recommend;
+          if (!rec) { onToast && onToast('暂无普通运营账号可推荐'); return; }
+          assignForm.owner = rec.name;
+          assignForm.ownerPosition = 'ops';
+          const staleTip = j.data.staleCount ? '；另有 ' + j.data.staleCount + ' 条线索超 ' + j.data.staleMin + ' 分钟未分配' : '';
+          onToast && onToast('已按负载最低推荐 ' + rec.name + '（在管 ' + rec.load + ' 条）' + staleTip + '，请确认后分配');
+        } else onToast && onToast((j && j.error) || '获取推荐失败');
+      } catch (e) { onToast && onToast('网络错误，获取推荐失败'); }
+    }
     // 服务端返回的单条线索 → 回写本地行的 SLA 相关字段（不改其它业务字段）
     const SLA_FIELDS = ['assignedAt', 'firstContactAt', 'lastFollowupAt', 'escalatedAt', 'escalatedBy',
       'reassignedAt', 'reassignFrom', 'reassignReason', 'overdueReason', 'overdueReasonAt',
@@ -1070,7 +1085,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       POSITION_LABEL_MAP, posOf, posLabelOf, posStats, isPublicLead,
       // 分配（管理员）：勾选 → 单条 / 批量指派负责人
       checked, isChecked, toggleCheck, toggleCheckAll, allPagedChecked, clearChecked,
-      ownerOptions, assignDlg, assignForm, openAssign, openBatchAssign, pickAssignOwner, saveAssign, convertTalent,
+      ownerOptions, assignDlg, assignForm, openAssign, openBatchAssign, pickAssignOwner, saveAssign, suggestOwner, convertTalent,
       // SLA 主管动作：催办 / 重新分配 / 超时原因 + 展示口径
       slaDlg, slaForm, openUrge, openOverdueReason, saveSlaAct, openReassign, slaInfo, slaActive,
       isSenior, canJudge, TALENT_STATUS_LIST, TALENT_STATUS_LABEL,

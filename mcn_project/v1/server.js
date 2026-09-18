@@ -302,6 +302,37 @@ async function nextId(coll, prefix, width) {
   return prefix + String(max + 1).padStart(width, '0');
 }
 
+/* ---- 站内消息中心（2026-09-19a）：统一消息投递，配合前端右上角铃铛 ----
+ * 三类业务消息：新达人报名 → 高级运营 / 达人分配 → 被分配的普通运营 / SLA 超时上报 → 高级运营。
+ * 外推（notify → Server酱/企微）保持不变；站内消息只落 messages 集合，各账号只能读自己的（行级过滤）。 */
+async function pushMsg(toUser, type, title, body, link) {
+  if (!toUser) return;
+  const u = userRecByName(toUser);
+  await db.insert('messages', {
+    id: await nextId('messages', 'M', 5),
+    toUser, toName: u ? nameOf(u) : toUser,
+    type: ['signup', 'assign', 'sla'].includes(type) ? type : 'system',
+    title: String(title || '').slice(0, 80), body: String(body || '').slice(0, 500),
+    link: link || '', readAt: '', createdAt: nowStr(), isActive: true,
+  });
+}
+async function pushMsgPosition(position, type, title, body, link) {
+  const users = (AUTH && Array.isArray(AUTH.users) ? AUTH.users : []).filter(u => u.position === position);
+  for (const u of users) await pushMsg(u.user, type, title, body, link);
+}
+/* 负载最低原则（2026-09-19a）：统计每位普通运营名下活跃线索+达人数量，升序排列。
+ * 只做推荐，不写任何数据 —— 是否采纳由高级运营在分配弹窗里决定。 */
+async function opsLoadCandidates() {
+  const leads = (await db.list('leads')).filter(t => t.isActive !== false);
+  const talents = (await db.list('talents')).filter(t => t.isActive !== false);
+  const pool = leads.concat(talents);
+  const opsUsers = (AUTH && Array.isArray(AUTH.users) ? AUTH.users : []).filter(u => u.position === 'ops');
+  return opsUsers
+    .map(u => ({ user: u.user, name: nameOf(u),
+      load: pool.filter(t => t.ownerId ? t.ownerId === u.user : (t.owner && t.owner !== '未分配' && t.owner === nameOf(u))).length }))
+    .sort((a, b) => a.load - b.load);
+}
+
 /* ---------------- 数据迁移：补齐岗位与交接字段（幂等，每次启动检查） ----------------
  * owner 存的是一线人员的姓名（李婷/王浩/张萌），这里按姓名回填所属岗位。
  * 新账号在「账号管理」里选岗位后，姓名与岗位即与这边对应上。 */
@@ -864,6 +895,8 @@ async function slaSweep(rows) {
       '负责人=' + t.owner + '(' + posLabel(t.ownerPosition) + ')',
       '分配后 ' + rule.overdueMin + ' 分钟内未首次联系（' + (isHotLead(t) ? '高潜强意愿严格 SLA' : '普通 SLA') + '），已上报主管待处理；系统不自动换负责人');
     notify('SLA 超时：' + t.name + ' 分配后 ' + rule.overdueMin + ' 分钟仍未首次联系（负责人 ' + t.owner + '），请主管催办或重新分配');
+    await pushMsgPosition('senior_ops', 'sla', 'SLA 超时：' + t.name,
+      t.name + ' 分配后 ' + rule.overdueMin + ' 分钟未首次联系（负责人 ' + t.owner + '），请催办或重新分配', 'talent-leads');
     t.escalatedAt = nowT; t.escalatedBy = '系统'; t.slaStatus = 'overdue';
     n++;
   }
@@ -945,6 +978,27 @@ route('GET', '/api/mvp/leads', async (ctx) => {
   if (q.get('slaEscalated') === '1') rows = rows.filter(t => slaOf(t).slaStatus === 'overdue' && t.escalatedAt);
   ok(ctx.res, rows.map(toMvpLead));
 });
+/* 自动分配建议（2026-09-19a）：负载最低原则，只推荐不执行。
+ * 新线索（未分配）超过 AUTO_ASSIGN_STALE_MIN 分钟视为「待分配」，
+ * 按各普通运营当前在管线索+达人数量升序给出推荐负责人，由高级运营手动完成分配（不覆盖主管决定）。 */
+const AUTO_ASSIGN_STALE_MIN = 60;
+route('GET', '/api/mvp/leads/auto-assign-suggest', async (ctx) => {
+  if (!isSupervisor(ctx)) return fail(ctx.res, 403, '只有主管（管理员/高级运营）可以查看分配建议');
+  const candidates = await opsLoadCandidates();
+  const leads = (await db.list('leads')).filter(t => t.isActive !== false);
+  const nowMs = Date.now();
+  const stale = leads
+    .filter(t => !t.owner || t.owner === '未分配')
+    .map(t => {
+      const ms = new Date(String(t.createdAt || '').replace(' ', 'T')).getTime();
+      return { id: t.id, name: t.name, channel: t.channel || '', createdAt: String(t.createdAt || ''),
+        staleMin: isNaN(ms) ? -1 : Math.floor((nowMs - ms) / 60000) };
+    })
+    .filter(x => x.staleMin >= AUTO_ASSIGN_STALE_MIN)
+    .sort((a, b) => b.staleMin - a.staleMin);
+  ok(ctx.res, { staleMin: AUTO_ASSIGN_STALE_MIN, staleCount: stale.length, stale: stale.slice(0, 20), candidates, recommend: candidates[0] || null });
+});
+
 // 单条线索（越权直接 403，不依赖前端隐藏）
 route('GET', '/api/mvp/leads/:id', async (ctx) => {
   const t = await db.get('leads', ctx.params.id);
@@ -1032,6 +1086,12 @@ async function doAssign(ids, ownerName, ownerPosition, ctx, mode, remark) {
       assignedBy: ctx.displayName || ctx.operator, assignedById: ctx.authUser || ctx.operator,
       assignedAt: nowStr(), isActive: true,
     });
+    if (toPosition === 'ops') {
+      // 站内消息（2026-09-19a）：分配提醒 → 被分配的普通运营（工作台「新分配达人」确认接收）
+      await pushMsg(target.user, 'assign', '新分配达人：' + t.name,
+        (ctx.displayName || ctx.operator) + ' 把「' + t.name + '」分配给你' + (remark ? '（备注：' + remark + '）' : '')
+        + '，请确认接收后尽快首次联系', 'workbench');
+    }
     changed.push(toMvpLead(upd));
   }
   return { changed, skipped };
@@ -1080,6 +1140,30 @@ route('POST', '/api/mvp/leads/:id/assign-ack', async (ctx) => {
   if (tas[0]) await db.update('talentAssignments', tas[0].id, { ackAt: nowT, ack: true });
   ok(ctx.res, toMvpLead(upd));
 });
+
+/* ============================================================
+ * 站内消息中心（2026-09-19a）
+ * 所有登录用户只能读 / 标记已读「自己收到的消息」（toUser=当前账号，服务端行级过滤）。
+ * 消息产生点：新达人报名（→senior_ops）/ 达人分配（→被分配 ops）/ SLA 超时上报（→senior_ops）。
+ * ============================================================ */
+route('GET', '/api/notifications', async (ctx) => {
+  const items = (await db.list('messages'))
+    .filter(m => m.isActive !== false && m.toUser === ctx.authUser)
+    // createdAt 只到分钟：同分钟内按 id（单调递增）兜底，保证新消息排前面
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))
+      || String(b.id || '').localeCompare(String(a.id || '')));
+  ok(ctx.res, { unread: items.filter(m => !m.readAt).length, items: items.slice(0, 50) });
+});
+route('POST', '/api/notifications/read', async (ctx) => {
+  const b = ctx.body || {};
+  const unread = (await db.list('messages'))
+    .filter(m => m.isActive !== false && m.toUser === ctx.authUser && !m.readAt);
+  const ids = Array.isArray(b.ids) ? b.ids : null;
+  const targets = b.all ? unread : unread.filter(m => ids && ids.includes(m.id));
+  for (const m of targets) await db.update('messages', m.id, { readAt: nowStr() });
+  ok(ctx.res, { read: targets.length });
+});
+
 route('PUT', '/api/mvp/leads/:id', async (ctx) => {
   if (!ctx.role.mutate) return fail(ctx.res, 403, '当前角色无修改权限');
   const t = await db.get('leads', ctx.params.id);
@@ -1329,6 +1413,18 @@ async function buildWorkbenchPanels(ctx, all) {
       key: 'hit-cases', title: '爆款拆解库', type: 'list', link: 'hit-cases',
       hint: '把跑通的内容方向沉淀下来，一线直接复用',
       items: hitCases.slice(0, 5).map(c => ({ text: c.title, sub: (c.contentDirection || '') + (c.productType ? ' · ' + c.productType : '') })),
+    });
+    // 新线索提醒（2026-09-19a）：报名进来未分配的线索 + 负载最低的推荐负责人（只建议，不自动分配）
+    const newLeads = all.filter(t => statusOf(t) === 'lead' && (!t.ownerId || t.owner === '未分配'))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    const recOps = (await opsLoadCandidates())[0] || null;
+    blocks.push({
+      key: 'pending-leads', title: '新线索提醒（待分配）', type: 'table', link: 'talent-leads',
+      hint: '报名进来的未分配线索：查看报名信息 / 沟通记录后，在达人线索页选择运营负责人完成分配（推荐=当前负载最低的运营，仅供参考）',
+      columns: ['达人', '渠道', '报名时间', '推荐负责人', '操作'],
+      rows: newLeads.slice(0, 8).map(t => [t.name, t.channel || '—', String(t.createdAt || '').slice(0, 16) || '—',
+        recOps ? recOps.name + '（在管 ' + recOps.load + ' 条）' : '—',
+        { kind: 'lead-actions', talentId: t.id, name: t.name, owner: t.owner || '未分配' }]),
     });
     // 未分配达人池 + 异常提醒（管理台补全）：分配入口在达人档案页「分配给运营」
     const unassignedAll = all.filter(t => !(t.ownerId || (t.owner && t.owner !== '未分配')));
@@ -2907,7 +3003,7 @@ route('POST', '/api/leads', async (ctx) => {
     name: String(b.nickname).trim(), douyin: '', contact: contactParts.join(' / '),
     channel: b.source_channel || '表单', level: 'C', status: '待联系',
     contentTypes: [], categories: [], fans: 0, coopCount: 0, fulfillmentRate: 0,
-    owner: '未分配', tags: ['报名表单'], note: noteParts.join('；'),
+    owner: '未分配', tags: ['报名表单'], formSource: 'recruit.html', note: noteParts.join('；'),
     // 字段分层（2026-09-18）：报名表只提供映射字段；判断字段一律「待判断」，由运营/高级运营跟进后判定
     talentStatus: 'lead', talentLevel: TALENT_LEVEL_UNSET,
     potentialLevel: '待判断', intentLevel: '待判断', talentClass: '待分类', coopPath: '待判断',
@@ -2924,6 +3020,9 @@ route('POST', '/api/leads', async (ctx) => {
   await db.insert('leads', rec);
   await addLog('报名表单', '达人：' + rec.name, '问卷报名', '', '来源=' + rec.channel);
   notify('新达人报名：' + rec.name + '（渠道：' + rec.channel + '）\n联系方式：' + rec.contact + '\n请在后台「达人线索」及时跟进');
+  // 站内消息（2026-09-19a）：新达人报名 → 高级运营（消息中心，右上角铃铛）
+  await pushMsgPosition('senior_ops', 'signup', '新达人报名：' + rec.name,
+    '渠道：' + rec.channel + ' · 联系方式：' + (rec.contact || '未填写') + '，请在「达人线索」查看报名信息并分配负责人', 'talent-leads');
   json(ctx.res, 200, { code: 0, message: '提交成功', data: { id: rec.id } });
 });
 
@@ -3706,6 +3805,8 @@ if (!USE_FEISHU) {
   migrateDb();
   // 达人分配记录（2026-09-18）：高级运营分配/重新分配达人给普通运营的历史，独立集合可回溯
   if (!Array.isArray(mockDb.talentAssignments)) { mockDb.talentAssignments = []; saveDb(); }
+  // 站内消息中心（2026-09-19a）：新报名 / 分配 / SLA 超时等统一消息，按账号投递（前端右上角铃铛）
+  if (!Array.isArray(mockDb.messages)) { mockDb.messages = []; saveDb(); }
   // 收益结算：设置 / 结算单 / 资金流水
   if (!Array.isArray(mockDb.settings)) {
     mockDb.settings = [{ id: FIN_SETTINGS_ID, mcnRate: 0.3, taxRate: 0.06, receiveDays: 30, payDays: 15 }];
