@@ -413,6 +413,13 @@ createApp({
         if (me.value.role !== 'admin' && page.value === 'dashboard') goPage('workbench');
       }
     }).catch(() => { });
+    // 侧边栏底部岗位显示名（字段名与中文显示名分离；未知岗位兜底「成员」）
+    const MY_POSITION_LABEL = { admin: '管理员', promote: '推广', recruit: '招募', ops: '运营', senior_ops: '高级运营', finance: '财务' };
+    const myPositionLabel = computed(() => {
+      if (!me.value.role) return '';
+      const p = me.value.position || (me.value.role === 'admin' ? 'admin' : '');
+      return MY_POSITION_LABEL[p] || '成员';
+    });
     const accModal = ref(false), pwModal = ref(false);
     const accList = reactive([]);
     // 岗位决定账号能看到哪些线索（与 talents.ownerPosition 对应）
@@ -1402,7 +1409,7 @@ createApp({
       leadView, leadKeyword, leadModal, leadForm, filteredLeads, leadsFiltered, isOverdue,
       openLeadModal, saveLead, onLeadMove,
       taskFilter, tasksFiltered, tasksLoaded, canLaunchShoot, shootDlg, openLaunchShoot, saveLaunchShoot, shootTalentOptions, taskDlg, openTaskAction, saveTaskAction, taskActionsOf, taskStatusTone,
-      taskTypeTab, TASK_TYPE_TABS, taskTypeOf, opsTasks, opsTasksLoaded, canAssignOpsTask, opsTargetOptions, opsTaskDlg, openOpsTask, saveOpsTask,
+      taskTypeTab, TASK_TYPE_TABS, taskTypeOf, opsTasks, opsTasksLoaded, canAssignOpsTask, opsTargetOptions, opsTaskDlg, openOpsTask, saveOpsTask, myPositionLabel,
       opsTaskProgDlg, openOpsTaskProgress, saveOpsTaskProgress, deleteOpsTask,
       hitCases, hitCasesLoaded, hitCaseQ, hitCasesFiltered, canEditHitCase, loadHitCases, hitCaseDlg, openHitCase, saveHitCase, deleteHitCase,
       board, loadBoard, boardReady, maxLoad, loadPct, boardFunnel, boardAttention, boardAlerts, canSeeCost, canTasks,

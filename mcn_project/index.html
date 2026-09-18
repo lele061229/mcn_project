@@ -80,7 +80,7 @@ tailwind.config = {
           <div class="w-10 h-10 shrink-0 rounded-full bg-cyan-400 text-black font-bold text-base flex items-center justify-center">{{ (me.user || '游')[0].toUpperCase() }}</div>
           <div class="min-w-0">
             <div class="text-white font-semibold text-[15px] truncate">{{ me.user || '未登录' }}</div>
-            <div class="text-[11px] text-slate-400">{{ me.role==='admin' ? '管理员' : (me.role==='finance' ? '财务' : (me.role ? '运营' : '')) }} · 哇塞传媒</div>
+            <div class="text-[11px] text-slate-400">{{ myPositionLabel }} · 哇塞传媒</div>
           </div>
         </div>
         <button v-if="me.role==='admin'" @click="openAccounts"
@@ -2991,7 +2991,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260918a"></script>
-<script src="./app.js?v=20260918a"></script>
+<script src="./talent-leads.js?v=20260918b"></script>
+<script src="./app.js?v=20260918b"></script>
 </body>
 </html>

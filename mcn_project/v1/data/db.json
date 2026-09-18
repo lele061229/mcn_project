@@ -1926,7 +1926,26 @@
       "urgeCount": 0,
       "convertedBy": "李婷",
       "convertedById": "demo-recruit",
-      "convertedAt": "2026-09-18 06:22"
+      "convertedAt": "2026-09-18 06:22",
+      "firstContactAt": "",
+      "lastFollowupAt": "2026-09-18 06:22",
+      "escalatedBy": "",
+      "reassignedAt": "",
+      "reassignFrom": "",
+      "reassignReason": "",
+      "urgedAt": "",
+      "urgeBy": "",
+      "urgeNote": "",
+      "recruitBy": "",
+      "recruitById": "",
+      "dewuId": "DWU000056",
+      "dewuFans": 5950,
+      "dewuActivity": "中",
+      "dewuUpdateDays": 3,
+      "dewuLastPublish": "2026-09-13",
+      "dewuSyncedAt": "",
+      "dewuSource": "manual",
+      "talentLevel": "C"
     }
   ],
   "tasks": [
@@ -3173,38 +3192,38 @@
       "createdAt": "2026-09-18 06:15"
     },
     {
-      "id": "F0087",
-      "talentId": "T0059",
-      "talentName": "APItest737762-合作C",
+      "id": "F0090",
+      "talentId": "T0028",
+      "talentName": "APItest554861-运营A",
       "method": "微信",
-      "result": "有兴趣",
-      "content": "确认合作意向，约定寄拍细节",
+      "result": "",
+      "content": "UI回归：已加微信，介绍寄拍流程",
       "stage": "待联系",
       "potentialLevel": "待判断",
       "intentLevel": "待判断",
       "talentClass": "待分类",
-      "nextAt": "2026-12-15 10:00",
+      "nextAt": "2026-09-20 10:00",
       "nextAction": "",
       "operator": "李婷",
       "operatorId": "demo-recruit",
-      "createdAt": "2026-09-18 06:22"
+      "createdAt": "2026-09-18 06:31"
     },
     {
-      "id": "F0089",
-      "talentId": "T0060",
-      "talentName": "APItest737762-寄拍主链D",
-      "method": "其他",
+      "id": "F0091",
+      "talentId": "T0028",
+      "talentName": "APItest554861-运营A",
+      "method": "微信",
       "result": "",
-      "content": "APItest 时间轴回归",
-      "stage": "合作中",
+      "content": "UI回归：已加微信，介绍寄拍流程",
+      "stage": "待联系",
       "potentialLevel": "待判断",
       "intentLevel": "待判断",
       "talentClass": "待分类",
-      "nextAt": "",
-      "nextAction": "APItest 下一步动作",
-      "operator": "王浩",
-      "operatorId": "demo-staff",
-      "createdAt": "2026-09-18 06:22"
+      "nextAt": "2026-09-20 10:00",
+      "nextAction": "",
+      "operator": "李婷",
+      "operatorId": "demo-recruit",
+      "createdAt": "2026-09-18 06:32"
     }
   ],
   "logs": [
@@ -25797,6 +25816,258 @@
       "type": "删除达人档案",
       "before": "状态=合作中",
       "after": "已删除"
+    },
+    {
+      "id": "LOG2511",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "达人：UI回归232975-招募A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG2512",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "达人：UI回归232975-招募B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG2513",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "达人：UI回归232975-运营A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2514",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "达人：UI回归232975-运营B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2515",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "达人：UI回归232975-招募B",
+      "type": "线索批量分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2516",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "达人：UI回归232975-招募A",
+      "type": "线索批量分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2517",
+      "operator": "管理员",
+      "at": "2026-09-18 06:30",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=王浩；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG2518",
+      "operator": "李婷",
+      "at": "2026-09-18 06:31",
+      "target": "达人：APItest554861-运营A",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 06:15",
+      "after": "方式=微信；结果=—；阶段=待联系→待联系；下次跟进=2026-09-20 10:00"
+    },
+    {
+      "id": "LOG2519",
+      "operator": "管理员",
+      "at": "2026-09-18 06:31",
+      "target": "达人：UI回归232975-运营A",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=UI 回归：交接给招募"
+    },
+    {
+      "id": "LOG2520",
+      "operator": "李婷",
+      "at": "2026-09-18 06:31",
+      "target": "达人：UI回归232975-运营A",
+      "type": "线索交接-确认",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；李婷 确认"
+    },
+    {
+      "id": "LOG2521",
+      "operator": "管理员",
+      "at": "2026-09-18 06:31",
+      "target": "达人：UI回归232975-招募A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2522",
+      "operator": "管理员",
+      "at": "2026-09-18 06:31",
+      "target": "达人：UI回归232975-招募B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2523",
+      "operator": "管理员",
+      "at": "2026-09-18 06:31",
+      "target": "达人：UI回归232975-运营A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2524",
+      "operator": "管理员",
+      "at": "2026-09-18 06:31",
+      "target": "达人：UI回归232975-运营B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2525",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "达人：UI回归340432-招募A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG2526",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "达人：UI回归340432-招募B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=李婷（招募）"
+    },
+    {
+      "id": "LOG2527",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "达人：UI回归340432-运营A",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2528",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "达人：UI回归340432-运营B",
+      "type": "新增线索",
+      "before": "",
+      "after": "状态=待联系；负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2529",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "达人：UI回归340432-招募B",
+      "type": "线索批量分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2530",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "达人：UI回归340432-招募A",
+      "type": "线索批量分配",
+      "before": "负责人=李婷（招募）",
+      "after": "负责人=王浩（普通运营）"
+    },
+    {
+      "id": "LOG2531",
+      "operator": "管理员",
+      "at": "2026-09-18 06:32",
+      "target": "线索批量分配",
+      "type": "线索批量分配",
+      "before": "2 条",
+      "after": "负责人=王浩；成功 2 / 跳过 0"
+    },
+    {
+      "id": "LOG2532",
+      "operator": "李婷",
+      "at": "2026-09-18 06:32",
+      "target": "达人：APItest554861-运营A",
+      "type": "线索跟进记录",
+      "before": "上次跟进=2026-09-18 06:31",
+      "after": "方式=微信；结果=—；阶段=待联系→待联系；下次跟进=2026-09-20 10:00"
+    },
+    {
+      "id": "LOG2533",
+      "operator": "管理员",
+      "at": "2026-09-18 06:33",
+      "target": "达人：UI回归340432-运营A",
+      "type": "线索交接-发起",
+      "before": "负责人=王浩（普通运营）",
+      "after": "待 李婷（招募）确认；原因=UI 回归：交接给招募"
+    },
+    {
+      "id": "LOG2534",
+      "operator": "李婷",
+      "at": "2026-09-18 06:33",
+      "target": "达人：UI回归340432-运营A",
+      "type": "线索交接-确认",
+      "before": "负责人=王浩（普通运营）",
+      "after": "负责人=李婷（招募）；李婷 确认"
+    },
+    {
+      "id": "LOG2535",
+      "operator": "管理员",
+      "at": "2026-09-18 06:33",
+      "target": "达人：UI回归340432-招募A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2536",
+      "operator": "管理员",
+      "at": "2026-09-18 06:33",
+      "target": "达人：UI回归340432-招募B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2537",
+      "operator": "管理员",
+      "at": "2026-09-18 06:33",
+      "target": "达人：UI回归340432-运营A",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
+    },
+    {
+      "id": "LOG2538",
+      "operator": "管理员",
+      "at": "2026-09-18 06:33",
+      "target": "达人：UI回归340432-运营B",
+      "type": "删除线索",
+      "before": "状态=待联系",
+      "after": "已删除"
     }
   ],
   "campaigns": [
@@ -30262,6 +30533,52 @@
       "operator": "管理员",
       "createdAt": "2026-09-18 06:22",
       "confirmedAt": "2026-09-18 06:22"
+    },
+    {
+      "id": "HO0209",
+      "talentId": "T0059",
+      "talentName": "UI回归232975-运营A",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "UI 回归：交接给招募",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "李婷",
+      "createdAt": "2026-09-18 06:31",
+      "confirmedAt": "2026-09-18 06:31"
+    },
+    {
+      "id": "HO0210",
+      "talentId": "T0059",
+      "talentName": "UI回归340432-运营A",
+      "fromUser": "王浩",
+      "fromUserId": "demo-staff",
+      "fromPosition": "ops",
+      "toUser": "李婷",
+      "toUserId": "demo-recruit",
+      "toPosition": "recruit",
+      "reason": "UI 回归：交接给招募",
+      "note": "",
+      "situation": "",
+      "accountState": "",
+      "coopWay": "",
+      "contentDirection": "",
+      "risk": "",
+      "nextSuggest": "",
+      "status": "confirmed",
+      "operator": "李婷",
+      "createdAt": "2026-09-18 06:33",
+      "confirmedAt": "2026-09-18 06:33"
     }
   ],
   "leads": [
@@ -31708,7 +32025,7 @@
       "assignedAt": "2026-09-16 03:34",
       "tags": [],
       "note": "",
-      "lastFollowAt": "2026-09-18 06:15",
+      "lastFollowAt": "2026-09-18 06:32",
       "createdAt": "2026-09-16 03:34",
       "potentialLevel": "待判断",
       "intentLevel": "待判断",
@@ -31743,7 +32060,7 @@
       "dewuSyncedAt": "",
       "dewuSource": "manual",
       "firstContactAt": "2026-09-16 18:30",
-      "lastFollowupAt": "2026-09-18 06:15",
+      "lastFollowupAt": "2026-09-18 06:32",
       "escalatedAt": "2026-09-16 20:04",
       "escalatedBy": "系统",
       "reassignedAt": "",
