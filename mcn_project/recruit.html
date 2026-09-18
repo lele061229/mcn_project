@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>哇塞传媒 · 达人招募报名</title>
+<script src="/vendor/tailwind.js"></script>
+<style>
+  body { background: #f8fafc; }
+  .req-star { color: #ef4444; margin-right: 2px; font-weight: 700; }
+  .q-card { scroll-margin-top: 20px; }
+  .q-invalid { border-color: #ef4444 !important; background-color: #fef2f2; }
+  .grp-invalid { outline: 2px dashed #ef4444; border-radius: 8px; padding: 8px; }
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+           background: #ef4444; color: #fff; padding: 10px 20px; border-radius: 8px;
+           box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 999; font-size: 14px; max-width: 90vw; }
+  input[type=text], input[type=tel], textarea, select {
+    width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px;
+    font-size: 14px; outline: none; transition: border .15s; background: #fff;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #6366f1; }
+  .opt { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+         border: 1px solid #e2e8f0; border-radius: 999px; cursor: pointer;
+         font-size: 14px; color: #475569; transition: all .15s; user-select: none; }
+  .opt:hover { border-color: #a5b4fc; }
+  .opt.selected { background: #eef2ff; border-color: #6366f1; color: #4338ca; }
+  .opt input { accent-color: #6366f1; }
+  .other-input { margin-top: 8px; display: none; }
+  .other-input.show { display: block; }
+  .file-box { display: flex; align-items: center; gap: 10px; }
+  .file-box label.btn { padding: 8px 16px; background: #6366f1; color: #fff; border-radius: 8px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+  .file-box label.btn:hover { background: #4f46e5; }
+  .file-box .fname { font-size: 13px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+</head>
+<body class="min-h-screen py-8 px-4">
+<div class="max-w-2xl mx-auto">
+  <!-- 哇塞传媒品牌头部 -->
+  <div class="bg-black rounded-2xl shadow-sm px-6 py-5 mb-4 flex items-center gap-4">
+    <img src="/logo-wide-t.png" alt="哇塞传媒" class="h-14 w-auto">
+    <div class="ml-auto text-right text-[11px] text-cyan-300 leading-relaxed hidden sm:block tracking-wider">得物达人孵化 · 内容合作<br>DASHBOARD / RECRUIT</div>
+  </div>
+  <div class="bg-white rounded-2xl shadow-sm p-6 sm:p-8">
+    <h1 class="text-2xl font-bold text-slate-800">达人招募报名</h1>
+    <p class="text-sm text-slate-500 mt-1">填写下方信息，我们会尽快与你联系。带 <span class="req-star">*</span> 为必填项，选填项可留空直接提交。</p>
+
+    <form id="recruitForm" class="mt-6 space-y-6" novalidate>
+
+      <!-- Q1 达人姓名 -->
+      <div class="q-card" data-q="1">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">1.</span> 怎么称呼您？
+        </label>
+        <input type="text" name="nickname" placeholder="例：小李 / 琪琪" />
+      </div>
+
+      <!-- Q2 了解渠道（单选 + 其他补充） -->
+      <div class="q-card" data-q="2">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">2.</span> 请问是从什么渠道了解到我们达人寄拍呢？
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="source_channel" data-other="source_channel_other">
+          <label class="opt"><input type="radio" name="source_channel_radio" value="校园墙" />校园墙</label>
+          <label class="opt"><input type="radio" name="source_channel_radio" value="小红书账号" />小红书账号</label>
+          <label class="opt"><input type="radio" name="source_channel_radio" value="抖音视频" />抖音视频</label>
+          <label class="opt"><input type="radio" name="source_channel_radio" value="BOSS直聘" />BOSS直聘</label>
+          <label class="opt"><input type="radio" name="source_channel_radio" value="其他" />其他</label>
+        </div>
+        <input type="text" class="other-input" name="source_channel_other" placeholder="请补充渠道" />
+      </div>
+
+      <!-- Q3 自媒体经验（单选） -->
+      <div class="q-card" data-q="3">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">3.</span> 你目前有在做自媒体 / 内容账号吗？
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="self_media_status">
+          <label class="opt"><input type="radio" name="self_media_radio" value="有，目前正在做" />有，目前正在做</label>
+          <label class="opt"><input type="radio" name="self_media_radio" value="之前做过，现在暂时没做" />之前做过，现在暂时没做</label>
+          <label class="opt"><input type="radio" name="self_media_radio" value="暂时没有，但准备开始做" />暂时没有，但准备开始做</label>
+        </div>
+      </div>
+
+      <!-- Q4 主要平台（多选 + 其他补充） -->
+      <div class="q-card" data-q="4">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="q-no">4.</span> 你主要做哪些平台？<span class="text-slate-400 text-xs ml-1">（选填）</span>
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="platforms" data-other="platforms_other">
+          <label class="opt"><input type="checkbox" value="得物" />得物</label>
+          <label class="opt"><input type="checkbox" value="小红书" />小红书</label>
+          <label class="opt"><input type="checkbox" value="抖音" />抖音</label>
+          <label class="opt"><input type="checkbox" value="快手" />快手</label>
+          <label class="opt"><input type="checkbox" value="B站" />B站</label>
+          <label class="opt"><input type="checkbox" value="其他" />其他</label>
+        </div>
+        <input type="text" class="other-input" name="platforms_other" placeholder="请补充平台" />
+      </div>
+
+      <!-- Q5 粉丝量（单选） -->
+      <div class="q-card" data-q="5">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="q-no">5.</span> 目前粉丝量大概是多少？<span class="text-slate-400 text-xs ml-1">（选填）</span>
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="followers">
+          <label class="opt"><input type="radio" name="fans_radio" value="0~500" />0~500</label>
+          <label class="opt"><input type="radio" name="fans_radio" value="500~1000" />500~1000</label>
+          <label class="opt"><input type="radio" name="fans_radio" value="1000~5000" />1000~5000</label>
+          <label class="opt"><input type="radio" name="fans_radio" value="5000~1万" />5000~1万</label>
+          <label class="opt"><input type="radio" name="fans_radio" value="1万~5万" />1万~5万</label>
+          <label class="opt"><input type="radio" name="fans_radio" value="5万以上" />5万以上</label>
+        </div>
+      </div>
+
+      <!-- Q6 账号主页截图（上传） -->
+      <div class="q-card" data-q="6">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="q-no">6.</span> 上传一下你的主要账号主页<span class="text-slate-400 text-xs ml-1">（选填，限 20MB，jpg/png/gif 等）</span>
+        </label>
+        <div class="file-box">
+          <label class="btn">选择文件<input type="file" name="profile_screenshot_file" accept=".jpg,.jpeg,.png,.gif,.bmp,.psd,.tif,.tiff,.heic,.heif" hidden /></label>
+          <span class="fname">未选择文件</span>
+        </div>
+      </div>
+
+      <!-- Q7 商单经验（单选） -->
+      <div class="q-card" data-q="7">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="q-no">7.</span> 之前有接过寄拍或者商单吗？<span class="text-slate-400 text-xs ml-1">（选填）</span>
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="business_experience">
+          <label class="opt"><input type="radio" name="exp_radio" value="接过寄拍" />接过寄拍</label>
+          <label class="opt"><input type="radio" name="exp_radio" value="接过商单" />接过商单</label>
+          <label class="opt"><input type="radio" name="exp_radio" value="两种都接过" />两种都接过</label>
+          <label class="opt"><input type="radio" name="exp_radio" value="暂时没接过" />暂时没接过</label>
+        </div>
+      </div>
+
+      <!-- Q8 合作品类（多选 + 其他补充） -->
+      <div class="q-card" data-q="8">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="q-no">8.</span> 之前主要接过哪些类型的合作？<span class="text-slate-400 text-xs ml-1">（选填）</span>
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="cooperation_categories" data-other="cooperation_categories_other">
+          <label class="opt"><input type="checkbox" value="手表 / 饰品" />手表/饰品</label>
+          <label class="opt"><input type="checkbox" value="包包" />包包</label>
+          <label class="opt"><input type="checkbox" value="衣服 / 裤子" />衣服/裤子</label>
+          <label class="opt"><input type="checkbox" value="鞋类" />鞋类</label>
+          <label class="opt"><input type="checkbox" value="美妆护肤" />美妆护肤</label>
+          <label class="opt"><input type="checkbox" value="数码产品" />数码产品</label>
+          <label class="opt"><input type="checkbox" value="其他" />其他</label>
+        </div>
+        <input type="text" class="other-input" name="cooperation_categories_other" placeholder="请补充品类" />
+      </div>
+
+      <!-- Q9 想接寄拍类型（多选 + 其他补充） -->
+      <div class="q-card" data-q="9">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">9.</span> 你比较想接哪些类型的寄拍？
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="preferred_categories" data-other="preferred_categories_other">
+          <label class="opt"><input type="checkbox" value="手表 / 饰品" />手表/饰品</label>
+          <label class="opt"><input type="checkbox" value="包包" />包包</label>
+          <label class="opt"><input type="checkbox" value="衣服 / 裤子" />衣服/裤子</label>
+          <label class="opt"><input type="checkbox" value="鞋类" />鞋类</label>
+          <label class="opt"><input type="checkbox" value="美妆护肤" />美妆护肤</label>
+          <label class="opt"><input type="checkbox" value="数码产品" />数码产品</label>
+          <label class="opt"><input type="checkbox" value="家居 / 日用品" />家居/日用品</label>
+          <label class="opt"><input type="checkbox" value="其他" />其他</label>
+        </div>
+        <input type="text" class="other-input" name="preferred_categories_other" placeholder="请补充品类" />
+      </div>
+
+      <!-- Q10 出镜方式（多选） -->
+      <div class="q-card" data-q="10">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">10.</span> 你可以接受哪些出镜方式？
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="appearance_style">
+          <label class="opt"><input type="checkbox" value="真人露脸出镜" />真人露脸出镜</label>
+          <label class="opt"><input type="checkbox" value="本人出镜，但不露脸" />本人出镜，但不露脸</label>
+          <label class="opt"><input type="checkbox" value="手部 / 局部出镜" />手部/局部出镜</label>
+          <label class="opt"><input type="checkbox" value="只拍产品，不本人出镜" />只拍产品，不本人出镜</label>
+          <label class="opt"><input type="checkbox" value="都可以，看具体商品要求" />都可以，看具体商品要求</label>
+        </div>
+      </div>
+
+      <!-- Q11 拍摄作品（上传） -->
+      <div class="q-card" data-q="11">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="q-no">11.</span> 上传一下你曾经的拍摄作品<span class="text-slate-400 text-xs ml-1">（选填，限 20MB，2~3 张穿搭/展示照）</span>
+        </label>
+        <div class="file-box">
+          <label class="btn">选择文件<input type="file" name="works_file" accept=".jpg,.jpeg,.png,.gif,.bmp,.psd,.tif,.tiff,.heic,.heif" hidden /></label>
+          <span class="fname">未选择文件</span>
+        </div>
+      </div>
+
+      <!-- Q12 想了解的问题（单选） -->
+      <div class="q-card" data-q="12">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">12.</span> 你现在最想了解哪些问题？
+        </label>
+        <div class="flex flex-wrap gap-2" data-group="questions">
+          <label class="opt"><input type="radio" name="q12_radio" value="寄拍具体流程" />寄拍具体流程</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="对账号 / 粉丝有没有要求" />对账号 / 粉丝有没有要求</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="拍摄有什么要求" />拍摄有什么要求</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="作品发布有什么要求" />作品发布有什么要求</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="寄拍是否需要费用" />寄拍是否需要费用</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="商品怎么选择" />商品怎么选择</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="商单 / 收益相关" />商单 / 收益相关</label>
+          <label class="opt"><input type="radio" name="q12_radio" value="其他" />其他</label>
+        </div>
+      </div>
+
+      <!-- Q13 联系方式（填空：微信/电话，至少一项） -->
+      <div class="q-card" data-q="13">
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span><span class="q-no">13.</span> 请留下您的联系方式，我们的客服稍后会联系您
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <span class="text-xs text-slate-400">微信号</span>
+            <input type="text" name="wechat_id" placeholder="微信号" />
+          </div>
+          <div>
+            <span class="text-xs text-slate-400">电话号</span>
+            <input type="tel" name="phone" placeholder="11 位手机号" />
+          </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-1">微信号或电话号至少填写一项</p>
+      </div>
+
+      <div class="pt-2">
+        <button type="submit" id="submitBtn"
+                class="w-full py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 active:bg-indigo-800 transition disabled:opacity-50">
+          提交报名
+        </button>
+      </div>
+    </form>
+
+    <div id="successBox" class="hidden mt-6 p-6 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+      <div class="text-3xl mb-2">✅</div>
+      <div class="text-emerald-700 font-medium">提交成功！</div>
+      <div class="text-sm text-slate-500 mt-1">我们已收到你的报名信息，会尽快联系你。</div>
+    </div>
+  </div>
+  <p class="text-center text-xs text-slate-400 mt-4">© 哇塞传媒 · 达人招募</p>
+</div>
+
+<script>
+// 必填题号
+const REQUIRED_QS = new Set(['1','2','3','9','10','12','13']);
+const API_BASE = ''; // 同源：部署在哪台服务器就提交到哪台
+
+// 选项选中样式 + "其他" 补充框联动
+document.querySelectorAll('.opt input').forEach(inp => {
+  inp.addEventListener('change', () => {
+    // radio: 同组只高亮选中的
+    const group = inp.closest('[data-group]');
+    if (inp.type === 'radio') {
+      group.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    }
+    inp.closest('.opt').classList.toggle('selected', inp.checked);
+    // 其他补充框显隐
+    toggleOtherInput(group);
+  });
+});
+
+function toggleOtherInput(group) {
+  const otherName = group.dataset.other;
+  if (!otherName) return;
+  const otherInput = document.querySelector(`[name="${otherName}"]`);
+  if (!otherInput) return;
+  const hasOtherChecked = Array.from(group.querySelectorAll('input:checked'))
+    .some(i => i.value === '其他');
+  otherInput.classList.toggle('show', hasOtherChecked);
+}
+
+// 文件名显示
+document.querySelectorAll('input[type=file]').forEach(f => {
+  f.addEventListener('change', () => {
+    const span = f.closest('.file-box').querySelector('.fname');
+    span.textContent = f.files[0] ? f.files[0].name : '未选择文件';
+  });
+});
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
+}
+
+function getRadioValue(name) {
+  const el = document.querySelector(`input[name="${name}"]:checked`);
+  return el ? el.value : '';
+}
+function getCheckboxValues(groupName) {
+  return Array.from(document.querySelectorAll(`[data-group="${groupName}"] input[type=checkbox]:checked`))
+    .map(cb => cb.value);
+}
+// 取单选组的值（Q3/Q7/Q12 等用 data-group 标识的单选组）
+function getSingleValue(groupName) {
+  const el = document.querySelector(`[data-group="${groupName}"] input[type=radio]:checked`);
+  return el ? el.value : '';
+}
+
+// 合并"其他"补充值：若选了"其他"且有补充，把补充文本替换"其他"
+function mergeOther(values, otherText) {
+  if (!values.length) return values;
+  const arr = [...values];
+  const idx = arr.indexOf('其他');
+  if (idx >= 0 && otherText && otherText.trim()) {
+    arr[idx] = '其他：' + otherText.trim();
+  }
+  return arr;
+}
+
+/* ===== 条件跳题 + 题号自动重排 =====
+   规则：
+   - Q3「有在做自媒体」选「有，目前正在做 / 之前做过」→ 才显示 Q4 平台、Q5 粉丝量、Q6 账号主页
+   - Q7「接过寄拍/商单吗」选「接过寄拍 / 接过商单 / 两种都接过」→ 才显示 Q8 合作品类
+   被隐藏的题不占题号：每次显隐变化后，按当前可见顺序重新编号（1、2、3…） */
+const MEDIA_DONE_VALUES = ['有，目前正在做', '之前做过，现在暂时没做'];
+const EXP_DONE_VALUES = ['接过寄拍', '接过商单', '两种都接过'];
+function hasMediaExp() { return MEDIA_DONE_VALUES.indexOf(getSingleValue('self_media_status')) !== -1; }
+function hasCoopExp() { return EXP_DONE_VALUES.indexOf(getSingleValue('business_experience')) !== -1; }
+// 被控题号 → 显示条件（返回 true 才显示）
+const CONDITIONAL_RULES = { '4': hasMediaExp, '5': hasMediaExp, '6': hasMediaExp, '8': hasCoopExp };
+
+// 隐藏时清空该题的作答，避免提交残留数据
+function clearCardAnswers(card) {
+  card.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(el => { el.checked = false; });
+  card.querySelectorAll('input[type=text], input[type=tel]').forEach(el => { el.value = ''; });
+  const f = card.querySelector('input[type=file]');
+  if (f) {
+    f.value = '';
+    const fn = card.querySelector('.fname');
+    if (fn) fn.textContent = '未选择文件';
+  }
+}
+// 按当前可见题目重新编号（隐藏的题不占号）
+function renumberVisibleQuestions() {
+  let n = 0;
+  document.querySelectorAll('#recruitForm .q-card').forEach(card => {
+    if (card.style.display === 'none') return;
+    n++;
+    const no = card.querySelector('.q-no');
+    if (no) no.textContent = n + '.';
+  });
+}
+function refreshConditional() {
+  Object.keys(CONDITIONAL_RULES).forEach(q => {
+    const card = document.querySelector('.q-card[data-q="' + q + '"]');
+    if (!card) return;
+    const show = CONDITIONAL_RULES[q]();
+    card.style.display = show ? '' : 'none';
+    if (!show) clearCardAnswers(card);
+  });
+  renumberVisibleQuestions();
+}
+// 任一单选项变化都会影响条件题（Q3 控 Q4/Q5/Q6，Q7 控 Q8）
+document.querySelectorAll('#recruitForm input[type=radio]').forEach(r => {
+  r.addEventListener('change', refreshConditional);
+});
+refreshConditional(); // 页面打开时先按未选择状态隐藏
+
+// 校验单题
+function isQAnswered(qCard) {
+  const q = qCard.dataset.q;
+  if (q === '1') return !!qCard.querySelector('[name="nickname"]').value.trim();
+  if (q === '2') return !!getSingleValue('source_channel');
+  if (q === '3') return !!getSingleValue('self_media_status');
+  if (q === '9') return getCheckboxValues('preferred_categories').length > 0;
+  if (q === '10') return getCheckboxValues('appearance_style').length > 0;
+  if (q === '12') return !!getSingleValue('questions');
+  if (q === '13') {
+    return !!qCard.querySelector('[name="wechat_id"]').value.trim()
+        || !!qCard.querySelector('[name="phone"]').value.trim();
+  }
+  return true;
+}
+
+function markInvalid(qCard) {
+  qCard.querySelectorAll('input[type=text], input[type=tel], select').forEach(el => {
+    if (!el.value.trim()) el.classList.add('q-invalid');
+  });
+  const group = qCard.querySelector('[data-group]');
+  if (group) group.classList.add('grp-invalid');
+  qCard.style.background = '#fff1f2';
+}
+function clearInvalid() {
+  document.querySelectorAll('.q-invalid').forEach(el => el.classList.remove('q-invalid'));
+  document.querySelectorAll('.grp-invalid').forEach(g => g.classList.remove('grp-invalid'));
+  document.querySelectorAll('.q-card').forEach(c => c.style.background = '');
+}
+
+// 上传单个文件，返回 URL
+async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: fd });
+  const data = await res.json();
+  if (data.code !== 0) throw new Error(data.message || '上传失败');
+  return data.data.url;
+}
+
+document.getElementById('recruitForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearInvalid();
+
+  // 1) 校验必填
+  const qCards = document.querySelectorAll('.q-card');
+  let firstInvalid = null;
+  for (const card of qCards) {
+    if (REQUIRED_QS.has(card.dataset.q) && !isQAnswered(card)) {
+      markInvalid(card);
+      if (!firstInvalid) firstInvalid = card;
+    }
+  }
+  if (firstInvalid) {
+    showToast('请填写带 * 的必填项');
+    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '提交中...';
+
+  try {
+    // 2) 上传图片（若有）
+    let profileUrl = '', worksUrl = '';
+    const pf = document.querySelector('[name="profile_screenshot_file"]').files[0];
+    const wf = document.querySelector('[name="works_file"]').files[0];
+    if (pf) profileUrl = API_BASE + await uploadFile(pf);
+    if (wf) worksUrl = API_BASE + await uploadFile(wf);
+
+    // 3) 收集数据
+    const sourceChannel = getSingleValue('source_channel');
+    const sourceOther = document.querySelector('[name="source_channel_other"]').value.trim();
+    const platforms = mergeOther(getCheckboxValues('platforms'), document.querySelector('[name="platforms_other"]').value);
+    const coopCats = mergeOther(getCheckboxValues('cooperation_categories'), document.querySelector('[name="cooperation_categories_other"]').value);
+    const prefCats = mergeOther(getCheckboxValues('preferred_categories'), document.querySelector('[name="preferred_categories_other"]').value);
+
+    const payload = {
+      nickname: document.querySelector('[name="nickname"]').value.trim(),
+      source_channel: sourceChannel === '其他' && sourceOther ? '其他：' + sourceOther : sourceChannel,
+      self_media_status: getSingleValue('self_media_status'),
+      platforms: platforms.join('、'),
+      followers: getSingleValue('followers'),
+      profile_screenshot: profileUrl,
+      business_experience: getSingleValue('business_experience'),
+      cooperation_categories: coopCats.join('、'),
+      preferred_categories: prefCats.join('、'),
+      appearance_style: getCheckboxValues('appearance_style').join('、'),
+      works: worksUrl,
+      questions: getSingleValue('questions'),
+      wechat_id: document.querySelector('[name="wechat_id"]').value.trim(),
+      phone: document.querySelector('[name="phone"]').value.trim(),
+    };
+    Object.keys(payload).forEach(k => { if (payload[k] === '' || payload[k] === null) delete payload[k]; });
+
+    const res = await fetch(`${API_BASE}/api/leads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.code === 0) {
+      e.target.classList.add('hidden');
+      document.getElementById('successBox').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      showToast(data.message || '提交失败，请重试');
+    }
+  } catch (err) {
+    showToast(err.message || '网络错误，请稍后重试');
+  } finally {
+    btn.disabled = false; btn.textContent = '提交报名';
+  }
+});
+</script>
+</body>
+</html>

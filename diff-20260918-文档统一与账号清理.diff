@@ -1,0 +1,452 @@
+### 文档统一 + 幽灵账号清理  diff（2026-09-18）
+
+--- /tmp/mcn_docbak/AGENTS.root.md	2026-09-17 20:26:25.517800200 -0700
++++ AGENTS.md	2026-09-17 20:27:09.264727000 -0700
+@@ -18,13 +18,15 @@
+ ↓
+ 达人陪跑
+ ↓
+-运营管理
++重点培养
++↓
++签约合作
+ ↓
+-达人任务
++公司直属达人
+ ↓
+-收益分析
++内容运营
+ ↓
+-经营决策
++商业收益
+ 
+ 本项目不是普通 CRM。
+ 
+@@ -104,11 +106,13 @@
+ 
+ ## 前端
+ 
+-Vue3
++Vue3（全局构建版，vendor/vue.global.prod.js）
+ 
+-Vite
++Tailwind（运行时，vendor/tailwind.js）
+ 
+-Element Plus
++ECharts（图表，vendor/echarts.min.js）
++
++SheetJS（Excel 导入导出，vendor/xlsx.full.min.js）
+ 
+ ## 后端
+ 
+@@ -165,12 +169,16 @@
+ 
+ 例如：
+ 
++promote
++
+ recruit
+ 
+ ops
+ 
+ senior_ops
+ 
++finance
++
+ ---
+ 
+ # 四、权限判断规则
+@@ -209,6 +217,32 @@
+ 
+ ---
+ 
++## promote
++
++推广人员
++
++负责：
++
++1. 渠道投放与获客
++
++2. 线索来源渠道维护
++
++3. 投放成本与效果复盘
++
++可见：
++
++渠道页（投放 / 渠道 ROI）
++
++不可见：
++
++达人线索、达人档案、账号运营、达人任务、爆款拆解、财务
++
++注意：
++
++推广不参与线索跟进，也不是达人负责人（OWNER_POSITIONS 不含 promote）。
++
++---
++
+ ## recruit
+ 
+ 招募负责人
+@@ -285,6 +319,36 @@
+ 
+ ---
+ 
++## finance
++
++财务人员
++
++role：
++
++finance（不是 staff）
++
++负责：
++
++1. 分成与结算
++
++2. 应付 / 收款
++
++3. 财务数据核对
++
++可见：
++
++财务页（收益 / 结算）
++
++不可见：
++
++达人线索、达人档案、账号运营、达人任务
++
++注意：
++
++财务不碰线索，也不是达人负责人（OWNER_POSITIONS 不含 finance）。
++
++---
++
+ # 六、达人生命周期模型
+ 
+ 字段：
+@@ -371,9 +435,9 @@
+ 
+ 内容任务
+ 
+-sample
++shoot
+ 
+-寄拍任务
++拍摄 / 寄拍任务
+ 
+ growth
+ 
+@@ -437,7 +501,7 @@
+ 
+ 当前：
+ 
+-119项回归测试。
++149项回归测试。
+ 
+ 新增功能必须增加：
+ 
+@@ -499,19 +563,15 @@
+ 
+ 阶段1：
+ 
+-达人CRM
++跑通 MCN 内部管理流程。
+ 
+ 阶段2：
+ 
+-达人增长运营中台
++提升运营效率。
+ 
+ 阶段3：
+ 
+-AI辅助运营
+-
+-阶段4：
+-
+-商业化SaaS
++产品化（多公司支持 / SaaS化 / AI辅助运营）。
+ 
+ ---
+ 
+
+########## docs/PROJECT_CONTEXT.md ##########
+
+--- /tmp/mcn_docbak/PROJECT_CONTEXT.docs.md	2026-09-17 20:26:26.203237900 -0700
++++ docs/PROJECT_CONTEXT.md	2026-09-17 20:27:09.316367300 -0700
+@@ -182,7 +182,39 @@
+ 
+ ---
+ 
+-## 2. recruit
++## 2. promote
++
++推广人员
++
++职责：
++
++负责：
++
++渠道投放
++
++线索来源渠道维护
++
++投放成本与效果复盘
++
++关注：
++
++- 渠道数据
++
++- 获客成本
++
++- 渠道 ROI
++
++权限：
++
++只能进渠道页。
++
++看不到达人线索、达人档案、账号运营、达人任务、财务。
++
++不做达人负责人。
++
++---
++
++## 3. recruit
+ 
+ 达人招募负责人
+ 
+@@ -211,7 +243,7 @@
+ 
+ ---
+ 
+-## 3. ops
++## 4. ops
+ 
+ 普通运营 / 达人陪跑运营
+ 
+@@ -247,7 +279,7 @@
+ 
+ ---
+ 
+-## 4. senior_ops
++## 5. senior_ops
+ 
+ 高级运营
+ 
+@@ -289,6 +321,36 @@
+ 
+ ---
+ 
++## 6. finance
++
++财务人员
++
++职责：
++
++负责：
++
++分成与结算
++
++应付 / 收款
++
++财务数据核对
++
++关注：
++
++- 收益
++
++- 结算进度
++
++权限：
++
++只能进财务页。
++
++看不到达人线索、达人档案、账号运营、达人任务。
++
++不碰线索，也不做达人负责人。
++
++---
++
+ # 六、达人生命周期模型
+ 
+ 字段：
+@@ -391,9 +453,9 @@
+ 
+ 内容任务
+ 
+-sample
++shoot
+ 
+-寄拍任务
++拍摄 / 寄拍任务
+ 
+ growth
+ 
+
+########## docs/代码导读-20260916.md ##########
+
+--- /tmp/mcn_docbak/daodu.md	2026-09-17 20:26:26.546052800 -0700
++++ docs/代码导读-20260916.md	2026-09-17 20:27:09.342130300 -0700
+@@ -176,7 +176,7 @@
+ 7. **数据字段缺失** → `migrateDb()` 启动自愈是否覆盖了新字段；看 `v1/data/db.json` 原始数据（别只信界面）。
+ 8. **分页断言失败** → 回归脚本数 `<tr>` 是错的（每页 10 行），要看页脚"共 N 条"。
+ 
+-**排查顺序**：复现（哪个账号哪个页面）→ 打开 F12 Network 看接口返回的是 403/400 还是数据错 → 数据错查 server.js 对应 route → 显示错查 index.html 对应区块 + `?v=` 版本号。改完必跑回归：`python v1/check-biz-chain.py`（业务链 28 项）+ `python v1/check-crm-api.py`（116 项）。
++**排查顺序**：复现（哪个账号哪个页面）→ 打开 F12 Network 看接口返回的是 403/400 还是数据错 → 数据错查 server.js 对应 route → 显示错查 index.html 对应区块 + `?v=` 版本号。改完必跑回归：`python v1/check-biz-chain.py`（业务链 28 项）+ `python v1/check-crm-api.py`（149 项）。
+ 
+ ---
+ 
+
+########## docs/学习任务.md ##########
+
+--- /tmp/mcn_docbak/xuexi.md	2026-09-17 20:26:26.892964900 -0700
++++ docs/学习任务.md	2026-09-17 20:27:09.369723100 -0700
+@@ -7,8 +7,8 @@
+ 
+ - [ ] **0.1 通读《代码导读》**（docs/代码导读-20260916.md），重点记住第 2 节的通用链路模式（前端校验→fetch→服务端裁决→写库留痕→乐观更新）
+ - [ ] **0.2 启动本地服务**：`cd /d/Projects/mcn_project/mcn_project && node v1/server.js`，浏览器打开 http://127.0.0.1:3000
+-- [ ] **0.3 用 4 个 demo 账号各登录一遍**（admin / demo-recruit / demo-staff / demo-sample，密码见登录页），感受「同一个系统不同岗位看到的东西不一样」
+-- [ ] **0.4 跑一遍回归**：`python v1/check-crm-api.py`，看到 116 项全绿（这就是改代码前后的安全网）
++- [ ] **0.3 用 6 个 demo 账号各登录一遍**（admin / demo-promote / demo-recruit / demo-staff / demo-senior / demo-finance，密码见登录页），感受「同一个系统不同岗位看到的东西不一样」
++- [ ] **0.4 跑一遍回归**：`python v1/check-crm-api.py`，看到 149 项全绿（这就是改代码前后的安全网）
+ 
+ ## 阶段 1 · 读懂一条完整链路（约 1 小时）
+ 
+
+########## docs/测试计划.md ##########
+
+--- /tmp/mcn_docbak/ceshi.md	2026-09-17 20:26:27.238685600 -0700
++++ docs/测试计划.md	2026-09-17 20:31:35.465415300 -0700
+@@ -6,7 +6,7 @@
+ 
+ | 类型 | 谁做 | 测什么 | 现状 |
+ |---|---|---|---|
+-| 自动化回归 | 脚本 | 代码没被改坏（API/权限/UI 共 307 项） | ✅ 已有，每次改动全绿 |
++| 自动化回归 | 脚本 | 代码没被改坏（API/权限/UI 共 425 项） | ✅ 已有，每次改动全绿 |
+ | 自己冒烟测试 | 你 | 点开每个页面、每个按钮是否正常 | ⚠️ 部分，缺系统性清单 |
+ | 真人验收测试（UAT） | 同事/朋友 | 功能符不符合真实业务习惯、好不好用 | ❌ 还没开始 |
+ 
+@@ -14,7 +14,7 @@
+ 
+ ## 二、自己冒烟测试（30 分钟，做一次）
+ 
+-用 5 个 demo 账号（登录页一键体验，密码都是 `demo123456`）按下面的剧本走一遍。**每一步记下：正常 / 异常 / 别扭**。
++用 6 个 demo 账号（登录页一键体验，密码都是 `demo123456`）按下面的剧本走一遍。**每一步记下：正常 / 异常 / 别扭**。
+ 
+ ### 剧本：一条线索的一生（admin 或对应岗位操作）
+ 
+@@ -25,7 +25,7 @@
+ 5. **转正式**：状态推到「已报名」→ 转正式达人 → 检查 convertedBy 留痕
+ 6. **交接**：发起交接给运营王浩 → 切 demo-staff 确认 → owner 变更、opsBy 固化
+ 7. **账号运营**：王浩维护达人账号数据（活跃度/粉丝数）→ 档案页能看到
+-8. **寄拍**：创建任务分给张萌 → demo-sample 工作台推进任务 → 逾期会标红
++8. **寄拍**：运营给达人建寄拍任务（任务归属=该达人的运营负责人）→ 任务在达人任务中心推进（寄拍状态机）→ 逾期标红
+ 9. **看板**：admin 看板 → 渠道图、风险提醒、漏斗数字对不对
+ 
+ ### 专项检查（容易翻车的点）
+@@ -33,7 +33,7 @@
+ - [ ] 手机上打开（F12 切手机模式或真机）：线索页、工作台、看板布局
+ - [ ] 换浏览器（Chrome/Edge/手机浏览器）：localStorage 渠道是否还在（**换了会丢，属已知设计**）
+ - [ ] 两个浏览器同时登不同账号，一个人改数据另一个刷新看是否同步
+-- [ ] 直接改 URL 访问没权限的页面（如寄拍岗访问财务页）→ 应被拦截
++- [ ] 直接改 URL 访问没权限的页面（如财务岗访问线索页）→ 应被拦截
+ - [ ] 断网/刷新后回到刚才的页面，状态是否丢失
+ 
+ ## 三、找人测试（UAT，最重要的一步）
+@@ -42,7 +42,7 @@
+ 
+ 优先找**符合角色画像的人**：
+ - 有 MCN/电商运营经验的 → 演管理员和运营岗（他们对业务口径最敏感）
+-- 没用过后台系统的普通人 → 演寄拍岗（测易用性，"不看说明书能不能会用"）
++- 没用过后台系统的普通人 → 演招募岗或财务岗（测易用性，"不看说明书能不能会用"）
+ - 1～3 个人就够，不用多
+ 
+ ### 给他们的测试说明（可直接复制发出去）
+@@ -87,4 +87,4 @@
+ - [ ] 冒烟剧本 9 步全通，无 P0/P1
+ - [ ] 至少 1 位真人完成"一条线索的一生"，反馈 ≤5 条 P1
+ - [ ] 手机端核心三页（线索/工作台/看板）无布局崩坏
+-- [ ] 测试期间每次改动后，307 项自动化回归保持全绿
++- [ ] 测试期间每次改动后，425 项自动化回归保持全绿
+
+########## v1/auth.json（本地；线上同一份）##########
+
+--- /tmp/mcn_docbak/auth.json.orig	2026-09-17 20:26:27.592710400 -0700
++++ v1/auth.json	2026-09-17 20:30:57.832750000 -0700
+@@ -55,15 +55,6 @@
+       "salt": "82f5fa720b9ee106",
+       "hash": "4e4461189f4228e9aef419b4c45d64c1b12750a197a65e9bd7bb9be37abce207",
+       "createdAt": "2026-09-16"
+-    },
+-    {
+-      "user": "demo-sample",
+-      "role": "staff",
+-      "position": "",
+-      "displayName": "张萌",
+-      "salt": "841d09c8a1714946",
+-      "hash": "5c883de3c026c6c92a638ad0ffbded3b5c3705381176486f2655d5b7cf93102f",
+-      "createdAt": "2026-09-17"
+     }
+   ]
+-}
+\ No newline at end of file
++}
+
+########## v1/check-perm.js ##########
+
+--- _backup_before_merge/check-perm.js.bak-before-ghostfix	2026-09-17 20:35:37.005513900 -0700
++++ v1/check-perm.js	2026-09-17 20:35:37.034026100 -0700
+@@ -42,16 +42,16 @@
+   console.log('== 2. 岗位账号 ==');
+   for (const u of [
+     { user: 'demo-recruit', role: 'staff', position: 'recruit', displayName: '李婷' },
+-    { user: 'demo-sample', role: 'staff', position: 'sample', displayName: '张萌' },
++    { user: 'demo-promote', role: 'staff', position: 'promote', displayName: '陈晨' },
+   ]) {
+     const r = await api(admin.cookie, '/api/users', 'POST', Object.assign({ pass: P }, u));
+     if (r.status !== 200) console.log('   (账号 ' + u.user + ' 已存在或建号返回 ' + r.status + ')');
+   }
+   const recruit = await login('demo-recruit', P);
+   const ops = await login('demo-staff', P);
+-  const sample = await login('demo-sample', P);
++  const other = await login('demo-promote', P);   // 「无关岗位」账号：推广岗（原寄拍岗 sample 已随角色模型重构删除）
+   check('招募岗账号可登录', recruit.status === 200, recruit.j);
+-  check('寄拍岗账号可登录', sample.status === 200, sample.j);
++  check('推广岗账号可登录', other.status === 200, other.j);
+   const recruitMe = await api(recruit.cookie, '/api/me');
+   check('招募岗姓名=李婷 / 岗位=recruit',
+     D(recruitMe) && D(recruitMe).displayName === '李婷' && D(recruitMe).position === 'recruit', D(recruitMe));
+@@ -75,8 +75,8 @@
+   const rEsc = D(await api(recruit.cookie, '/api/mvp/leads?scope=all'));
+   check('越权请求 scope=all 被自动降级为「我负责的」', rEsc.length === rMine.length, { esc: rEsc.length, mine: rMine.length });
+ 
+-  const sMine = D(await api(sample.cookie, '/api/mvp/leads?scope=mine'));
+-  check('寄拍岗看不到招募岗负责的线索（跨岗位隔离）',
++  const sMine = D(await api(other.cookie, '/api/mvp/leads?scope=mine'));
++  check('推广岗看不到招募岗负责的线索（跨岗位隔离）',
+     sMine.every(l => l.owner !== '李婷' && l.ownerPosition !== 'recruit'), { owners: [...new Set(sMine.map(l => l.owner))] });
+ 
+   console.log('== 4. 越权修改拦截 ==');
+@@ -106,10 +106,10 @@
+ 
+   const inbox = D(await api(ops.cookie, '/api/mvp/handovers?box=inbox'));
+   check('接收人「待我确认」里能看到该交接单', inbox.some(h => h.id === hoId), inbox);
+-  const inboxOther = D(await api(sample.cookie, '/api/mvp/handovers?box=inbox'));
++  const inboxOther = D(await api(other.cookie, '/api/mvp/handovers?box=inbox'));
+   check('非接收人的待确认列表里没有该交接单', !inboxOther.some(h => h.id === hoId), inboxOther);
+ 
+-  const wrongConfirm = await api(sample.cookie, '/api/mvp/handovers/' + hoId + '/confirm', 'POST');
++  const wrongConfirm = await api(other.cookie, '/api/mvp/handovers/' + hoId + '/confirm', 'POST');
+   check('非接收人确认 → 403', wrongConfirm.status === 403, wrongConfirm.j);
+ 
+   const pendingList = D(await api(ops.cookie, '/api/mvp/leads?scope=mine'));
+@@ -144,7 +144,7 @@
+   check('确认记录含变更前后负责人', confRow && confRow.before.includes('李婷') && confRow.after.includes('王浩'), confRow);
+   check('确认记录留有操作人', confRow && !!confRow.operator, confRow);
+ 
+-  const otherHist = await api(sample.cookie, '/api/mvp/leads/' + targetLead.id + '/history');
++  const otherHist = await api(other.cookie, '/api/mvp/leads/' + targetLead.id + '/history');
+   check('无关岗位查该线索历史 → 403', otherHist.status === 403, otherHist.status);
+ 
+   const logs = D(await api(admin.cookie, '/api/logs'));

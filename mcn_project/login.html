@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>哇塞传媒 · 登录</title>
+<link rel="icon" href="./logo-wide.png">
+<script src="./vendor/tailwind.js"></script>
+<style>
+  /* ---------- 基底：深蓝黑渐变 + 低透明度科技网格 ---------- */
+  html{ background:#030711; }
+  body{
+    background:
+      radial-gradient(1100px 620px at 50% -12%, rgba(14,42,74,.55) 0%, rgba(14,42,74,0) 62%),
+      radial-gradient(900px 600px at 88% 110%, rgba(8,47,73,.35) 0%, rgba(8,47,73,0) 60%),
+      linear-gradient(165deg, #060d1c 0%, #030814 48%, #02060f 100%);
+    padding-bottom:56px;
+  }
+  /* 科技网格：极低透明度 + 径向蒙版渐隐，避免满屏喧宾夺主 */
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(56,189,248,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(56,189,248,.055) 1px, transparent 1px);
+    background-size:46px 46px;
+    -webkit-mask-image:radial-gradient(ellipse 70% 62% at 50% 42%, #000 0%, transparent 100%);
+    mask-image:radial-gradient(ellipse 70% 62% at 50% 42%, #000 0%, transparent 100%);
+  }
+  [v-cloak]{display:none}
+
+  /* ---------- 鼠标跟随的青蓝径向光晕（轻微跟随，不拖尾） ---------- */
+  #cursorGlow{
+    position:fixed; left:0; top:0; width:560px; height:560px; z-index:0;
+    pointer-events:none; border-radius:50%; opacity:0;
+    background:radial-gradient(circle, rgba(34,211,238,.09) 0%, rgba(34,211,238,.035) 38%, transparent 68%);
+    transition:opacity .6s ease; will-change:transform;
+  }
+
+  #pageWrap{ position:relative; z-index:1; }
+
+  /* ---------- 入场 stagger ---------- */
+  .stagger{ opacity:0; animation:riseIn .7s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--d,0s); }
+  @keyframes riseIn{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
+
+  /* ---------- Logo：0.7s 淡入 + 缩放 + 模糊恢复；后方缓慢呼吸的青色光晕 ---------- */
+  .logo-wrap{ position:relative; display:flex; justify-content:center; }
+  .logo-anim{ animation:logoIn .7s cubic-bezier(.22,1,.36,1) both; animation-delay:.05s; }
+  @keyframes logoIn{
+    from{ opacity:0; transform:scale(.92); filter:blur(10px); }
+    to{ opacity:1; transform:scale(1); filter:blur(0); }
+  }
+  .logo-halo{
+    position:absolute; left:50%; top:50%; width:430px; height:180px; z-index:0;
+    transform:translate(-50%,-50%); pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(34,211,238,.36) 0%, rgba(34,211,238,.13) 48%, transparent 74%);
+    filter:blur(26px);
+    animation:haloBreathe 4.6s ease-in-out infinite;
+  }
+  @keyframes haloBreathe{
+    0%,100%{ opacity:.45; transform:translate(-50%,-50%) scale(1); }
+    50%{ opacity:.8; transform:translate(-50%,-50%) scale(1.07); }
+  }
+  .logo-wrap img{ position:relative; z-index:1; }
+
+  /* ---------- 玻璃登录卡片 ---------- */
+  .glass-card{
+    background:linear-gradient(165deg, rgba(13,22,40,.72) 0%, rgba(4,10,22,.62) 100%);
+    -webkit-backdrop-filter:blur(14px) saturate(130%);
+    backdrop-filter:blur(14px) saturate(130%);
+    border:1px solid rgba(56,189,248,.16);
+    box-shadow:
+      0 24px 70px -28px rgba(0,0,0,.9),
+      0 0 0 1px rgba(2,6,23,.4),
+      inset 0 1px 0 rgba(148,197,255,.06);
+  }
+
+  /* ---------- 输入框：focus 青色描边 + 轻微外发光 ---------- */
+  .field{
+    background:rgba(2,8,20,.72);
+    border:1px solid rgba(71,85,105,.55);
+    color:#e2e8f0;
+    transition:border-color .22s ease, box-shadow .28s ease, background-color .28s ease;
+  }
+  .field::placeholder{ color:#475569; }
+  .field:focus{
+    outline:none;
+    border-color:rgba(34,211,238,.65);
+    background:rgba(3,12,26,.85);
+    box-shadow:0 0 0 3px rgba(34,211,238,.10), 0 0 16px -4px rgba(34,211,238,.40);
+  }
+  input:-webkit-autofill{
+    -webkit-text-fill-color:#e2e8f0;
+    -webkit-box-shadow:0 0 0 1000px #07101f inset;
+    caret-color:#e2e8f0;
+  }
+
+  /* ---------- 进入系统按钮：青蓝渐变，hover 上浮 2px + 光晕增强，active 缩放 ---------- */
+  .btn-primary{
+    background:linear-gradient(135deg, #22d3ee 0%, #38bdf8 48%, #0ea5e9 100%);
+    color:#041018;
+    box-shadow:0 8px 22px -10px rgba(34,211,238,.65), inset 0 1px 0 rgba(255,255,255,.35);
+    transition:transform .18s cubic-bezier(.22,1,.36,1), box-shadow .25s ease, filter .25s ease, opacity .2s ease;
+  }
+  .btn-primary:hover{
+    transform:translateY(-2px); filter:brightness(1.07);
+    box-shadow:0 14px 32px -10px rgba(34,211,238,.9), 0 0 0 1px rgba(34,211,238,.35), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .btn-primary:active{ transform:translateY(0) scale(.98); }
+  .btn-primary:disabled{ opacity:.55; transform:none; filter:none; cursor:not-allowed; }
+
+  /* ---------- 一键体验区块（降视觉权重） ---------- */
+  .demo-panel{
+    background:rgba(8,15,30,.32);
+    border:1px dashed rgba(34,211,238,.18);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  .demo-btn{ transition:transform .18s cubic-bezier(.22,1,.36,1), border-color .22s ease, box-shadow .28s ease, background-color .22s ease; }
+  .demo-btn:active{ transform:translateY(0) scale(.985); }
+  .demo-btn:disabled{ opacity:.5; transform:none; cursor:not-allowed; }
+  .demo-admin{
+    background:rgba(34,211,238,.10); border:1px solid rgba(34,211,238,.32); color:#7dd3fc;
+  }
+  .demo-admin:hover{
+    transform:translateY(-1px);
+    background:rgba(34,211,238,.16); border-color:rgba(103,232,249,.65);
+    box-shadow:0 8px 20px -8px rgba(34,211,238,.5), 0 0 0 1px rgba(34,211,238,.12);
+  }
+  .demo-pos{
+    background:rgba(148,163,184,.05); border:1px solid rgba(100,116,139,.32); color:#cbd5e1;
+  }
+  .demo-pos:hover{
+    transform:translateY(-1px);
+    background:rgba(34,211,238,.05); border-color:rgba(34,211,238,.42);
+    box-shadow:0 8px 18px -10px rgba(34,211,238,.4);
+  }
+
+  /* ---------- 系统进入转场（400~600ms，不拦截失败路径） ---------- */
+  #enterOverlay{
+    position:fixed; inset:0; z-index:60; opacity:0; pointer-events:none;
+    transition:opacity .4s ease;
+    background:
+      radial-gradient(58% 46% at 50% 44%, rgba(34,211,238,.08) 0%, transparent 60%),
+      rgba(2,6,23,.92);
+  }
+  #enterOverlay.on{ opacity:1; pointer-events:auto; }
+  #enterOverlay .scanline{
+    position:absolute; left:0; right:0; top:-2px; height:2px; opacity:0;
+    background:linear-gradient(90deg, transparent 0%, rgba(103,232,249,.95) 50%, transparent 100%);
+    box-shadow:0 0 18px rgba(34,211,238,.75);
+  }
+  #enterOverlay.on .scanline{ animation:scanDown .55s cubic-bezier(.45,0,.2,1) forwards; }
+  @keyframes scanDown{ 0%{ top:-2px; opacity:0; } 12%{ opacity:1; } 88%{ opacity:1; } 100%{ top:100%; opacity:0; } }
+  #pageWrap{ transition:transform .5s ease, opacity .5s ease, filter .5s ease; }
+  #pageWrap.leave{ transform:scale(.985); opacity:.55; filter:blur(1.5px); }
+
+  /* ---------- 底部系统状态 ---------- */
+  .sys-status{
+    position:fixed; left:0; right:0; bottom:14px; z-index:5; pointer-events:none;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size:10px; letter-spacing:.24em; color:rgba(148,163,184,.38);
+  }
+  .sys-status .dot{
+    width:6px; height:6px; border-radius:50%; background:#34d399;
+    box-shadow:0 0 8px rgba(52,211,153,.85);
+    animation:dotPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes dotPulse{ 0%,100%{ opacity:.5; } 50%{ opacity:1; } }
+
+  /* ---------- 可访问性：减少动态效果 ---------- */
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation:none !important; transition:none !important; }
+    .stagger{ opacity:1; }
+  }
+</style>
+</head>
+<body class="min-h-screen flex items-center justify-center px-4">
+  <div id="cursorGlow" aria-hidden="true"></div>
+  <div id="pageWrap" class="w-full max-w-sm">
+    <!-- 品牌 -->
+    <div class="flex flex-col items-center mb-8">
+      <div class="logo-wrap stagger" style="--d:.05s">
+        <span class="logo-halo" aria-hidden="true"></span>
+        <img src="./logo-wide-t.png" alt="哇塞传媒" class="w-56 logo-anim">
+      </div>
+      <div class="mt-3 text-[12px] text-slate-500 tracking-[0.25em] stagger" style="--d:.32s">达人运营中台 · 内部系统</div>
+    </div>
+
+    <!-- 登录卡片 -->
+    <form id="loginForm" class="glass-card rounded-2xl p-7 stagger" style="--d:.45s">
+      <label class="block text-xs text-slate-400 mb-1.5">账号</label>
+      <input id="user" type="text" autocomplete="username" placeholder="请输入账号"
+             class="field w-full px-3.5 py-2.5 rounded-lg text-sm mb-4">
+      <label class="block text-xs text-slate-400 mb-1.5">密码</label>
+      <input id="pass" type="password" autocomplete="current-password" placeholder="请输入密码"
+             class="field w-full px-3.5 py-2.5 rounded-lg text-sm mb-2">
+      <div id="err" class="hidden text-xs text-rose-400 mb-2"></div>
+      <button type="submit" id="btn"
+              class="btn-primary w-full mt-3 py-2.5 rounded-lg text-sm font-bold tracking-widest">
+        进 入 系 统
+      </button>
+      <div class="mt-5 text-center text-[11px] text-slate-600">哇塞传媒 · 得物达人孵化 · 仅限内部使用</div>
+    </form>
+
+    <!-- ⚠️ 临时功能：一键体验各角色 / 各岗位（正式使用前删除整个 DEMO 区块，包括下方 demoLogin 函数）
+         岗位口径与「账号管理」页保持一致：推广 promote / 招募 recruit / 普通运营 ops / 高级运营 senior_ops / 财务 finance。
+         按钮用 data-demo 标记账号，回归脚本按此选择，改文案不会让脚本失效。 -->
+    <div id="demoBlock" class="demo-panel rounded-2xl p-4 mt-4 stagger" style="--d:.6s">
+      <div class="text-[11px] text-cyan-300/50 tracking-[0.25em] text-center mb-3">⚡ 一键体验（临时）</div>
+      <!-- 管理员：唯一能看全量线索的角色，单独一行突出 -->
+      <button type="button" data-demo="admin" onclick="demoLogin('admin','wsccbe9e7e38e3')"
+              class="demo-btn demo-admin w-full py-2.5 rounded-lg text-xs font-bold">管理员</button>
+      <!-- 五个演示入口：各自只看自己链路上的事（推广=投放、招募=线索、普通运营=陪跑达人、高级运营=质检分配、财务=结算） -->
+      <div class="grid grid-cols-5 gap-1.5 mt-2">
+        <button type="button" data-demo="demo-promote" onclick="demoLogin('demo-promote','demo123456')" title="推广岗 · 陈晨"
+                class="demo-btn demo-pos py-2 rounded-lg text-[11px] font-medium">推广<span class="block text-[10px] font-normal text-slate-500 mt-0.5">陈晨</span></button>
+        <button type="button" data-demo="demo-recruit" onclick="demoLogin('demo-recruit','demo123456')" title="招募岗 · 李婷"
+                class="demo-btn demo-pos py-2 rounded-lg text-[11px] font-medium">招募<span class="block text-[10px] font-normal text-slate-500 mt-0.5">李婷</span></button>
+        <button type="button" data-demo="demo-staff" onclick="demoLogin('demo-staff','demo123456')" title="运营岗 · 王浩"
+                class="demo-btn demo-pos py-2 rounded-lg text-[11px] font-medium">运营<span class="block text-[10px] font-normal text-slate-500 mt-0.5">王浩</span></button>
+        <button type="button" data-demo="demo-senior" onclick="demoLogin('demo-senior','demo123456')" title="高级运营 · 张萌"
+                class="demo-btn demo-pos py-2 rounded-lg text-[11px] font-medium">高级运营<span class="block text-[10px] font-normal text-slate-500 mt-0.5">张萌</span></button>
+        <button type="button" data-demo="demo-finance" onclick="demoLogin('demo-finance','demo123456')" title="财务岗 · 周妍"
+                class="demo-btn demo-pos py-2 rounded-lg text-[11px] font-medium">财务<span class="block text-[10px] font-normal text-slate-500 mt-0.5">周妍</span></button>
+      </div>
+      <!-- 说明小字：讲清「菜单看角色、线索看岗位」，避免误以为换岗位能换菜单 -->
+      <div class="mt-3 text-[10px] leading-relaxed text-slate-500 text-center">
+        每个按钮是一个岗位账号，按链路分工：推广投放获客 → 招募对接线索 → 普通运营陪跑达人 → 高级运营质检分配 → 财务结算；管理员看全部。菜单由角色决定，能看到的线索范围由岗位决定。
+      </div>
+      <div id="demoErr" class="hidden text-xs text-rose-400 text-center mt-2"></div>
+    </div>
+    <script>
+    function playEnter() {
+      // 系统进入转场：内容轻微收缩 + 青色扫描线扫过，520ms 后再放行跳转
+      return new Promise(resolve => {
+        document.getElementById('pageWrap').classList.add('leave');
+        document.getElementById('enterOverlay').classList.add('on');
+        setTimeout(resolve, 520);
+      });
+    }
+    async function demoLogin(user, pass) {
+      const err = document.getElementById('demoErr');
+      err.classList.add('hidden');
+      try {
+        const r = await fetch('/api/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, pass }),
+        });
+        const j = await r.json();
+        if (j.ok) { await playEnter(); location.href = '/'; return; }
+        err.textContent = j.error || '进入失败';
+        err.classList.remove('hidden');
+      } catch (e) {
+        err.textContent = '网络异常，请重试';
+        err.classList.remove('hidden');
+      }
+    }
+    </script>
+    <!-- ⚠️ DEMO 区块结束 -->
+  </div>
+
+  <div id="enterOverlay" aria-hidden="true"><span class="scanline"></span></div>
+  <div class="sys-status" aria-hidden="true"><span class="dot"></span>SYSTEM ONLINE · INTERNAL SYSTEM</div>
+
+<script>
+const form = document.getElementById('loginForm');
+const err = document.getElementById('err');
+const btn = document.getElementById('btn');
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  err.classList.add('hidden');
+  btn.disabled = true; btn.textContent = '登 录 中…';
+  try {
+    const r = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user: document.getElementById('user').value.trim(), pass: document.getElementById('pass').value }),
+    });
+    const j = await r.json();
+    if (j.ok) { await playEnter(); location.href = '/'; return; }
+    err.textContent = j.error || '登录失败';
+    err.classList.remove('hidden');
+  } catch (ex) {
+    err.textContent = '网络异常，请重试';
+    err.classList.remove('hidden');
+  }
+  btn.disabled = false; btn.textContent = '进 入 系 统';
+});
+// 已登录则直接进入
+fetch('/api/mvp/leads').then(r => { if (r.ok) location.href = '/'; });
+
+// 鼠标跟随光晕：rAF 线性插值轻微跟随，触屏 / 减少动态偏好下不启用
+(function () {
+  const g = document.getElementById('cursorGlow');
+  if (!g || window.matchMedia('(hover: none)').matches || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const R = 280; // 与 CSS 宽高 560px 一半对应
+  let tx = innerWidth / 2, ty = innerHeight * .42, cx = tx, cy = ty, on = false;
+  addEventListener('mousemove', e => {
+    tx = e.clientX; ty = e.clientY;
+    if (!on) { on = true; cx = tx; cy = ty; g.style.opacity = '1'; }
+  }, { passive: true });
+  document.documentElement.addEventListener('mouseleave', () => { on = false; g.style.opacity = '0'; });
+  (function loop() {
+    cx += (tx - cx) * .1; cy += (ty - cy) * .1;
+    g.style.transform = 'translate3d(' + (cx - R) + 'px,' + (cy - R) + 'px,0)';
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

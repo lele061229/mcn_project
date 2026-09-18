@@ -1,0 +1,16 @@
+# 凭据与敏感文件（只存本机/线上，不入库）
+**/auth.json
+**/auth.json.bak*
+**/FEISHU_APP.env
+*.env
+
+# 备份与临时产物
+*.bak*
+_backup_before_merge/
+_gpt_shots/
+__pycache__/
+node_modules/
+
+# 依赖包缓存
+node-v16.20.2-linux-x64.tar.gz
+vendor/*.map
