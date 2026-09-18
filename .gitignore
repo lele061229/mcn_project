@@ -14,3 +14,7 @@ node_modules/
 # 依赖包缓存
 node-v16.20.2-linux-x64.tar.gz
 vendor/*.map
+
+# 回归临时日志与核验截图（本地运行产物，不入库）
+_reg_*.log
+_shot_*.png
