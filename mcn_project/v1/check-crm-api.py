@@ -14,7 +14,8 @@ RUN = str(int(time.time()))[-6:]
 N = {'ra': 'APItest%s-招募A' % RUN, 'rb': 'APItest%s-招募B' % RUN, 'oa': 'APItest%s-运营A' % RUN,
      'oc': 'APItest%s-合作C' % RUN,
      # V0.3 主链：寄拍任务链路 + 双负责人固化
-     'shoot': 'APItest%s-寄拍主链D' % RUN, 'ops2': 'APItest%s-双负责人E' % RUN}
+     'shoot': 'APItest%s-寄拍主链D' % RUN, 'ops2': 'APItest%s-双负责人E' % RUN,
+     'asg': 'APItest%s-分配F' % RUN}
 _results = []
 
 
@@ -193,8 +194,9 @@ def main():
         lead['potentialLevel'] == '高' and lead['intentLevel'] == '强' and lead['talentClass'] == 'A',
         (lead['potentialLevel'], lead['intentLevel'], lead['talentClass']))
     st, j = call(staff, '/api/mvp/leads/%s/follow-ups' % made['ra'])
+    # 时间轴已并入分配记录（2026-09-18），首行可能是分配记录 → 改为语义断言（任一行含内容）
     chk('跟进记录接口可读回（≥1 条且含内容）',
-        st == 200 and len(j['data']) >= 1 and '寄拍流程' in (j['data'][0].get('content') or ''),
+        st == 200 and len(j['data']) >= 1 and any('寄拍流程' in (x.get('content') or '') for x in j['data']),
         len(j['data']) if st == 200 else st)
 
     # ---------- 6. 交接（发起 → 接收人确认 → 负责人自动变更） ----------
@@ -538,6 +540,67 @@ def main():
     if hitid:
         st, j = call(senior, '/api/hit-cases/' + str(hitid), method='DELETE')
         chk('清理爆款拆解', st == 200, (st, (j or {}).get('error')))
+
+    # ---------- 12.5 达人分配（高级运营 → 普通运营，2026-09-18 新增） ----------
+    st, j = call(admin, '/api/mvp/leads', {'name': N['asg'], 'channel': 'API回归'})
+    assert st == 200 and j.get('ok'), (st, j)
+    made['asg'] = j['data']['id']
+    asg_id = made['asg']
+    st, j = call(staff, '/api/mvp/leads/%s/assign' % asg_id, {'owner': '王浩'})
+    chk('普通运营调「分配给运营」→ 403（isSupervisor 裁决）', st == 403, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % asg_id, {'owner': '陈晨'})
+    chk('高级运营分配给推广岗 → 400（OWNER_POSITIONS 边界）', st == 400 and '不做达人负责人' in (j.get('error') or ''), (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % asg_id, {'owner': '王浩', 'ownerPosition': 'ops', 'remark': 'APItest 分配备注'})
+    chk('高级运营「分配给运营」成功（带备注）', st == 200 and j['data']['assigned'] == 1, (st, (j or {}).get('error')))
+    lead = j['data']['leads'][0]
+    chk('分配后 owner/ownerId/岗位 更新',
+        lead['owner'] == '王浩' and lead['ownerId'] == 'demo-staff' and lead['ownerPosition'] == 'ops',
+        (lead.get('owner'), lead.get('ownerId'), lead.get('ownerPosition')))
+    chk('分配后 talentOperator = 被分配的普通运营', lead.get('talentOperator') == '王浩', lead.get('talentOperator'))
+    st, j = call(senior, '/api/mvp/leads/%s/assignments' % asg_id)
+    arows = (j.get('data') or []) if j and j.get('ok') else []
+    chk('分配记录独立接口读回', st == 200 and len(arows) >= 1, (st, len(arows)))
+    if arows:
+        chk('分配记录含 分配人/接收人/备注/类型',
+            arows[0]['assignedBy'] == '张萌' and arows[0]['toOwner'] == '王浩' and arows[0]['toOwnerId'] == 'demo-staff'
+            and arows[0]['remark'] == 'APItest 分配备注' and '分配' in (arows[0]['type'] or ''),
+            arows[0])
+    st, j = call(staff, '/api/mvp/leads')
+    chk('分配后普通运营可见该达人（只看自己口径）', st == 200 and any(x['id'] == asg_id for x in (j.get('data') or [])), st)
+    st, j = call(staff, '/api/mvp/leads/%s/follow-ups' % asg_id)
+    tl_rows = (j.get('data') or []) if j and j.get('ok') else []
+    chk('跟进时间轴并入分配记录（交接历史可回看）',
+        st == 200 and any('分配' in (x.get('method') or '') and 'APItest 分配备注' in (x.get('content') or '') for x in tl_rows),
+        [x.get('method') for x in tl_rows][:3])
+    # 重新分配：临时建一位普通运营 → talentOperator 跟随换人（回归 2026-09-18 修复的刷新 Bug）
+    TMPU = 'apitestops%s' % RUN
+    st, j = call(admin, '/api/users', {'user': TMPU, 'pass': 'Apitest123456', 'role': 'staff',
+                                       'position': 'ops', 'displayName': 'API测试运营'})
+    chk('临时普通运营账号创建成功', st in (200, 201), (st, (j or {}).get('error')))
+    if st in (200, 201):
+        st, j = call(senior, '/api/mvp/leads/%s/assign' % asg_id, {'owner': 'API测试运营', 'ownerPosition': 'ops', 'remark': '重新分配'})
+        chk('重新分配给另一位普通运营成功', st == 200, (st, (j or {}).get('error')))
+        lead = ((j.get('data') or {}).get('leads') or [{}])[0] if j and j.get('ok') else {}
+        chk('重新分配后 talentOperator 跟随换人（回归 0918 修复）',
+            lead.get('talentOperator') == 'API测试运营' and lead.get('opsId') == TMPU,
+            (lead.get('talentOperator'), lead.get('opsId')))
+        st, j = call(admin, '/api/mvp/leads/%s/assignments' % asg_id)
+        arows2 = (j.get('data') or []) if j and j.get('ok') else []
+        chk('分配历史含 2 条（首次分配 + 重新分配）', st == 200 and len(arows2) >= 2, (st, len(arows2)))
+        st, j = call(admin, '/api/users/' + TMPU, method='DELETE')
+        chk('清理临时运营账号', st == 200, (st, (j or {}).get('error')))
+    # ops 工作台 panels：新分配达人 / 我的达人 / 待跟进提醒
+    st, j = call(staff, '/api/mvp/workbench')
+    blocks = ((j.get('data') or {}).get('panels') or {}).get('blocks') or []
+    bkeys = [b.get('key') for b in blocks]
+    chk('ops 工作台含「我的达人」「待跟进提醒」面板', 'my-talents' in bkeys and 'follow-remind' in bkeys, bkeys)
+    na = next((b for b in blocks if b.get('key') == 'new-assigned'), None)
+    chk('ops 工作台含「新分配达人」面板', na is not None, bkeys)
+    if na:
+        chk('新分配达人面板命中刚分配的达人（含分配人/时间/备注列）',
+            any('APItest' in str(r[0]) for r in na.get('rows', []))
+            and '分配人' in (na.get('columns') or []) and '备注' in (na.get('columns') or []),
+            na.get('rows', [])[:2])
 
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):

@@ -548,6 +548,7 @@ tailwind.config = {
                   <td class="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">{{ r.convertedAt ? r.convertedAt.slice(0,16) : '—' }}</td>
                   <td class="px-4 py-3 text-right whitespace-nowrap">
                     <button @click="openTalentTimeline(r)" class="text-cyan-600 hover:underline text-xs font-medium">跟进时间轴</button>
+                    <button v-if="canAssignOpsTask" @click="tl.openAssign(r, showToast)" class="ml-2 text-cyan-600 hover:underline text-xs font-medium">分配给运营</button>
                     <button @click="goPage('account-ops')" class="ml-2 text-slate-500 hover:underline text-xs">账号</button>
                   </td>
                 </tr>
@@ -1944,8 +1945,8 @@ tailwind.config = {
               <template v-else>把这条线索指派给某位同事，立即生效</template>
             </div>
             <div class="bg-slate-50 rounded-xl p-3 mb-4 max-h-28 overflow-y-auto">
-              <div v-for="id in tl.assignDlg.ids" :key="id" class="text-xs text-slate-500 py-0.5">
-                {{ (tl.list.find(x => x.id === id) || {}).name || id }} · 当前负责人 {{ (tl.list.find(x => x.id === id) || {}).owner || '—' }}
+              <div v-for="rw in (tl.assignDlg.rows || [])" :key="rw.id" class="text-xs text-slate-500 py-0.5">
+                {{ rw.name }} · 当前负责人 {{ rw.owner || '—' }}
               </div>
             </div>
             <div class="space-y-3 text-sm">
@@ -1961,13 +1962,16 @@ tailwind.config = {
                   <option v-for="pk in ['recruit','ops']" :key="pk" :value="pk">{{ tl.POSITION_LABEL_MAP[pk] }}</option>
                 </select>
               </div>
+              <div v-if="tl.assignDlg.mode!=='reassign'"><label class="text-xs text-slate-500">备注（写入达人分配记录，可不填）</label>
+                <textarea v-model="tl.assignForm.remark" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="例如：达人近期主推新品，优先安排寄拍；交接时注意延续内容方向"></textarea>
+              </div>
               <div v-if="tl.assignDlg.mode==='reassign'"><label class="text-xs text-slate-500">重新分配原因 *</label>
                 <textarea v-model="tl.assignForm.reason" rows="2" class="w-full mt-1 px-3 py-2 rounded-lg border border-slate-200 text-sm" placeholder="例如：分配后 60 分钟未首次联系，改派给同岗位同事"></textarea>
               </div>
             </div>
             <div class="text-[11px] text-slate-400 mt-3">
               <template v-if="tl.assignDlg.mode==='reassign'">系统只做「提醒 → 上报 → 主管确认」，不会自动换负责人；本次换人会写入操作日志，原有超时标记与催办计数清零。</template>
-              <template v-else>分配 = 指派负责人（立即生效，写入操作日志）；若线索已在处理中需要转岗，请用「交接」，由接收人确认后生效。</template>
+              <template v-else>分配 = 指派负责人（立即生效）；分配与备注写入达人分配记录，跟进时间轴可回看交接历史。若线索已在处理中需要转岗，请用「交接」，由接收人确认后生效。</template>
             </div>
             <div class="flex gap-3 mt-5">
               <button @click="tl.assignDlg.show=false" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-sm">取消</button>
@@ -2987,7 +2991,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260916r"></script>
-<script src="./app.js?v=20260916r"></script>
+<script src="./talent-leads.js?v=20260918a"></script>
+<script src="./app.js?v=20260918a"></script>
 </body>
 </html>

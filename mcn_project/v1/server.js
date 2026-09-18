@@ -968,7 +968,8 @@ route('POST', '/api/mvp/leads', async (ctx) => {
  * 两者都写操作日志，但语义与流程不同，所以是两个接口。
  * ============================================================ */
 // 把一批线索的负责人改成指定人；返回 { changed: [...], skipped: [...] }
-async function doAssign(ids, ownerName, ownerPosition, ctx, mode) {
+// remark：分配备注（写入独立分配记录 talentAssignments，交接历史可回溯）
+async function doAssign(ids, ownerName, ownerPosition, ctx, mode, remark) {
   const target = userRecByName(ownerName);
   if (!target) return { error: '负责人不存在：' + ownerName };
   const toPosition = POSITIONS.includes(ownerPosition) ? ownerPosition : (target.position || '');
@@ -984,8 +985,9 @@ async function doAssign(ids, ownerName, ownerPosition, ctx, mode) {
     if (t.owner === nameOf(target) && (t.ownerPosition || '') === toPosition) { skipped.push({ id, name: t.name, reason: '负责人未变化' }); continue; }
     const before = (t.owner || '未分配') + '（' + posLabel(t.ownerPosition) + '）';
     const extra = {};
-    // 管理员/高级运营直接把线索指派给运营 → 同时固化「达人运营负责人」（与走交接确认的口径一致）
-    if (toPosition === 'ops' && !t.opsId) { extra.opsBy = nameOf(target); extra.opsId = target.user; extra.opsAt = nowStr(); extra.talentOperator = nameOf(target); }
+    // 管理员/高级运营把达人分配给运营 → 「达人运营负责人」始终跟随最新分配人（2026-09-18）：
+    // 高级运营不是达人长期 owner，只做分配/重新分配；重新分给另一位普通运营时 talentOperator 同步换人
+    if (toPosition === 'ops') { extra.opsBy = nameOf(target); extra.opsId = target.user; extra.opsAt = nowStr(); extra.talentOperator = nameOf(target); }
     const upd = await db.update(coll, id, Object.assign({
       owner: nameOf(target), ownerId: target.user, ownerPosition: toPosition, assignedAt: nowStr(),
       // 换人 = SLA 重新计时：清掉历史豁免 / 上报标记 / 催办计数（新负责人从零开始考核）
@@ -993,6 +995,16 @@ async function doAssign(ids, ownerName, ownerPosition, ctx, mode) {
     }, extra));
     await addLog(ctx.operator, '达人：' + upd.name, mode, '负责人=' + before,
       '负责人=' + nameOf(target) + '（' + posLabel(toPosition) + '）');
+    // 独立分配记录：谁把哪位达人分给了谁、备注是什么 —— 交接历史可回溯（跟进时间轴也会并入展示）
+    await db.insert('talentAssignments', {
+      id: await nextId('talentAssignments', 'TA', 5),
+      talentId: t.id, talentName: t.name,
+      fromOwner: t.owner || '', fromOwnerId: t.ownerId || '', fromPosition: t.ownerPosition || '',
+      toOwner: nameOf(target), toOwnerId: target.user, toPosition,
+      type: mode, remark: String(remark || '').slice(0, 200),
+      assignedBy: ctx.displayName || ctx.operator, assignedById: ctx.authUser || ctx.operator,
+      assignedAt: nowStr(), isActive: true,
+    });
     changed.push(toMvpLead(upd));
   }
   return { changed, skipped };
@@ -1002,7 +1014,7 @@ route('POST', '/api/mvp/leads/:id/assign', async (ctx) => {
   if (!isSupervisor(ctx)) return fail(ctx.res, 403, '只有主管（管理员/高级运营）可以分配负责人');
   const b = ctx.body || {};
   if (!b.owner) return fail(ctx.res, 400, '请选择负责人');
-  const r = await doAssign([ctx.params.id], b.owner, b.ownerPosition, ctx, '线索分配');
+  const r = await doAssign([ctx.params.id], b.owner, b.ownerPosition, ctx, '线索分配', b.remark);
   if (r.error) return fail(ctx.res, 400, r.error);
   if (!r.changed.length) return fail(ctx.res, 409, (r.skipped[0] && r.skipped[0].reason) || '分配未生效');
   notify('线索已分配给 ' + b.owner + '：' + r.changed[0].name);
@@ -1016,7 +1028,7 @@ route('POST', '/api/mvp/leads/batch-assign', async (ctx) => {
   if (!ids.length) return fail(ctx.res, 400, '请先勾选线索');
   if (ids.length > 500) return fail(ctx.res, 400, '单次最多分配 500 条');
   if (!b.owner) return fail(ctx.res, 400, '请选择负责人');
-  const r = await doAssign(ids, b.owner, b.ownerPosition, ctx, '线索批量分配');
+  const r = await doAssign(ids, b.owner, b.ownerPosition, ctx, '线索批量分配', b.remark);
   if (r.error) return fail(ctx.res, 400, r.error);
   await addLog(ctx.operator, '线索批量分配', '线索批量分配', ids.length + ' 条', '负责人=' + b.owner + '；成功 ' + r.changed.length + ' / 跳过 ' + r.skipped.length);
   if (r.changed.length) notify('批量分配 ' + r.changed.length + ' 条线索给 ' + b.owner);
@@ -1272,6 +1284,20 @@ async function buildWorkbenchPanels(ctx, all) {
     const cnt = k => mine.filter(t => statusOf(t) === k).length;
     const myOpsTasks = (await db.list('opsTasks')).filter(k => k.isActive !== false
       && (k.ownerId === ctx.authUser || k.owner === (ctx.displayName || ctx.operator)));
+    // 新分配达人（2026-09-18）：近 7 天主管（管理员/高级运营）分配给我的达人，来自独立分配记录
+    const myAssigns = (await db.list('talentAssignments')).filter(a => a.isActive !== false
+      && (a.toOwnerId === ctx.authUser || (!a.toOwnerId && a.toOwner === (ctx.displayName || ctx.operator)))
+      && daysAgo(a.assignedAt) <= 7)
+      .sort((a, b) => String(b.assignedAt || '').localeCompare(String(a.assignedAt || '')));
+    blocks.push({
+      key: 'new-assigned', title: '新分配达人', type: 'table', link: 'talent-pool',
+      hint: '近 7 天高级运营分配给我的达人，尽快首次触达建立联系',
+      columns: ['达人', '分配人', '分配时间', '备注'],
+      rows: myAssigns.slice(0, 8).map(a => {
+        const t = mine.find(x => x.id === a.talentId);
+        return [t ? t.name : (a.talentName || a.talentId), a.assignedBy || '—', String(a.assignedAt || '').slice(0, 16) || '—', a.remark || '—'];
+      }),
+    });
     blocks.push({
       key: 'my-talents', title: '我的达人', type: 'stats', link: 'talent-pool',
       items: [
@@ -1288,6 +1314,19 @@ async function buildWorkbenchPanels(ctx, all) {
         { label: '待调整内容方向', value: mine.filter(t => !(t.contentTypes || []).length || t.coopPath === '待判断').length, sub: '还没定方向 / 合作路径' },
         { label: '待完成运营任务', value: myOpsTasks.filter(k => !['已完成', '已取消'].includes(k.status)).length, sub: '主管派发的方向验证任务' },
       ],
+    });
+    // 待跟进提醒（2026-09-18）：逾期未跟进 / 今日待跟进 / 新分配未触达，只统计我名下达人
+    const followDue = t => String(t.nextFollowAt || '').slice(0, 10);
+    const overdueFollow = mine.filter(t => followDue(t) && followDue(t) < today);
+    const dueToday = mine.filter(t => followDue(t) === today);
+    const assignedUntouched = myAssigns.filter(a => { const t = mine.find(x => x.id === a.talentId); return t && !t.lastFollowAt; });
+    blocks.push({
+      key: 'follow-remind', title: '待跟进提醒', type: 'alerts',
+      items: [
+        overdueFollow.length ? { text: '逾期未跟进', sub: overdueFollow.length + ' 位达人已过计划跟进时间（' + overdueFollow.slice(0, 3).map(t => t.name).join('、') + (overdueFollow.length > 3 ? ' 等' : '') + '）', page: 'talent-pool', tone: 'rose' } : null,
+        dueToday.length ? { text: '今日待跟进', sub: dueToday.length + ' 位达人计划今天跟进', page: 'talent-pool', tone: 'amber' } : null,
+        assignedUntouched.length ? { text: '新分配未触达', sub: assignedUntouched.length + ' 位新分配达人还没首次联系', page: 'talent-pool', tone: 'amber' } : null,
+      ].filter(Boolean),
     });
     blocks.push({
       key: 'my-talent-list', title: '我的达人 · 成长与下一步动作', type: 'table', link: 'talent-pool',
@@ -1499,7 +1538,31 @@ route('GET', '/api/mvp/leads/:id/follow-ups', async (ctx) => {
   if (!visible) return fail(ctx.res, 403, '无权查看该线索的跟进记录');
   const arr = await db.list('followups');
   const rows = arr.filter(f => f.talentId === t.id).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-  ok(ctx.res, rows.slice(0, 200).map(toFollowup));
+  // 分配/交接历史并入时间轴（2026-09-18）：「谁把达人分给了谁 + 备注」与跟进记录同一条时间线可见
+  const assigns = (await db.list('talentAssignments')).filter(a => a.talentId === t.id && a.isActive !== false);
+  const assignRows = assigns.map(a => ({
+    id: a.id, talentId: a.talentId, talentName: a.talentName,
+    content: '【' + (a.type || '达人分配') + '】' + (a.fromOwner ? a.fromOwner + ' → ' : '') + a.toOwner
+      + (a.remark ? '；备注：' + a.remark : ''),
+    method: '分配记录', nextAt: '', nextAction: '', type: '分配',
+    operator: a.assignedBy || '', operatorId: a.assignedById || '', createdAt: a.assignedAt || '',
+  }));
+  const merged = assignRows.concat(rows.map(toFollowup))
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+  ok(ctx.res, merged.slice(0, 200));
+});
+// 分配记录独立查询：某位达人的分配/重新分配历史（主管或现负责人可见）
+route('GET', '/api/mvp/leads/:id/assignments', async (ctx) => {
+  let t = await db.get('leads', ctx.params.id);
+  let fromTalent = false;
+  if (!t) { t = await db.get('talents', ctx.params.id); fromTalent = true; }
+  if (!t) return fail(ctx.res, 404, '线索不存在');
+  const visible = fromTalent ? (isSupervisor(ctx) || isMine(t, ctx)) : leadVisibleTo(t, ctx, 'position');
+  if (!visible) return fail(ctx.res, 403, '无权查看该达人的分配记录');
+  const rows = (await db.list('talentAssignments'))
+    .filter(a => a.talentId === t.id && a.isActive !== false)
+    .sort((a, b) => String(b.assignedAt || '').localeCompare(String(a.assignedAt || '')));
+  ok(ctx.res, rows.slice(0, 100));
 });
 route('POST', '/api/mvp/leads/:id/follow-ups', async (ctx) => {
   if (!ctx.role.mutate) return fail(ctx.res, 403, '当前角色无修改权限');
@@ -1562,6 +1625,9 @@ route('DELETE', '/api/mvp/leads/:id', async (ctx) => {
   //（nextId 取现存最大值 +1，删掉的 ID 会被复用），污染下一条同 ID 线索的「跟进记录读回」。
   const fus = await db.list('followups');
   for (const f of fus) { if (f.talentId === ctx.params.id) await db.remove('followups', f.id); }
+  // 级联清理：分配记录同理跟着删，避免孤儿 talentAssignments 挂到将来被复用的 ID 上
+  const tas = await db.list('talentAssignments');
+  for (const a of tas) { if (a.talentId === ctx.params.id) await db.remove('talentAssignments', a.id); }
   await addLog(ctx.operator, '达人：' + t.name, '删除线索', '状态=' + t.status, '已删除');
   ok(ctx.res, { id: ctx.params.id, deleted: true });
 });
@@ -1649,7 +1715,7 @@ route('POST', '/api/mvp/leads/:id/reassign', async (ctx) => {
   if (!t) return fail(ctx.res, 404, '线索不存在');
   if (t.owner === b.owner) return fail(ctx.res, 400, '新负责人与当前负责人相同，请选择其他人');
   const sla = slaOf(t);
-  const r = await doAssign([t.id], b.owner, b.ownerPosition, ctx, 'SLA 重新分配');
+  const r = await doAssign([t.id], b.owner, b.ownerPosition, ctx, 'SLA 重新分配', b.reason || b.remark);
   if (r.error) return fail(ctx.res, 400, r.error);
   if (!r.changed.length) return fail(ctx.res, 409, (r.skipped[0] && r.skipped[0].reason) || '重新分配未生效');
   const nowT = nowStr();
@@ -1692,6 +1758,9 @@ route('DELETE', '/api/talents/:id', async (ctx) => {
   const t = await db.get('talents', ctx.params.id);
   if (!t) return fail(ctx.res, 404, '达人不存在');
   await db.remove('talents', ctx.params.id);
+  // 级联清理：分配记录跟着达人一起删（与删线索级联同口径，避免孤儿记录挂到将来复用的 ID 上）
+  const tas = await db.list('talentAssignments');
+  for (const a of tas) { if (a.talentId === ctx.params.id) await db.remove('talentAssignments', a.id); }
   await addLog(ctx.operator, '达人：' + t.name, '删除达人档案', '状态=' + t.status, '已删除');
   ok(ctx.res, { id: ctx.params.id, deleted: true });
 });
@@ -3446,6 +3515,8 @@ if (!USE_FEISHU) {
   }
   // 岗位 / 交接状态字段迁移（老数据补默认值，新库补空集合）
   migrateDb();
+  // 达人分配记录（2026-09-18）：高级运营分配/重新分配达人给普通运营的历史，独立集合可回溯
+  if (!Array.isArray(mockDb.talentAssignments)) { mockDb.talentAssignments = []; saveDb(); }
   // 收益结算：设置 / 结算单 / 资金流水
   if (!Array.isArray(mockDb.settings)) {
     mockDb.settings = [{ id: FIN_SETTINGS_ID, mcnRate: 0.3, taxRate: 0.06, receiveDays: 30, payDays: 15 }];

@@ -303,11 +303,13 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     // 岗位职责边界：达人只能给 招募 / 运营 岗 —— 推广管投放、寄拍只执行任务、财务管结算
     const ownerOptions = computed(() => targets.value.filter(t => ['recruit', 'ops'].includes(t.position || '')));
 
-    const assignDlg = reactive({ show: false, mode: 'single', ids: [], busy: false });
-    const assignForm = reactive({ owner: '', ownerPosition: '', reason: '' });
+    const assignDlg = reactive({ show: false, mode: 'single', ids: [], busy: false, rows: [] });
+    const assignForm = reactive({ owner: '', ownerPosition: '', reason: '', remark: '' });
     function openAssign(row, onToast) {
       assignDlg.mode = 'single'; assignDlg.ids = [row.id];
-      assignForm.owner = ''; assignForm.ownerPosition = ''; assignForm.reason = '';
+      // 带上行数据：达人档案页（talent-pool）打开时行不在线索列表里，弹窗仍能显示名字/当前负责人
+      assignDlg.rows = [{ id: row.id, name: row.name, owner: row.owner }];
+      assignForm.owner = ''; assignForm.ownerPosition = ''; assignForm.reason = ''; assignForm.remark = '';
       loadTargets(row.owner === '未分配' ? '' : row.owner);
       assignDlg.show = true;
       if (!row) onToast && onToast('未找到线索');
@@ -316,6 +318,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     function openReassign(row, onToast) {
       if (!row || !row.id) { onToast && onToast('未找到线索'); return; }
       assignDlg.mode = 'reassign'; assignDlg.ids = [row.id];
+      assignDlg.rows = [{ id: row.id, name: row.name, owner: row.owner }];
       assignForm.owner = ''; assignForm.ownerPosition = '';
       assignForm.reason = row.slaStatus === 'overdue'
         ? '分配后 ' + (row.slaUsedMin || 0) + ' 分钟未首次联系（时限 ' + (row.slaOverdueMin || 0) + ' 分钟）'
@@ -326,7 +329,8 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     function openBatchAssign(onToast) {
       if (!checked.length) { onToast && onToast('请先勾选要分配的线索'); return; }
       assignDlg.mode = 'batch'; assignDlg.ids = checked.slice();
-      assignForm.owner = ''; assignForm.ownerPosition = ''; assignForm.reason = '';
+      assignDlg.rows = checked.map(id => { const x = list.find(v => v.id === id); return { id, name: (x && x.name) || id, owner: (x && x.owner) || '' }; });
+      assignForm.owner = ''; assignForm.ownerPosition = ''; assignForm.reason = ''; assignForm.remark = '';
       loadTargets('');
       assignDlg.show = true;
     }
@@ -362,6 +366,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         const payload = { owner: assignForm.owner, ownerPosition: assignForm.ownerPosition };
         if (isBatch) payload.ids = assignDlg.ids;
         if (isReassign) payload.reason = String(assignForm.reason).trim();
+        else payload.remark = String(assignForm.remark || '').trim();   // 备注 → 独立分配记录 talentAssignments
         const j = await (await fetch(url, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
         })).json();
