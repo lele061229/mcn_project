@@ -104,6 +104,12 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         // 报名数据（20260919d）：作品链接 + 报名时间（列表「报名数据」列与详情弹窗「报名信息」区展示）
         works: t.works || '',
         createdAt: String(t.createdAt || '').slice(0, 16),
+        // 线索类型 + 付费孵化审核流（20260921a）
+        leadType: t.leadType || 'free_recruit',
+        leadTypeLabel: t.leadTypeLabel || '免费招募',
+        reviewState: t.reviewState || '',
+        reviewNote: t.reviewNote || '', reviewComment: t.reviewComment || '',
+        reviewSubmittedAt: String(t.reviewSubmittedAt || ''), reviewAt: String(t.reviewAt || ''), reviewBy: t.reviewBy || '',
         owner: t.owner || '未分配',
         ownerId: t.ownerId || '',
         ownerPosition: t.ownerPosition || '', ownerPositionLabel: t.ownerPositionLabel || '',
@@ -130,20 +136,24 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         note: (questions ? '想了解：' + questions : '') + ((r.profileScreenshot || t.profileScreenshot) ? '；主页截图：' + (r.profileScreenshot || t.profileScreenshot) : ''),
       };
     }
-    function loadFromDb() {
-      fetch('/api/mvp/leads').then(r2 => r2.json()).then(j => {
-        if (!j || !j.ok || !Array.isArray(j.data)) return;
-        // 合并数据库里的全部线索（报名表单 / 后台新增 / Excel 导入），已存在的按 id 跳过。
+    // 数据库同步（20260921a 升级）：新增线索 unshift，已存在的原位更新（审核状态 / 跟进字段实时刷新）。
+    // silent=true 供轻量轮询复用（不弹同步提示）；返回新增条数供轮询判断。
+    function syncFromDb(silent) {
+      return fetch('/api/mvp/leads').then(r2 => r2.json()).then(j => {
+        if (!j || !j.ok || !Array.isArray(j.data)) return 0;
+        // 合并数据库里的全部线索（报名表单 / 后台新增 / Excel 导入）。
         // 服务端已按角色裁剪，非管理员拿到的只是自己有权看到的那部分。
         let added = 0;
         for (const t of j.data) {
-          if (list.some(x => x.id === t.id)) continue;
-          list.unshift(talentToLead(t));
-          added++;
+          const i = list.findIndex(x => x.id === t.id);
+          if (i >= 0) Object.assign(list[i], talentToLead(t));
+          else { list.unshift(talentToLead(t)); added++; }
         }
-        if (added && typeof window !== 'undefined' && window.showToast) window.showToast('已从数据库同步 ' + added + ' 条线索');
-      }).catch(() => { /* 接口不可用时保留本地数据 */ });
+        if (added && !silent && typeof window !== 'undefined' && window.showToast) window.showToast('已从数据库同步 ' + added + ' 条线索');
+        return added;
+      }).catch(() => 0); /* 接口不可用时保留本地数据 */
     }
+    function loadFromDb() { syncFromDb(false); }
     loadFromDb();
 
     /* ---- 岗位数据可见范围 ----
@@ -186,7 +196,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     // owner / position / 未分配 / 逾期未跟进 / 待交接 是「管理员总表」的筛选维度
     const BLANK_FILTERS = {
       name: '', source: '', stage: '', potential: '', willing: '', category: '',
-      owner: '', position: '', talentStatus: '', talentLevel: '', unassigned: false, overdue: false, handover: false,
+      owner: '', position: '', talentStatus: '', talentLevel: '', leadType: '', unassigned: false, overdue: false, handover: false,
     };
     const filters = reactive(Object.assign({}, BLANK_FILTERS));
     const appliedFilters = reactive(Object.assign({}, BLANK_FILTERS));
@@ -254,6 +264,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       if (f.talentLevel && (r.talentLevel || 'C') !== f.talentLevel) return false;
       if (f.owner && r.owner !== f.owner) return false;
       if (f.position && posOf(r) !== f.position) return false;
+      if (f.leadType && r.leadType !== f.leadType) return false;
       if (f.unassigned && !isPublicLead(r)) return false;
       if (f.overdue && !(r.nextFollow && r.nextFollow.slice(0, 10) < TODAY && r.stage !== '已交接')) return false;
       if (f.handover && r.handoverStatus !== 'pending') return false;
@@ -264,9 +275,6 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       if (quick.value === 'handover' && r.handoverStatus !== 'pending' && r.stage !== '待交接') return false;
       // 待转正式达人：已报名待审核（合作意向已确认），招募的最后一个动作就是转正式
       if (quick.value === 'toconvert' && r.stage !== '已报名') return false;
-      // SLA：首次联系时限。待升级 = 已超时（主管要催办/重新分配）；即将超时 = 已进入提醒档
-      if (quick.value === 'slaover' && r.slaStatus !== 'overdue') return false;
-      if (quick.value === 'slaremind' && !(r.slaStatus === 'remind' || r.slaStatus === 'overdue')) return false;
       return true;
     }));
     const total = computed(() => filtered.value.length);
@@ -328,6 +336,48 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
 
     const assignDlg = reactive({ show: false, mode: 'single', ids: [], busy: false, rows: [] });
     const assignForm = reactive({ owner: '', ownerPosition: '', reason: '', remark: '' });
+    /* ---- 线索类型（20260921a）：paid_incubation=付费孵化 / free_recruit=免费招募（字段名与显示名分离）---- */
+    const LEAD_TYPE_LIST = ['paid_incubation', 'free_recruit'];
+    const LEAD_TYPE_LABEL = { paid_incubation: '付费孵化', free_recruit: '免费招募' };
+    const REVIEW_STATE_LABEL = { pending_review: '待审核', approved: '已通过', supplement: '待补充' };
+    function reviewLabel(sv) { return REVIEW_STATE_LABEL[sv] || ''; }
+    // 行是否归我（提交审核用）：ownerId 优先，老数据回退姓名
+    function mineRow(r) {
+      const myId = (meRef && meRef.value && (meRef.value.account || meRef.value.user)) || '';
+      return r.ownerId ? r.ownerId === myId : (!!myName.value && r.owner === myName.value);
+    }
+    // 付费孵化审核流：ops 跟进后提交 → senior 审核通过（转正式）/ 要求补充（退回）
+    const reviewDlg = reactive({ open: false, row: null, comment: '' });
+    function openReview(row, onToast) {
+      const x = list.find(v => v.id === (row.id || row.talentId)) || row;
+      reviewDlg.row = { id: x.id, name: x.name || row.name || '', owner: x.owner || '未分配',
+        reviewNote: x.reviewNote || '', reviewState: x.reviewState || '' };
+      reviewDlg.comment = '';
+      reviewDlg.open = true;
+    }
+    async function doReview(action, onToast) {
+      const r = reviewDlg.row;
+      if (!r) return;
+      if (action === 'supplement' && !reviewDlg.comment.trim()) { onToast && onToast('请填写要求补充的说明'); return; }
+      try {
+        const resp = await fetch('/api/mvp/leads/' + r.id + '/review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, comment: reviewDlg.comment }) });
+        const j = await resp.json().catch(() => null);
+        if (resp.ok) {
+          reviewDlg.open = false;
+          onToast && onToast(action === 'approve' ? '审核通过，已转为正式达人' : '已退回运营补充');
+          syncFromDb(true);
+        } else onToast && onToast((j && j.error) || '审核操作失败');
+      } catch (e) { onToast && onToast('网络错误，审核操作失败'); }
+    }
+    async function submitReview(row, onToast, note) {
+      try {
+        const resp = await fetch('/api/mvp/leads/' + row.id + '/submit-review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: note || '' }) });
+        const j = await resp.json().catch(() => null);
+        if (resp.ok) { onToast && onToast('已提交审核，等待高级运营确认'); syncFromDb(true); return true; }
+        onToast && onToast((j && j.error) || '提交审核失败');
+      } catch (e) { onToast && onToast('网络错误，提交审核失败'); }
+      return false;
+    }
     function openAssign(row, onToast) {
       assignDlg.mode = 'single'; assignDlg.ids = [row.id];
       // 带上行数据：达人档案页（talent-pool）打开时行不在线索列表里，弹窗仍能显示名字/当前负责人
@@ -1111,6 +1161,7 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       ownerOptions, assignDlg, assignForm, openAssign, openBatchAssign, pickAssignOwner, saveAssign, suggestOwner, convertTalent,
       // SLA 主管动作：催办 / 重新分配 / 超时原因 + 展示口径
       slaDlg, slaForm, openUrge, openOverdueReason, saveSlaAct, openReassign, slaInfo, slaActive,
+      LEAD_TYPE_LIST, LEAD_TYPE_LABEL, reviewLabel, reviewDlg, openReview, doReview, submitReview, syncFromDb, mineRow,
       isSenior, canJudge, TALENT_STATUS_LIST, TALENT_STATUS_LABEL,
       TALENT_LEVEL_LIST, TALENT_LEVEL_LABEL, levelTone,
       // 交接流程与留痕

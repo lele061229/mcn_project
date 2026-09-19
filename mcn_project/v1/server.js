@@ -311,7 +311,8 @@ async function pushMsg(toUser, type, title, body, link) {
   await db.insert('messages', {
     id: await nextId('messages', 'M', 5),
     toUser, toName: u ? nameOf(u) : toUser,
-    type: ['new_lead', 'signup', 'assign', 'talent_assigned', 'sla'].includes(type) ? type : 'system',
+    type: ['new_lead', 'signup', 'assign', 'talent_assigned', 'sla',
+      'new_paid_lead', 'lead_followup_submitted', 'lead_approved', 'lead_reassigned', 'lead_supplement'].includes(type) ? type : 'system',
     title: String(title || '').slice(0, 80), body: String(body || '').slice(0, 500),
     link: link || '', readAt: '', createdAt: nowStr(), isActive: true,
   });
@@ -320,16 +321,25 @@ async function pushMsgPosition(position, type, title, body, link) {
   const users = (AUTH && Array.isArray(AUTH.users) ? AUTH.users : []).filter(u => u.position === position);
   for (const u of users) await pushMsg(u.user, type, title, body, link);
 }
-/* 负载最低原则（2026-09-19a）：统计每位普通运营名下活跃线索+达人数量，升序排列。
- * 只做推荐，不写任何数据 —— 是否采纳由高级运营在分配弹窗里决定。 */
+/* 负载最低原则（2026-09-19a 建，20260921a 口径升级）：
+ * 普通运营负载 = 当前负责达人数量 + 当前未完成线索数量 + 当前未完成任务数量（寄拍任务 + 运营计划任务）。
+ * 自动分配（付费孵化线索）与高级运营的分配建议共用同一口径。 */
 async function opsLoadCandidates() {
-  const leads = (await db.list('leads')).filter(t => t.isActive !== false);
+  const leads = (await db.list('leads')).filter(t => t.isActive !== false && !WB_DONE_STATUS.includes(t.status));
   const talents = (await db.list('talents')).filter(t => t.isActive !== false);
-  const pool = leads.concat(talents);
+  const tasks = (await db.list('tasks')).filter(k => k.isActive !== false && (ACTIVE_TASK.includes(k.status) || k.status === '超时'));
+  let opsTasks = [];
+  try { opsTasks = (await db.list('opsTasks')).filter(k => k.isActive !== false && !['已完成', '已取消'].includes(k.status || '')); } catch (e) { opsTasks = []; }
   const opsUsers = (AUTH && Array.isArray(AUTH.users) ? AUTH.users : []).filter(u => u.position === 'ops');
   return opsUsers
-    .map(u => ({ user: u.user, name: nameOf(u),
-      load: pool.filter(t => t.ownerId ? t.ownerId === u.user : (t.owner && t.owner !== '未分配' && t.owner === nameOf(u))).length }))
+    .map(u => {
+      const name = nameOf(u);
+      const ownT = t => t.ownerId ? t.ownerId === u.user : (t.owner && t.owner !== '未分配' && t.owner === name);
+      const ownK = k => k.ownerId ? k.ownerId === u.user : (k.owner && k.owner === name);
+      return { user: u.user, name,
+        load: pool(ownT) + tasks.filter(ownK).length + opsTasks.filter(ownK).length };
+      function pool(f) { return leads.concat(talents).filter(f).length; }
+    })
     .sort((a, b) => a.load - b.load);
 }
 
@@ -382,6 +392,15 @@ function seedTalentFields(t, isTalent) {
   if (t.firstContactAt === undefined) { t.firstContactAt = ''; n++; }
   if (t.lastFollowupAt === undefined) { t.lastFollowupAt = t.lastFollowAt || ''; n++; }
   if (t.escalatedAt === undefined) { t.escalatedAt = ''; n++; }
+  // —— 线索类型 + 审核状态（20260921a 线索流转统一）：paid_incubation=付费孵化 / free_recruit=免费招募 ——
+  // 存量数据一律默认免费招募（走招募岗初筛的老链路），不改变任何历史记录的语义
+  if (t.leadType === undefined) { t.leadType = 'free_recruit'; n++; }
+  if (t.reviewState === undefined) { t.reviewState = ''; n++; }
+  if (t.reviewSubmittedAt === undefined) { t.reviewSubmittedAt = ''; n++; }
+  if (t.reviewAt === undefined) { t.reviewAt = ''; n++; }
+  if (t.reviewBy === undefined) { t.reviewBy = ''; n++; }
+  if (t.reviewComment === undefined) { t.reviewComment = ''; n++; }
+  if (t.reviewNote === undefined) { t.reviewNote = ''; n++; }
   if (t.escalatedBy === undefined) { t.escalatedBy = ''; n++; }
   if (t.reassignedAt === undefined) { t.reassignedAt = ''; n++; }
   if (t.reassignFrom === undefined) { t.reassignFrom = ''; n++; }
@@ -769,6 +788,11 @@ const isSupervisor = ctx => ctx.roleCode === 'admin' || ctx.position === 'senior
 const posLabel = p => POSITION_LABEL[p] || '未设置';
 // 判断字段（评级/潜力/意愿/分类/路径）修改权限：普通运营 / 高级运营 / 管理员 —— 招募只收集报名信息，不做业务判断
 const canJudgeLead = ctx => isSupervisor(ctx) || ctx.position === 'ops';
+// 线索类型（20260921a 线索流转统一）：字段名与中文显示名分离
+//   paid_incubation=付费孵化：表单直达运营（系统自动分配），ops 跟进后提交 senior 审核
+//   free_recruit=免费招募：走招募岗初筛 → senior 判断 → 分配 ops 的老链路
+const LEAD_TYPES = ['paid_incubation', 'free_recruit'];
+const LEAD_TYPE_LABEL = { paid_incubation: '付费孵化', free_recruit: '免费招募' };
 // 账号显示名：auth.json 的 displayName（与 talents.owner 存的人名对应），缺省退回账号名
 const nameOf = rec => (rec && (rec.displayName || rec.user)) || '';
 // 是否「我负责的」：优先按账号 ID 比对（ownerId ⇄ 登录账号），老数据回退到中文姓名比对
@@ -875,6 +899,10 @@ function slaOf(t) {
    只对「已超时且还没上报」的线索写一次 escalatedAt（幂等：已有值就跳过），
    同时把负责人写进 escalatedBy 之外的 escalatedTo（主管=管理员）并推通知。 */
 async function slaSweep(rows) {
+  // 20260921a：SLA 首次联系时限停止业务使用 —— 不再自动上报 / 发消息 / 写 escalatedAt。
+  // 历史字段（slaExempt/firstContactAt/escalatedAt 等）全部保留；slaOf 读时派生口径保留供存量数据回看。
+  return 0;
+  /* —— 以下为停用前的惰性扫描逻辑（存档，不执行）——
   const nowT = nowStr();
   let n = 0;
   for (const t of rows) {
@@ -901,6 +929,7 @@ async function slaSweep(rows) {
     n++;
   }
   return n;
+  —— 停用逻辑存档结束 —— */
 }
 function toMvpLead(t) {
   return {
@@ -926,6 +955,15 @@ function toMvpLead(t) {
     assignState: t.assignState || (t.ownerPosition === 'ops' ? 'assigned' : ''),
     assignedBy: t.assignedBy || '',
     assignAckAt: String(t.assignAckAt || ''),
+    // 线索类型（20260921a）：paid_incubation=付费孵化 / free_recruit=免费招募（字段名与显示名分离）
+    leadType: LEAD_TYPES.includes(t.leadType) ? t.leadType : 'free_recruit',
+    leadTypeLabel: LEAD_TYPE_LABEL[LEAD_TYPES.includes(t.leadType) ? t.leadType : 'free_recruit'] || '免费招募',
+    // 付费孵化审核流（20260921a）：'' → pending_review（ops 提交）→ approved（senior 通过，转正式）/ supplement（要求补充）
+    reviewState: t.reviewState || '',
+    reviewSubmittedAt: String(t.reviewSubmittedAt || ''),
+    reviewAt: String(t.reviewAt || ''), reviewBy: t.reviewBy || '',
+    reviewComment: t.reviewComment || '', reviewNote: t.reviewNote || '',
+    assignedOps: t.assignedOps || t.ownerId || '',
     nextAction: t.nextAction || '',
     // 跟进 SLA：首次联系时限相关的派生字段（详见文件上方 slaOf 注释）
     ...slaOf(t),
@@ -980,8 +1018,8 @@ route('GET', '/api/mvp/leads', async (ctx) => {
     const today = fmtDate(new Date());
     rows = rows.filter(t => t.nextFollowAt && String(t.nextFollowAt).slice(0, 10) < today && t.status !== '已成为达人');
   }
-  // SLA 筛选（读时派生，先扫描上报再筛）
-  await slaSweep(rows);
+  // SLA 筛选（读时派生；20260921a 起停止 SLA 业务使用，不再惰性扫描上报）
+
   if (q.get('slaOverdue') === '1') rows = rows.filter(t => slaOf(t).slaStatus === 'overdue');
   if (q.get('slaRemind') === '1') rows = rows.filter(t => slaOf(t).slaStatus === 'remind');
   if (q.get('slaEscalated') === '1') rows = rows.filter(t => slaOf(t).slaStatus === 'overdue' && t.escalatedAt);
@@ -1100,6 +1138,14 @@ async function doAssign(ids, ownerName, ownerPosition, ctx, mode, remark) {
       await pushMsg(target.user, 'talent_assigned', '新分配达人：' + t.name,
         (ctx.displayName || ctx.operator) + ' 给你分配了新达人「' + t.name + '」' + (remark ? '（备注：' + remark + '）' : '')
         + '，请到工作台确认接收后尽快首次联系', 'workbench');
+      // 重新分配（20260921a）：线索原来有负责人且换人时，新旧负责人都收「重新分配」消息
+      if (t.owner && t.owner !== '未分配') {
+        const oldId = t.ownerId || uidByName(t.owner);
+        const rMsg = (ctx.displayName || ctx.operator) + ' 把「' + t.name + '」从 ' + t.owner + ' 重新分配给 ' + nameOf(target)
+          + (remark ? '（原因：' + remark + '）' : '');
+        if (oldId && oldId !== target.user) await pushMsg(oldId, 'lead_reassigned', '线索已重新分配：' + t.name, rMsg + '，该线索不再由你负责', 'talent-leads');
+        await pushMsg(target.user, 'lead_reassigned', '重新分配给你：' + t.name, rMsg + '，请到工作台确认接收', 'workbench');
+      }
     }
     changed.push(toMvpLead(upd));
   }
@@ -1148,6 +1194,67 @@ route('POST', '/api/mvp/leads/:id/assign-ack', async (ctx) => {
     .sort((a, b) => String(b.assignedAt || '').localeCompare(String(a.assignedAt || '')));
   if (tas[0]) await db.update('talentAssignments', tas[0].id, { ackAt: nowT, ack: true });
   ok(ctx.res, toMvpLead(upd));
+});
+
+/* ============================================================
+ * 付费孵化线索审核流（20260921a 线索流转统一）
+ *   ops 跟进完成 → submit-review 提交 → senior 审核：
+ *   approve（通过）→ 转正式达人进达人档案 / supplement（要求补充）→ 退回 ops 继续跟进
+ * 权限：提交=线索负责人本人（ops）；审核=isSupervisor（管理员/高级运营）。
+ * ============================================================ */
+route('POST', '/api/mvp/leads/:id/submit-review', async (ctx) => {
+  if (!ctx.role.mutate) return fail(ctx.res, 403, '当前角色无修改权限');
+  const t = await db.get('leads', ctx.params.id);
+  if (!t) return fail(ctx.res, 404, '线索不存在或已转正式达人');
+  if (!isMine(t, ctx)) return fail(ctx.res, 403, '只有线索负责人可以提交审核');
+  if (t.leadType !== 'paid_incubation') return fail(ctx.res, 400, '只有付费孵化线索走审核流程');
+  if (t.reviewState === 'pending_review') return fail(ctx.res, 409, '该线索已在审核中，请等待高级运营处理');
+  const b = ctx.body || {};
+  const upd = await db.update('leads', t.id, {
+    reviewState: 'pending_review', reviewSubmittedAt: nowStr(),
+    reviewNote: String(b.note || '').slice(0, 300), reviewBy: '', reviewAt: '', reviewComment: '',
+  });
+  await addLog(ctx.operator, '达人：' + t.name, '提交审核', '审核状态=' + (t.reviewState || '无'),
+    '付费孵化线索跟进完成，提交高级运营确认' + (b.note ? '；说明=' + b.note : ''));
+  await pushMsgPosition('senior_ops', 'lead_followup_submitted', '待审核：' + t.name,
+    (ctx.displayName || ctx.operator) + ' 提交了付费孵化线索「' + t.name + '」的审核请求'
+    + (b.note ? '（' + b.note + '）' : '') + '，请在工作台「付费孵化待审核」处理', 'workbench');
+  ok(ctx.res, toMvpLead(upd));
+});
+route('POST', '/api/mvp/leads/:id/review', async (ctx) => {
+  if (!isSupervisor(ctx)) return fail(ctx.res, 403, '只有主管（管理员/高级运营）可以审核线索');
+  const t = await db.get('leads', ctx.params.id);
+  if (!t) return fail(ctx.res, 404, '线索不存在或已转正式达人');
+  if (t.reviewState !== 'pending_review') return fail(ctx.res, 409, '该线索不在待审核状态');
+  const b = ctx.body || {};
+  const action = b.action;
+  if (!['approve', 'supplement'].includes(action)) return fail(ctx.res, 400, 'action 必须是 approve（通过）或 supplement（要求补充）');
+  if (action === 'approve') {
+    // 审核通过 = 转为正式达人：走转化不变式 promoteToTalent（线索池迁入达人库，ID 不变）
+    const rec = await promoteToTalent(Object.assign({}, t, {
+      reviewState: 'approved', reviewAt: nowStr(), reviewBy: ctx.displayName || ctx.operator,
+      reviewComment: String(b.comment || '').slice(0, 300),
+    }), ctx.displayName || ctx.operator, ctx.authUser || ctx.operator, t.status, '付费孵化审核通过');
+    await addLog(ctx.operator, '达人：' + rec.name, '审核通过', '审核状态=pending_review',
+      '付费孵化线索审核通过，已转为正式达人进入达人档案' + (b.comment ? '；意见=' + b.comment : ''));
+    const opsId = rec.ownerId || uidByName(rec.owner);
+    await pushMsg(opsId, 'lead_approved', '审核通过：' + rec.name,
+      '你提交的付费孵化线索「' + rec.name + '」已审核通过，转为正式达人并进入达人档案', 'talent-pool');
+    notify('付费孵化线索「' + rec.name + '」审核通过，已转为正式达人');
+    ok(ctx.res, toMvpLead(rec));
+  } else {
+    const upd = await db.update('leads', t.id, {
+      reviewState: 'supplement', reviewAt: nowStr(), reviewBy: ctx.displayName || ctx.operator,
+      reviewComment: String(b.comment || '').slice(0, 300),
+    });
+    await addLog(ctx.operator, '达人：' + upd.name, '审核要求补充', '审核状态=pending_review',
+      '高级运营要求补充跟进信息' + (b.comment ? '；意见=' + b.comment : ''));
+    const opsId = upd.ownerId || uidByName(upd.owner);
+    await pushMsg(opsId, 'lead_supplement', '需要补充：' + upd.name,
+      '高级运营要求补充付费孵化线索「' + upd.name + '」的跟进信息' + (upd.reviewComment ? '：' + upd.reviewComment : '')
+      + '，补充后可再次提交审核', 'workbench');
+    ok(ctx.res, toMvpLead(upd));
+  }
 });
 
 /* ============================================================
@@ -1400,17 +1507,28 @@ async function buildWorkbenchPanels(ctx, all) {
     if (slaUp) alertsItems.push({ text: 'SLA 超时未联系', sub: slaUp + ' 条线索超过首次联系时限', page: 'talent-leads', tone: 'rose' });
     blocks.push({ key: 'alerts', title: '异常提醒', type: 'alerts', items: alertsItems });
   } else if (myPos === 'senior_ops') {
-    // 1) 待分配线索：报名进来未分配的线索 + 负载最低的推荐负责人（只建议，不自动分配）
+    // 1) 待分配线索：报名进来未分配的线索（付费孵化已由系统自动分配，这里主要是免费招募）+ 负载最低推荐
     const newLeads = all.filter(t => statusOf(t) === 'lead' && (!t.ownerId || t.owner === '未分配'))
       .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
     const recOps = (await opsLoadCandidates())[0] || null;
     blocks.push({
       key: 'pending-leads', title: '新线索提醒（待分配）', type: 'table', link: 'talent-leads',
       hint: '报名进来的未分配线索：查看报名信息 / 沟通记录后，在达人线索页选择运营负责人完成分配（推荐=当前负载最低的运营，仅供参考）',
-      columns: ['达人', '渠道', '报名时间', '推荐负责人', '操作'],
-      rows: newLeads.slice(0, 8).map(t => [t.name, t.channel || '—', String(t.createdAt || '').slice(0, 16) || '—',
+      columns: ['达人', '线索类型', '渠道', '报名时间', '推荐负责人', '操作'],
+      rows: newLeads.slice(0, 8).map(t => [t.name, LEAD_TYPE_LABEL[t.leadType] || '免费招募', t.channel || '—', String(t.createdAt || '').slice(0, 16) || '—',
         recOps ? recOps.name + '（在管 ' + recOps.load + ' 条）' : '—',
         { kind: 'lead-actions', talentId: t.id, name: t.name, owner: t.owner || '未分配' }]),
+    });
+    // 1.5) 付费孵化待审核（20260921a）：ops 跟进后提交 → senior 审核通过=转正式达人 / 要求补充=退回
+    const toReview = all.filter(t => t.leadType === 'paid_incubation' && t.reviewState === 'pending_review')
+      .sort((a, b) => String(b.reviewSubmittedAt || '').localeCompare(String(a.reviewSubmittedAt || '')));
+    blocks.push({
+      key: 'pending-review', title: '付费孵化待审核', type: 'table', link: 'talent-leads',
+      hint: '运营跟进完成后提交的付费孵化线索：通过=转正式达人进入档案；要求补充=退回运营继续跟进',
+      columns: ['达人', '负责人', '提交时间', '审核说明', '操作'],
+      rows: toReview.slice(0, 8).map(t => [t.name, t.owner || '未分配',
+        String(t.reviewSubmittedAt || '').slice(0, 16) || '—', t.reviewNote || '—',
+        { kind: 'lead-review', talentId: t.id, name: t.name }]),
     });
     // 2) 运营团队概览：每个普通运营的负责达人数 / 异常数 / 任务完成率 —— 决定要不要重新分配
     const members = await buildTeamMembers();
@@ -1424,12 +1542,10 @@ async function buildWorkbenchPanels(ctx, all) {
     blocks.push(funnelBlock());
     const abnAcc = (await db.list('talents')).filter(t => t.isActive !== false && accRowOf(t).updateStale).length;
     const abnFollow = all.filter(t => t.owner && t.owner !== '未分配' && !WB_DONE_STATUS.includes(t.status) && t.lastFollowAt && daysAgo(t.lastFollowAt) > 2).length;
-    const abnSla = all.filter(t => slaOf(t).slaStatus === 'overdue').length;
     blocks.push({
       key: 'senior-alerts', title: '异常提醒', type: 'alerts', items: [
         abnFollow ? { text: '超时未跟进', sub: abnFollow + ' 条线索超过 2 天未跟进', page: 'talent-leads', tone: 'rose' } : null,
         abnAcc ? { text: '账号久未更新', sub: abnAcc + ' 个达人账号超过更新周期未发内容', page: 'account-ops', tone: 'amber' } : null,
-        abnSla ? { text: 'SLA 超时未联系', sub: abnSla + ' 条线索超过首次联系时限', page: 'talent-leads', tone: 'rose' } : null,
       ].filter(Boolean),
     });
   } else if (myPos === 'ops') {
@@ -1460,6 +1576,7 @@ async function buildWorkbenchPanels(ctx, all) {
         { label: '7 天未更新达人', value: mine.filter(t => accRowOf(t).daysSincePublish >= 7).length, sub: '该安排新内容了', tone: 'text-amber-500' },
         { label: '待调整内容方向', value: mine.filter(t => !(t.contentTypes || []).length || t.coopPath === '待判断').length, sub: '还没定方向 / 合作路径' },
         { label: '待完成运营任务', value: myOpsTasks.filter(k => !['已完成', '已取消'].includes(k.status)).length, sub: '主管派发的方向验证任务' },
+        { label: '待审核进度', value: mine.filter(t => t.leadType === 'paid_incubation' && ['pending_review', 'supplement'].includes(t.reviewState)).length, sub: '付费孵化线索已提交/被退回，等高级运营确认' },
       ],
     });
     // 我的达人列表：成长与下一步动作（陪跑视角核心面板，只看 talentOperator/owner=当前用户）
@@ -1503,29 +1620,25 @@ async function buildWorkbenchPanels(ctx, all) {
     // 可见范围=服务端行级过滤（leadVisibleTo position 池）：我负责的 + 招募同岗池，
     // 不含运营团队数据 / 财务数据 / 深度账号运营数据。
     const universe = all.filter(t => leadVisibleTo(t, ctx, 'position'));
-    // 1) 新线索列表
+    // 1) 新线索列表（20260921a：付费孵化线索由系统自动分配给运营，不进招募池；招募主要处理免费招募）
     blocks.push({
-      key: 'new-lead-list', title: '新线索列表', type: 'table', link: 'talent-leads',
+      key: 'new-lead-list', title: '新线索列表（免费招募）', type: 'table', link: 'talent-leads',
       hint: '按报名时间倒序：新线索先首次触达，再判断潜力与意愿',
       columns: ['达人', '渠道', '报名时间', '意愿', '当前阶段'],
-      rows: universe.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10)
+      rows: universe.filter(t => t.leadType !== 'paid_incubation').slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 10)
         .map(t => [t.name, t.channel || '—', String(t.createdAt || '').slice(0, 16) || '—',
           t.intentLevel || '待判断', MVP_STAGE_MAP[t.status] || '新线索']),
     });
-    // 2) 跟进待办（含 SLA 首次联系时限：分配即计时，超时自动上报主管）
-    const over = universe.filter(t => slaOf(t).slaStatus === 'overdue');
-    const remind = universe.filter(t => slaOf(t).slaStatus === 'remind');
+    // 2) 跟进待办（20260921a：SLA 停止业务使用，只按计划跟进时间推导）
     const recOverdueFollow = universe.filter(t => { const d = String(t.nextFollowAt || '').slice(0, 10); return d && d < today; });
     const recDueToday = universe.filter(t => String(t.nextFollowAt || '').slice(0, 10) === today);
     blocks.push({
       key: 'follow-todo', title: '跟进待办', type: 'alerts', link: 'talent-leads',
-      hint: 'SLA 超时会自动上报主管；逾期 / 今日待跟进按计划跟进时间推导',
-      items: over.slice(0, 5).map(t => ({ text: t.name, sub: 'SLA 已超时 · ' + (slaOf(t).slaRuleLabel || ''), page: 'talent-leads', tone: 'rose' }))
-        .concat(remind.slice(0, 5).map(t => ({ text: t.name, sub: 'SLA 剩余 ' + slaOf(t).slaRemainMin + ' 分钟', page: 'talent-leads', tone: 'amber' })))
-        .concat([
-          recOverdueFollow.length ? { text: '逾期未跟进', sub: recOverdueFollow.length + ' 条已过计划跟进时间', page: 'talent-leads', tone: 'rose' } : null,
-          recDueToday.length ? { text: '今日待跟进', sub: recDueToday.length + ' 条计划今天跟进', page: 'talent-leads', tone: 'amber' } : null,
-        ]).filter(Boolean),
+      hint: '逾期 / 今日待跟进按计划跟进时间推导',
+      items: [
+        recOverdueFollow.length ? { text: '逾期未跟进', sub: recOverdueFollow.length + ' 条已过计划跟进时间', page: 'talent-leads', tone: 'rose' } : null,
+        recDueToday.length ? { text: '今日待跟进', sub: recDueToday.length + ' 条计划今天跟进', page: 'talent-leads', tone: 'amber' } : null,
+      ].filter(Boolean),
     });
     // 3) 高意向池
     const hot = universe.filter(t => t.intentLevel === '强' || t.potentialLevel === '高');
@@ -1560,21 +1673,24 @@ async function buildWorkbenchPanels(ctx, all) {
     blocks.push({
       key: 'campaign-list', title: '推广活动列表', type: 'table', link: 'channels',
       hint: '我名下的投放活动：投入与产出在推广获客页维护',
-      columns: ['活动', '渠道', '投入', '有效线索', '签约'],
+      columns: ['活动', '渠道', '投入', '表单访问', '有效线索', '签约'],
       rows: mineCamps.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 8)
-        .map(c => [c.name, c.channel || '—', '¥' + (Number(c.cost) || 0), Number(c.validLeads) || 0, Number(c.signed) || 0]),
+        .map(c => [c.name, c.channel || '—', '¥' + (Number(c.cost) || 0), Number(c.visits) || 0, Number(c.validLeads) || 0, Number(c.signed) || 0]),
     });
     // 2) 渠道效果对比
     blocks.push({
       key: 'channel-effect', title: '渠道效果对比', type: 'table', link: 'channels',
       hint: '按我负责的渠道逐个聚合，看哪个渠道值得续投',
-      columns: ['渠道', '线索', '有效', '报名', '达人', '转化率'],
+      columns: ['渠道', '表单访问', '有效线索', '新增达人', '有效线索转化率', '新增达人成本'],
       rows: myChannels.map(ch => {
         const rows = chLeads.filter(t => (t.channel || '') === ch);
-        const valid = rows.filter(t => t.lastFollowAt).length;
-        const signed = rows.filter(t => ['已报名', '已成为达人'].includes(stgOf(t))).length;
+        const form = rows.filter(t => t.formSource === 'recruit.html').length;
         const tal = rows.filter(t => stgOf(t) === '已成为达人').length;
-        return [ch, rows.length, valid, signed, tal, rows.length ? Math.round(tal / rows.length * 100) + '%' : '—'];
+        const chCamps = mineCamps.filter(c => (c.channel || '') === ch);
+        const chCost = chCamps.reduce((s, c) => s + (Number(c.cost) || 0), 0);
+        const chVisits = chCamps.reduce((s, c) => s + (Number(c.visits) || 0), 0);
+        return [ch, chVisits, form, tal, chVisits ? Math.round(form / chVisits * 100) + '%' : '—',
+          tal ? '¥' + Math.round(chCost / tal) : '—'];
       }),
     });
     // 3) 来源追踪：报名表单（formSource=recruit.html）自动进线索池，其余为渠道录入 / 手动创建
@@ -2301,7 +2417,6 @@ async function listLeadsAndTalents() {
 }
 route('GET', '/api/mvp/workbench', async (ctx) => {
   const all = await listLeadsAndTalents();
-  await slaSweep(all);                                   // 惰性 SLA 扫描：超时未联系的在此自动上报
   const hPending = (await db.list('handovers')).filter(h => h.status === 'pending');
   const isAdmin = ctx.roleCode === 'admin';
   const myId = ctx.authUser || '';
@@ -2335,20 +2450,6 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       if (iAmReceiver) { add(t, '待接收', '高', '查看达人情况后确认接收 / 驳回', sc(t.handoverAt), (t.handoverFrom || '原负责人') + ' 发起', pend.id); continue; }
       if (t.handoverStatus === 'pending' && pend && mine) { add(t, '待交接', '中', '等待 ' + t.handoverTo + ' 确认接收', sc(t.handoverAt), '我发起', pend.id); continue; }
       if (mine && t.nextFollowAt && sc(t.nextFollowAt) < today) { add(t, '逾期未跟进', '高', '立即联系，重新约定跟进时间', sc(t.nextFollowAt), '我负责'); continue; }
-      // SLA：分配后的首次联系时限（高潜强意愿用严格档）。已超时排在「今日待跟进」之前——它是硬时限
-      const sla = slaOf(t);
-      if (mine && sla.slaStatus === 'overdue') {
-        add(t, 'SLA 已超时', '高',
-          '立即首次联系；无法联系请填写超时原因（' + sla.slaRuleLabel + '）',
-          String(sla.slaDeadline).slice(11) || sc(t.assignedAt), 'SLA 超时' + (t.escalatedAt ? ' · 已上报主管' : ''));
-        continue;
-      }
-      if (mine && sla.slaStatus === 'remind') {
-        add(t, 'SLA 即将超时', '高',
-          '尽快完成首次联系（剩余 ' + sla.slaRemainMin + ' 分钟）',
-          String(sla.slaDeadline).slice(11), 'SLA 提醒');
-        continue;
-      }
       if (mine && t.nextFollowAt && sc(t.nextFollowAt) === today) { add(t, '今日待跟进', '高', st === '新线索' ? '首次触达，发送介绍资料' : '按计划跟进', sc(t.nextFollowAt), '我负责'); continue; }
       // 招募岗位职责的终点：达人确认合作后，交接给运营做长期管理（先于「新分配」判断：
       // 已合作的达人不应再算「首次触达」）
@@ -2429,11 +2530,8 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
     try { settleOverdue = (await db.list('settlements')).filter(s => s.status !== '已结清' && s.dueDate && s.dueDate < todayStr).length; } catch (e) { }
     const abTasks = (await db.list('tasks')).filter(k => k.isActive !== false
       && ((k.status === '超时') || (ACTIVE_TASK.includes(k.status) && k.dueAt && k.dueAt < todayStr))).length;
-    // 待升级线索：分配后超首次联系时限、还没联系的（主管要催办或重新分配）
-    const slaUp = all.filter(t => slaOf(t).slaStatus === 'overdue').length;
     extraCards = [
       { label: '未分配线索', value: all.filter(t => !t.owner || t.owner === '未分配').length, sub: '公海线索，尽快指派负责人', tone: 'text-rose-600' },
-      { label: '待升级线索', value: slaUp, sub: '超首次联系时限未联系，需催办或重新分配', tone: 'text-rose-600' },
       { label: '超时线索', value: staleLeads, sub: '负责入超过 2 天没跟进', tone: 'text-amber-500' },
       { label: '待运营接收', value: opsPending, sub: '已转正式、还没交接给运营', tone: 'text-teal-600' },
       { label: '待确认交接', value: hPending.length, sub: '跟进接收人的处理进度', tone: 'text-orange-600' },
@@ -2446,27 +2544,31 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
     extraCards = [
       { label: '待分配新线索', value: all.filter(t => !(t.ownerId || (t.owner && t.owner !== '未分配'))).length, sub: '公海新线索，尽快指派负责人', tone: 'text-rose-600' },
       { label: '今日新增报名', value: all.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '今天报名进入线索池的达人', tone: 'text-cyan-600' },
-      { label: '超时未处理线索', value: all.filter(t => slaOf(t).slaStatus === 'overdue').length, sub: '超首次联系时限，需催办或重新分配', tone: 'text-rose-600' },
+      { label: '超时未处理线索', value: all.filter(t => t.owner && t.owner !== '未分配' && !WB_DONE_STATUS.includes(t.status)
+        && t.lastFollowAt && (Date.now() - ts(t.lastFollowAt)) > 2 * 86400000).length, sub: '负责人超过 2 天没跟进的线索', tone: 'text-rose-600' },
+      { label: '付费孵化待审核', value: all.filter(t => t.leadType === 'paid_incubation' && t.reviewState === 'pending_review').length, sub: '运营提交的付费孵化线索，等待审核', tone: 'text-amber-500' },
       { label: '团队在管达人总数', value: senTalents.length, sub: '正式达人库在管总量', tone: 'text-indigo-600' },
       { label: '重点培养达人数量', value: senTalents.filter(t => (t.talentStatus || '') === 'potential').length, sub: '生命周期=重点培养达人', tone: 'text-violet-600' },
     ];
   } else if (myPos === 'promote' && !isAdmin) {
-    // 推广工作台卡片（20260920a 分岗位改版）：活动口径来自投放表，线索口径来自我负责渠道的实时数据
+    // 推广工作台卡片（20260921a 漏斗调整）：主漏斗 = 推广活动 → 表单访问 → 有效线索 → 新增达人
+    // 有效线索口径 = 完整提交招募报名表自动生成的线索（formSource=recruit.html）；旧指标字段保留不删
     const cs = (await db.list('campaigns')).filter(c => c.isActive !== false && c.owner === meName);
     const csMonth = cs.filter(c => String(c.createdAt || '').slice(0, 7) === today.slice(0, 7));
     const myChannels = [...new Set(cs.map(c => c.channel).filter(Boolean))];
     const chLeads = myChannels.length ? all.filter(t => myChannels.includes(t.channel || '')) : [];
-    const valid = chLeads.filter(t => t.lastFollowAt).length;
-    const signedUp = chLeads.filter(t => ['待审核', '已通过', '合作中', '暂停合作'].includes(t.status)).length;
+    const formLeads = chLeads.filter(t => t.formSource === 'recruit.html');
     const toTalent = chLeads.filter(t => ['合作中', '暂停合作'].includes(t.status)).length;
+    const totalCost = cs.reduce((s, c) => s + (Number(c.cost) || 0), 0);
+    const totalVisits = cs.reduce((s, c) => s + (Number(c.visits) || 0), 0);
     extraCards = [
       { label: '本月推广活动数', value: csMonth.length, sub: today.slice(0, 7) + ' 创建的投放活动（名下共 ' + cs.length + ' 个）', tone: 'text-cyan-600' },
-      { label: '总投入', value: '¥' + cs.reduce((s, c) => s + (Number(c.cost) || 0), 0), sub: '名下活动成本合计', tone: 'text-indigo-600' },
-      { label: '有效线索数', value: valid, sub: '我负责渠道已建立联系的线索', tone: 'text-indigo-600' },
-      { label: '报名人数', value: signedUp, sub: '我负责渠道进入报名及之后的线索', tone: 'text-slate-800' },
+      { label: '总投入', value: '¥' + totalCost, sub: '名下活动成本合计', tone: 'text-indigo-600' },
+      { label: '表单访问量', value: totalVisits, sub: '报名表单访问人次（推广获客页维护）', tone: 'text-slate-800' },
+      { label: '有效线索数', value: formLeads.length, sub: '完整提交报名表自动生成的线索', tone: 'text-indigo-600' },
       { label: '新增达人数', value: toTalent, sub: '我负责渠道已转正式的达人', tone: 'text-emerald-600' },
-      { label: '报名转化率', value: valid ? Math.round(signedUp / valid * 100) + '%' : '—', sub: '报名人数 / 有效线索数', tone: 'text-cyan-600' },
-      { label: '最终转化率', value: signedUp ? Math.round(toTalent / signedUp * 100) + '%' : '—', sub: '新增达人数 / 报名人数', tone: 'text-emerald-600' },
+      { label: '有效线索转化率', value: totalVisits ? Math.round(formLeads.length / totalVisits * 100) + '%' : '—', sub: '有效线索 / 表单访问', tone: 'text-cyan-600' },
+      { label: '新增达人成本', value: toTalent ? '¥' + Math.round(totalCost / toTalent) : '—', sub: '总投入 / 新增达人数', tone: 'text-emerald-600' },
     ];
   } else if (myPos === 'recruit' && !isAdmin) {
     // 招募工作台卡片（20260920a 分岗位改版）：看新线索、沟通、初筛、交接
@@ -2477,7 +2579,6 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       { label: '今日待跟进', value: universe.filter(t => String(t.nextFollowAt || '').slice(0, 10) === today).length, sub: '下次跟进时间=今天', tone: 'text-cyan-600' },
       { label: '高意向达人', value: universe.filter(t => t.intentLevel === '强').length, sub: '意愿=强，优先推进转化', tone: 'text-emerald-600' },
       { label: '待交接达人', value: universe.filter(t => ['合作中', '暂停合作'].includes(t.status) && !hoOf(t.id)).length, sub: '已合作，尽快交接给运营', tone: 'text-teal-600' },
-      { label: '首次联系SLA超时数', value: universe.filter(t => slaOf(t).slaStatus === 'overdue').length, sub: '超首次联系时限，会被上报主管', tone: 'text-rose-600' },
       { label: '今日新增报名', value: universe.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '今天报名进入线索池', tone: 'text-indigo-600' },
     ];
   } else if (myPos === 'finance' && !isAdmin) {
@@ -2506,6 +2607,7 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       { label: '待发布内容', value: toPublish, sub: '含待我审核的寄拍内容', tone: 'text-amber-500' },
       { label: '待寄拍（待起拍）', value: needShoot, sub: '合作中但当前没有进行中寄拍任务', tone: 'text-teal-600' },
       { label: '数据异常达人数', value: abnormal, sub: '任务超时 / 商品异常 / 账号久未更新', tone: 'text-rose-600' },
+      { label: '待审核线索', value: mineTalents.filter(t => t.leadType === 'paid_incubation' && ['pending_review', 'supplement'].includes(t.reviewState)).length, sub: '付费孵化线索已提交/被退回，等高级运营确认', tone: 'text-violet-600' },
     ];
   }
   // 岗位面板（中台化）：管理员=经营视角，高级运营=管理视角，普通运营=陪跑视角，招募=线索视角
@@ -2514,7 +2616,6 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
     panels,
     cards: {
       assigned: byType('新分配'), today: byType('今日待跟进'), overdue: byType('逾期未跟进'),
-      slaOverdue: byType('SLA 已超时'), slaRemind: byType('SLA 即将超时'),
       pending: byType('待接收'), hot: byType('高潜强意愿'), handover: byType('待交接'),
       recruitDone: byType('招募完成'), taskActive: byType('寄拍任务'), taskOverdue: byType('任务逾期'),
       taskAudit: byType('寄拍待审核'), taskPublish: byType('内容待发布'), taskIssue: byType('任务异常'),
@@ -2547,7 +2648,6 @@ route('GET', '/api/mvp/dashboard', async (ctx) => {
   const leadRows = (await db.list('leads')).filter(t => t.isActive !== false);   // 新增线索趋势专用（只算线索池，不含正式达人）
   const tasks = (await db.list('tasks')).filter(k => k.isActive !== false);
   const handovers = (await db.list('handovers')).filter(h => h.status === 'pending');
-  await slaSweep(all);                                   // 看板也要触发 SLA 上报（无定时任务）
   const scopeRows = isAdmin ? all : all.filter(t => isMine(t, ctx));
   const today = fmtDate(new Date());
   const stageOf = t => MVP_STAGE_MAP[t.status] || '新线索';
@@ -2676,8 +2776,6 @@ route('GET', '/api/mvp/dashboard', async (ctx) => {
     // 关注项：管理员/运营一眼看到卡在哪一步
     attention: {
       unassigned: scopeRows.filter(t => !owned(t)).length,
-      slaOverdue: scopeRows.filter(t => slaOf(t).slaStatus === 'overdue').length,
-      slaRemind: scopeRows.filter(t => slaOf(t).slaStatus === 'remind').length,
       overdueFollow: scopeRows.filter(t => { const nf = String(t.nextFollowAt || '').slice(0, 10); return nf && nf < today; }).length,
       pendingHandover: isAdmin ? handovers.length : scopeRows.filter(t => isPendingForMe(t, ctx)).length,
       taskOverdue: tasks.filter(k => k.status === '超时').length,
@@ -2751,7 +2849,7 @@ function toMvpCampaign(c) {
   return {
     id: c.id, name: c.name, channel: c.channel || '其他', owner: c.owner || '—',
     cost: Number(c.cost) || 0, start: String(c.start || '').slice(0, 10),
-    consult, validLeads, signed, talents: Number(c.talents) || 0, note: c.note || '',
+    consult, validLeads, signed, talents: Number(c.talents) || 0, visits: Number(c.visits) || 0, note: c.note || '',
     // 质量指标：不只看获客便宜，还要看线索质量（有效线索率 / 报名转化率 / 最终转化率）
     validRate: consult ? +(validLeads / consult * 100).toFixed(1) : 0,   // 有效线索率 = 有效线索 / 咨询
     signRate: validLeads ? +(signed / validLeads * 100).toFixed(1) : 0,  // 报名转化率 = 报名 / 有效线索
@@ -2780,7 +2878,7 @@ if (!USE_FEISHU) {
       name: b.name, channel: b.channel || '其他', owner: ctx.roleCode === 'admin' ? (b.owner || '—') : (ctx.displayName || ctx.operator),
       cost: Number(b.cost) || 0, start: b.start || String(nowStr()).slice(0, 10),
       consult: Number(b.consult) || 0, validLeads: Number(b.validLeads) || 0,
-      signed: Number(b.signed) || 0, talents: Number(b.talents) || 0,
+      signed: Number(b.signed) || 0, talents: Number(b.talents) || 0, visits: Number(b.visits) || 0,
       note: b.note || '', createdAt: nowStr(),
     };
     await db.insert('campaigns', rec);
@@ -2795,7 +2893,7 @@ if (!USE_FEISHU) {
     const b = ctx.body;
     const patch = {};
     ['name', 'channel', 'owner', 'start', 'note'].forEach(k => { if (b[k] !== undefined) patch[k] = b[k]; });
-    ['cost', 'consult', 'validLeads', 'signed', 'talents'].forEach(k => { if (b[k] !== undefined) patch[k] = Number(b[k]) || 0; });
+    ['cost', 'consult', 'validLeads', 'signed', 'talents', 'visits'].forEach(k => { if (b[k] !== undefined) patch[k] = Number(b[k]) || 0; });
     if (ctx.roleCode !== 'admin') delete patch.owner;   // 非管理员不能把投放改挂到别人名下
     if (!Object.keys(patch).length) return fail(ctx.res, 400, '没有需要更新的字段');
     const updated = await db.update('campaigns', ctx.params.id, patch);
@@ -3058,6 +3156,8 @@ route('POST', '/api/leads', async (ctx) => {
     // 字段分层（2026-09-18）：报名表只提供映射字段；判断字段一律「待判断」，由运营/高级运营跟进后判定
     talentStatus: 'lead', talentLevel: TALENT_LEVEL_UNSET,
     potentialLevel: '待判断', intentLevel: '待判断', talentClass: '待分类', coopPath: '待判断',
+    // 线索类型（20260921a）：表单新增「报名类型」选择；付费孵化 → 系统自动分配负载最低的运营
+    leadType: LEAD_TYPES.includes(b.lead_type) ? b.lead_type : (LEAD_TYPES.includes(b.leadType) ? b.leadType : 'free_recruit'),
     profileScreenshot: b.profile_screenshot || '',
     recruit: {
       selfMedia: b.self_media_status || '', platforms: b.platforms || '', fansText: b.followers || '',
@@ -3069,11 +3169,38 @@ route('POST', '/api/leads', async (ctx) => {
     rejectReason: '', auditAt: '', auditBy: '', isActive: true,
   };
   await db.insert('leads', rec);
-  await addLog('报名表单', '达人：' + rec.name, '问卷报名', '', '来源=' + rec.channel);
+  await addLog('报名表单', '达人：' + rec.name, '问卷报名', '', '来源=' + rec.channel + '；类型=' + (LEAD_TYPE_LABEL[rec.leadType] || '免费招募'));
   notify('新达人报名：' + rec.name + '（渠道：' + rec.channel + '）\n联系方式：' + rec.contact + '\n请在后台「达人线索」及时跟进');
   // 站内消息（2026-09-19a）：新达人报名 → 高级运营（消息中心，右上角铃铛）
   await pushMsgPosition('senior_ops', 'new_lead', '新增达人报名：' + rec.name,
-    '渠道：' + rec.channel + ' · 联系方式：' + (rec.contact || '未填写') + '，请在「达人线索」查看报名信息并分配负责人', 'talent-leads');
+    '【' + (LEAD_TYPE_LABEL[rec.leadType] || '免费招募') + '】渠道：' + rec.channel + ' · 联系方式：' + (rec.contact || '未填写')
+    + (rec.leadType === 'paid_incubation' ? '，系统已自动分配给负载最低的运营' : '，请在「达人线索」查看报名信息并分配负责人'), 'talent-leads');
+  // 付费孵化线索自动分配（20260921a）：负载最低的普通运营直接承接，senior 无需逐条手工分配；
+  // 之后 senior 仍可在达人线索页重新分配（走 doAssign，assignedBy 变为操作人）
+  if (rec.leadType === 'paid_incubation') {
+    const cands = await opsLoadCandidates();
+    const tgt = cands[0] || null;
+    if (tgt) {
+      await db.update('leads', rec.id, {
+        owner: tgt.name, ownerId: tgt.user, ownerPosition: 'ops', assignedAt: nowStr(),
+        assignState: 'pending_assign', assignedBy: 'system', assignedOps: tgt.user,
+        opsBy: tgt.name, opsId: tgt.user, opsAt: nowStr(), talentOperator: tgt.name,
+      });
+      await db.insert('talentAssignments', {
+        id: await nextId('talentAssignments', 'TA', 5),
+        talentId: rec.id, talentName: rec.name,
+        fromOwner: '', fromOwnerId: '', fromPosition: '',
+        toOwner: tgt.name, toOwnerId: tgt.user, toPosition: 'ops',
+        type: '自动分配', remark: '付费孵化线索：系统按负载最低原则自动分配',
+        assignedBy: 'system', assignedById: 'system', assignedAt: nowStr(), isActive: true,
+      });
+      await pushMsg(tgt.user, 'new_paid_lead', '付费孵化新线索：' + rec.name,
+        '系统按负载最低原则把「' + rec.name + '」（' + (rec.contact || '未填写') + '）自动分配给你，请到工作台确认接收后尽快首次联系', 'workbench');
+    } else {
+      await pushMsgPosition('senior_ops', 'new_lead', '付费孵化线索待分配：' + rec.name,
+        '当前没有可用的普通运营账号，请在「达人线索」手动分配', 'talent-leads');
+    }
+  }
   json(ctx.res, 200, { code: 0, message: '提交成功', data: { id: rec.id } });
 });
 
@@ -3795,7 +3922,9 @@ const server = http.createServer(async (req, res) => {
   }
   if (u.pathname === '/api/leads' || u.pathname === '/api/upload') {
     const ip = String((req.headers['x-forwarded-for'] || req.socket.remoteAddress || '')).split(',')[0].trim();
-    if (rateLimited(ip)) return fail(res, 429, '提交太频繁，请 10 分钟后再试');
+    // 环回地址（本地回归 / 本机自测）豁免限频；线上真实用户仍按 5 次/10 分钟防刷
+    const loopback = ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1' || ip === 'localhost';
+    if (!loopback && rateLimited(ip)) return fail(res, 429, '提交太频繁，请 10 分钟后再试');
   }
   try {
     const match = routes.find(r => {

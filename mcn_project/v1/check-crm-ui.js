@@ -236,8 +236,8 @@ const N = {
   console.log('== G. 工作台（规则待办 + 招募完成提示）==');
   await clickNav('我的工作台'); await sleep(2000);
   const wb = await ev(`(() => { const t=document.body.innerText; return { c1:t.includes('待处理新线索'), c2:t.includes('今日待跟进'), c3:t.includes('高意向达人'), c4:t.includes('待交接达人'), c5:t.includes('首次联系SLA超时数'), todo:t.includes('待办列表'), src:t.includes('来源'), done:t.includes('招募完成'), handoverBtn:t.includes('发起交接') }; })()`);
-  check('招募工作台岗位卡齐全（待处理新线索/今日待跟进/高意向达人/待交接达人/SLA 超时，20260920a 分岗位改版）',
-    wb.c1 && wb.c2 && wb.c3 && wb.c4 && wb.c5, wb);
+  check('招募工作台岗位卡齐全（待处理新线索/今日待跟进/高意向达人/待交接达人，20260921a 移除 SLA 卡）',
+    wb.c1 && wb.c2 && wb.c3 && wb.c4 && !wb.c5, wb);
   check('工作台待办列表存在且含「来源」列', wb.todo && wb.src, wb);
   // 招募岗位职责的终点提示：名下有「合作中」达人且未交接 → 出现「招募完成」待办与「发起交接」按钮
   check('招募岗出现「招募完成」待办与「发起交接」按钮（达人该转运营了）', wb.done && wb.handoverBtn, wb);

@@ -57,6 +57,13 @@
       <!-- Q2 了解渠道（单选 + 其他补充） -->
       <div class="q-card" data-q="2">
         <label class="block text-sm font-medium text-slate-700 mb-2">
+          <span class="req-star">*</span> 报名类型
+        </label>
+        <div class="flex flex-wrap gap-2 mb-6" data-group="lead_type">
+          <label class="opt"><input type="radio" name="lead_type" value="free_recruit" checked />免费招募</label>
+          <label class="opt"><input type="radio" name="lead_type" value="paid_incubation" />付费孵化</label>
+        </div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
           <span class="req-star">*</span><span class="q-no">2.</span> 请问是从什么渠道了解到我们达人寄拍呢？
         </label>
         <div class="flex flex-wrap gap-2" data-group="source_channel" data-other="source_channel_other">
@@ -446,6 +453,7 @@ document.getElementById('recruitForm').addEventListener('submit', async (e) => {
 
     const payload = {
       nickname: document.querySelector('[name="nickname"]').value.trim(),
+      lead_type: (document.querySelector('[name="lead_type"]:checked') || {}).value || 'free_recruit',
       source_channel: sourceChannel === '其他' && sourceOther ? '其他：' + sourceOther : sourceChannel,
       self_media_status: getSingleValue('self_media_status'),
       platforms: platforms.join('、'),

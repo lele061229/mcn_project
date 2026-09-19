@@ -184,15 +184,17 @@ try:
     st, j = call('/api/mvp/workbench')
     wb = j.get('data') or {}
     cards = wb.get('cards') or {}
-    check('工作台返回 slaOverdue 卡计数', 'slaOverdue' in cards, list(cards.keys())[:12])
-    check('工作台返回 slaRemind 卡计数', 'slaRemind' in cards, list(cards.keys())[:12])
-    check('工作台待办类型含 SLA 分类（若有超时）',
-          cards.get('slaOverdue', 0) == 0 or any('SLA' in (t.get('type') or '') for t in (wb.get('todos') or [])),
+    # 20260921a：SLA 停止业务使用 —— 工作台 cards 不再下发 slaOverdue/slaRemind（历史字段保留）
+    check('工作台 cards 已移除 slaOverdue/slaRemind（SLA 停止业务使用）',
+          'slaOverdue' not in cards and 'slaRemind' not in cards, list(cards.keys())[:12])
+    check('工作台待办不再含 SLA 分类（不再自动上报催办）',
+          all('SLA' not in (t.get('type') or '') for t in (wb.get('todos') or [])),
           [t.get('type') for t in (wb.get('todos') or [])][:8])
     st, j = call('/api/mvp/dashboard')
     d = j.get('data') or {}
     att = d.get('attention') or {}
-    check('看板 attention 含 slaOverdue', 'slaOverdue' in att, list(att.keys()))
+    check('看板 attention 已移除 slaOverdue/slaRemind（SLA 停止业务使用）',
+          'slaOverdue' not in att and 'slaRemind' not in att, list(att.keys()))
     check('看板 alerts 是数组', isinstance(d.get('alerts'), list))
 
     print('=== 8. 清理回归数据 ===')

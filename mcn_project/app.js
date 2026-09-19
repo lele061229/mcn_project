@@ -162,7 +162,7 @@ createApp({
     /* 推广投放：新增/编辑/删除（写入通道） */
     const cmpModal = ref(false);
     const cmpEditing = ref(null);
-    const cmpForm = reactive({ name: '', channel: '朋友圈', owner: '', cost: 0, start: new Date().toISOString().slice(0, 10), consult: 0, validLeads: 0, signed: 0, talents: 0, note: '' });
+    const cmpForm = reactive({ name: '', channel: '朋友圈', owner: '', cost: 0, start: new Date().toISOString().slice(0, 10), consult: 0, validLeads: 0, signed: 0, talents: 0, visits: 0, note: '' });
     function cmpBlank() {
       return { name: '', channel: '朋友圈', owner: '', cost: 0, start: new Date().toISOString().slice(0, 10), consult: 0, validLeads: 0, signed: 0, talents: 0, note: '' };
     }
@@ -437,12 +437,28 @@ createApp({
     });
     // 达人档案字段分层（2026-09-18e）：普通运营只看陪跑视角字段，负责人链路仅主管/管理员可见
     const amOps = computed(() => me.value.role !== 'admin' && me.value.position === 'ops');
-    /* ---- 站内消息中心（2026-09-19a）：右上角铃铛；新报名→高级运营 / 分配→运营 / SLA 超时→主管 ---- */
+    /* ---- 站内消息中心（2026-09-19a 建，20260921a 升级轮询）：右上角铃铛 + 轻量轮询 ----
+     * 8 秒轮询未读消息（不引 WebSocket）：新消息到达 → 顶部轻提示 + 静默刷新线索列表（syncFromDb 原位更新）。 */
     const notif = reactive({ open: false, unread: 0, items: [] });
-    const NOTIF_TYPE_LABEL = { new_lead: '新报名', signup: '新报名', assign: '分配提醒', talent_assigned: '分配提醒', sla: 'SLA 超时', system: '系统' };
+    const NOTIF_TYPE_LABEL = { new_lead: '新报名', signup: '新报名', assign: '分配提醒', talent_assigned: '分配提醒',
+      new_paid_lead: '付费孵化线索', lead_followup_submitted: '待审核', lead_approved: '审核通过',
+      lead_reassigned: '重新分配', lead_supplement: '要求补充', sla: 'SLA 超时', system: '系统' };
     function loadNotifs() {
       return fetch('/api/notifications').then(r => r.json()).then(j => {
         if (j && j.ok) { notif.unread = j.data.unread; notif.items.splice(0, notif.items.length, ...(j.data.items || [])); }
+      }).catch(() => { });
+    }
+    let lastTopNotifId = '';
+    function pollNotifs() {
+      const before = lastTopNotifId;
+      return loadNotifs().then(() => {
+        const top = notif.items[0];
+        lastTopNotifId = top ? top.id : '';
+        if (top && before && top.id !== before) {
+          // 轻提示：收到新线索 / 新分配 / 审核流转等站内消息
+          if (typeof showToast === 'function') showToast('🔔 ' + (top.title || NOTIF_TYPE_LABEL[top.type] || '新消息'));
+          if (tl && tl.syncFromDb) tl.syncFromDb(true);   // 新数据静默刷新线索列表（原位更新，不整页刷新）
+        }
       }).catch(() => { });
     }
     function toggleNotif() { notif.open = !notif.open; if (notif.open) loadNotifs(); }
@@ -453,9 +469,14 @@ createApp({
     function readAllNotifs() {
       fetch('/api/notifications/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ all: true }) }).then(loadNotifs).catch(() => { });
     }
-    setInterval(loadNotifs, 60000);
-    loadNotifs();
+    setInterval(pollNotifs, 8000);   // 20260921a：60s → 8s 轻量轮询（5~10s 区间）
+    loadNotifs().then(() => { const t = notif.items[0]; lastTopNotifId = t ? t.id : ''; });
     // 工作台「新线索提醒（待分配）」行内操作（2026-09-19a）：查看→达人线索页；分配→跳页后打开分配弹窗（复用线索页分配流）
+    // 工作台「付费孵化待审核」行内操作（20260921a）：打开审核弹窗（复用线索页审核流）
+    function reviewPanelLead(cv) {
+      goPage('talent-leads');
+      if (tl && tl.openReview) setTimeout(() => tl.openReview({ id: cv.talentId, name: cv.name || '' }, showToast), 400);
+    }
     function panelLeadAct(cv, act) {
       if (act === 'view') { goPage('talent-leads'); return; }
       if (act === 'assign') {
@@ -1463,7 +1484,7 @@ createApp({
       openLeadModal, saveLead, onLeadMove,
       taskFilter, tasksFiltered, tasksLoaded, canLaunchShoot, shootDlg, openLaunchShoot, saveLaunchShoot, shootTalentOptions, taskDlg, openTaskAction, saveTaskAction, taskActionsOf, taskStatusTone,
       taskTypeTab, TASK_TYPE_TABS, taskTypeOf, opsTasks, opsTasksLoaded, canAssignOpsTask, opsTargetOptions, opsTaskDlg, openOpsTask, saveOpsTask, myPositionLabel, amOps, ackAssign,
-      notif, NOTIF_TYPE_LABEL, toggleNotif, readNotif, readAllNotifs, panelLeadAct,
+      notif, NOTIF_TYPE_LABEL, toggleNotif, readNotif, readAllNotifs, panelLeadAct, reviewPanelLead,
       opsTaskProgDlg, openOpsTaskProgress, saveOpsTaskProgress, deleteOpsTask,
       hitCases, hitCasesLoaded, hitCaseQ, hitCasesFiltered, canEditHitCase, loadHitCases, hitCaseDlg, openHitCase, saveHitCase, deleteHitCase,
       board, loadBoard, boardReady, maxLoad, loadPct, boardFunnel, boardAttention, boardAlerts, canSeeCost, canTasks,

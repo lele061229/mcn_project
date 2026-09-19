@@ -670,9 +670,9 @@ def main():
     st, j = call(senior, '/api/mvp/workbench')
     sen = (j.get('data') or {})
     senLabels = [c.get('label') for c in (sen.get('extraCards') or [])]
-    chk('senior 顶部卡片 5 张：待分配新线索/今日新增报名/超时未处理线索/团队在管达人总数/重点培养达人数量',
-        st == 200 and {'待分配新线索', '今日新增报名', '超时未处理线索', '团队在管达人总数', '重点培养达人数量'} <= set(senLabels)
-        and len(senLabels) == 5, senLabels)
+    chk('senior 顶部卡片 6 张（20260921a）：待分配新线索/今日新增报名/超时未处理线索/付费孵化待审核/团队在管达人总数/重点培养达人数量',
+        st == 200 and {'待分配新线索', '今日新增报名', '超时未处理线索', '付费孵化待审核', '团队在管达人总数', '重点培养达人数量'} <= set(senLabels)
+        and len(senLabels) == 6, senLabels)
     senTeam = next((b for b in ((sen.get('panels') or {}).get('blocks') or []) if b.get('key') == 'ops-team'), None)
     chk('senior 运营团队概览面板有运营行（团队视角：看到每个普通运营的负载/异常/完成率）',
         senTeam is not None and isinstance(senTeam.get('rows'), list) and len(senTeam.get('rows')) >= 1,
@@ -683,9 +683,9 @@ def main():
     stfLabels = [c.get('label') for c in (stf.get('extraCards') or [])]
     stfTodos = stf.get('todos') or []
     stfKeys = set(b.get('key') for b in ((stf.get('panels') or {}).get('blocks') or []))
-    chk('ops 顶部卡片 6 张：我的达人数/今日新分配达人/待跟进达人/待发布内容/待寄拍（待起拍）/数据异常达人数',
-        st == 200 and {'我的达人数', '今日新分配达人', '待跟进达人', '待发布内容', '待寄拍（待起拍）', '数据异常达人数'} <= set(stfLabels)
-        and len(stfLabels) == 6, stfLabels)
+    chk('ops 顶部卡片 7 张（20260921a）：我的达人数/今日新分配达人/待跟进达人/待发布内容/待寄拍（待起拍）/数据异常达人数/待审核线索',
+        st == 200 and {'我的达人数', '今日新分配达人', '待跟进达人', '待发布内容', '待寄拍（待起拍）', '数据异常达人数', '待审核线索'} <= set(stfLabels)
+        and len(stfLabels) == 7, stfLabels)
     chk('ops 工作台待办只来自自己名下（行级隔离：达人待办 owner=王浩，任务/账号待办无他人 owner）',
         all(t.get('owner') in ('王浩', None, '') for t in stfTodos),
         sorted({str(t.get('owner')) for t in stfTodos}))
@@ -695,8 +695,8 @@ def main():
     pro = (j.get('data') or {})
     proLabels = [c.get('label') for c in (pro.get('extraCards') or [])]
     proKeys = set(b.get('key') for b in ((pro.get('panels') or {}).get('blocks') or []))
-    chk('promote 顶部卡片 7 张：本月推广活动数/总投入/有效线索数/报名人数/新增达人数/报名转化率/最终转化率',
-        st == 200 and {'本月推广活动数', '总投入', '有效线索数', '报名人数', '新增达人数', '报名转化率', '最终转化率'} <= set(proLabels)
+    chk('promote 顶部卡片 7 张（20260921a 新漏斗）：本月推广活动数/总投入/表单访问量/有效线索数/新增达人数/有效线索转化率/新增达人成本',
+        st == 200 and {'本月推广活动数', '总投入', '表单访问量', '有效线索数', '新增达人数', '有效线索转化率', '新增达人成本'} <= set(proLabels)
         and len(proLabels) == 7, proLabels)
     chk('promote 活动类卡片口径来自投放表（活动列表面板列含 活动/渠道/投入）',
         next((b for b in ((pro.get('panels') or {}).get('blocks') or []) if b.get('key') == 'campaign-list'), {}).get('columns')
@@ -709,9 +709,9 @@ def main():
     recLabels = [c.get('label') for c in (rec.get('extraCards') or [])]
     recKeys = set(b.get('key') for b in ((rec.get('panels') or {}).get('blocks') or []))
     recTodos = rec.get('todos') or []
-    chk('recruit 顶部卡片 6 张：待处理新线索/今日待跟进/高意向达人/待交接达人/首次联系SLA超时数/今日新增报名',
-        st == 200 and {'待处理新线索', '今日待跟进', '高意向达人', '待交接达人', '首次联系SLA超时数', '今日新增报名'} <= set(recLabels)
-        and len(recLabels) == 6, recLabels)
+    chk('recruit 顶部卡片 5 张（20260921a SLA 停用）：待处理新线索/今日待跟进/高意向达人/待交接达人/今日新增报名',
+        st == 200 and {'待处理新线索', '今日待跟进', '高意向达人', '待交接达人', '今日新增报名'} <= set(recLabels)
+        and len(recLabels) == 5, recLabels)
     chk('recruit 面板不含运营团队 / 财务 / 深度账号运营数据面板',
         not {'ops-team', 'settle-overview', 'income-stats', 'team-efficiency'} & recKeys, sorted(recKeys))
     chk('recruit 待办无运营团队视角类型（不出现 待分配 公海待办）',
@@ -744,6 +744,9 @@ def main():
         d.get('potentialLevel') == '待判断' and d.get('intentLevel') == '待判断'
         and d.get('talentClass') == '待分类' and d.get('coopPath') == '待判断',
         (d.get('potentialLevel'), d.get('intentLevel'), d.get('talentClass'), d.get('coopPath')))
+    chk('报名默认线索类型：leadType=free_recruit（免费招募，20260921a）',
+        d.get('leadType') == 'free_recruit' and d.get('leadTypeLabel') == '免费招募'
+        and d.get('reviewState') == '', (d.get('leadType'), d.get('leadTypeLabel'), d.get('reviewState')))
 
     st, j = call(senior, '/api/mvp/leads/%s/assign' % sg, {'owner': '李婷', 'ownerPosition': 'recruit'})
     chk('报名线索分配给招募（权限用例前置）', st == 200, (st, (j or {}).get('error')))
@@ -834,6 +837,101 @@ def main():
     chk('senior 工作台含「新线索提醒（待分配）」面板（列含 报名时间/推荐负责人/操作）',
         pl is not None and {'达人', '报名时间', '推荐负责人', '操作'} <= set(pl.get('columns') or []),
         [b.get('key') for b in blocks])
+
+    # ---------- 12.8 付费孵化线索自动分配 + 审核流（20260921a 线索流转统一） ----------
+    st, j = call(admin, '/api/leads', {'nickname': 'APItest付费孵化', 'source_channel': '抖音视频', 'phone': '13800003333', 'lead_type': 'paid_incubation'})
+    pid = ((j.get('data') or {}).get('id')) if st == 200 and isinstance(j.get('data'), dict) else None
+    if pid: made['paid'] = pid
+    chk('付费孵化报名提交成功（lead_type=paid_incubation）', st == 200 and j.get('code') == 0 and bool(pid), (st, pid))
+    st, j = call(senior, '/api/mvp/leads/' + (pid or 'T0000'))
+    pd = (j.get('data') or {}) if st == 200 else {}
+    chk('付费孵化线索系统自动分配（leadType 落库 / ownerPosition=ops / assignedBy=system / assignState=pending_assign / assignedOps 有值）',
+        pd.get('leadType') == 'paid_incubation' and pd.get('leadTypeLabel') == '付费孵化'
+        and pd.get('ownerPosition') == 'ops' and pd.get('assignedBy') == 'system'
+        and pd.get('assignState') == 'pending_assign' and bool(pd.get('assignedOps')),
+        {k: pd.get(k) for k in ['leadType', 'owner', 'ownerPosition', 'assignedBy', 'assignState', 'assignedOps']})
+    st, j = call(staff, '/api/notifications')
+    sitems_p = ((j.get('data') or {}).get('items') or [])
+    chk('自动分配后 ops 收到 new_paid_lead 消息（标题=付费孵化新线索：达人名）',
+        any(m.get('type') == 'new_paid_lead' and 'APItest付费孵化' in (m.get('title') or '') for m in sitems_p),
+        [(m.get('type'), m.get('title')) for m in sitems_p[:3]])
+    st, j = call(senior, '/api/mvp/leads/%s/assignments' % (pid or 'T0000'))
+    assigns_p = (j.get('data') or []) if st == 200 else []
+    chk('自动分配写入分配记录（type=自动分配 / assignedBy=system）',
+        any(a.get('type') == '自动分配' and a.get('assignedBy') == 'system' for a in assigns_p),
+        [(a.get('type'), a.get('assignedBy')) for a in assigns_p[:3]])
+    # ops 跟进后提交审核 → senior 审核（要求补充 → 再提交 → 通过）
+    st, j = call(staff, '/api/mvp/leads/%s/submit-review' % (pid or 'T0000'), {'note': '已完成首次联系，意向明确'})
+    chk('ops 提交审核 → 200（reviewState=pending_review）',
+        st == 200 and (j.get('data') or {}).get('reviewState') == 'pending_review', (st, (j or {}).get('error')))
+    st, j = call(staff, '/api/mvp/leads/%s/submit-review' % (pid or 'T0000'), {})
+    chk('重复提交审核 → 409', st == 409, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/notifications')
+    sitems_f = ((j.get('data') or {}).get('items') or [])
+    chk('提交审核 → senior 收到 lead_followup_submitted 消息',
+        any(m.get('type') == 'lead_followup_submitted' and 'APItest付费孵化' in (m.get('title') or '') for m in sitems_f),
+        [(m.get('type'), m.get('title')) for m in sitems_f[:3]])
+    st, j = call(recruit, '/api/mvp/leads/%s/review' % (pid or 'T0000'), {'action': 'approve'})
+    chk('招募审核 → 403（isSupervisor 裁决）', st == 403, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/review' % (pid or 'T0000'), {'action': 'bogus'})
+    chk('非法 action → 400', st == 400, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/review' % (pid or 'T0000'), {'action': 'supplement', 'comment': '请补充达人报价截图'})
+    supd = (j.get('data') or {}) if st == 200 else {}
+    chk('要求补充 → reviewState=supplement + 审核意见落库',
+        st == 200 and supd.get('reviewState') == 'supplement' and '报价' in (supd.get('reviewComment') or ''),
+        (st, supd.get('reviewState'), supd.get('reviewComment')))
+    st, j = call(staff, '/api/notifications')
+    sitems_s = ((j.get('data') or {}).get('items') or [])
+    chk('要求补充 → ops 收到 lead_supplement 消息',
+        any(m.get('type') == 'lead_supplement' and 'APItest付费孵化' in (m.get('title') or '') for m in sitems_s),
+        [(m.get('type'), m.get('title')) for m in sitems_s[:3]])
+    st, j = call(staff, '/api/mvp/leads/%s/submit-review' % (pid or 'T0000'), {'note': '已补充资料'})
+    chk('补充后可再次提交审核', st == 200 and (j.get('data') or {}).get('reviewState') == 'pending_review', (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/review' % (pid or 'T0000'), {'action': 'approve', 'comment': '通过'})
+    apd = (j.get('data') or {}) if st == 200 else {}
+    chk('审核通过 → 转正式达人（stage=已成为达人 / talentStatus=coaching / reviewState=approved / reviewBy=张萌）',
+        st == 200 and apd.get('status') == '已成为达人' and apd.get('talentStatus') == 'coaching'
+        and apd.get('reviewState') == 'approved' and apd.get('reviewBy') == '张萌',
+        (st, {k: apd.get(k) for k in ['status', 'talentStatus', 'reviewState', 'reviewBy']}))
+    st, j = call(senior, '/api/mvp/leads/' + (pid or 'T0000'))
+    chk('审核通过后线索池已无该记录（迁入达人库，ID 不变）', st == 404, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/talents')
+    tlist = (j.get('data') or []) if st == 200 else []
+    tdp = next((x for x in tlist if x.get('id') == pid), {})
+    chk('达人库可查到转正式记录（含 leadType=paid_incubation 留痕）',
+        st == 200 and tdp.get('name') == 'APItest付费孵化' and tdp.get('leadType') == 'paid_incubation',
+        (st, (tdp or {}).get('name'), (tdp or {}).get('leadType')))
+    st, j = call(staff, '/api/notifications')
+    sitems_a = ((j.get('data') or {}).get('items') or [])
+    chk('审核通过 → ops 收到 lead_approved 消息',
+        any(m.get('type') == 'lead_approved' and 'APItest付费孵化' in (m.get('title') or '') for m in sitems_a),
+        [(m.get('type'), m.get('title')) for m in sitems_a[:3]])
+    st, j = call(senior, '/api/mvp/workbench')
+    blocks_pr = (((j.get('data') or {}).get('panels') or {}).get('blocks') or [])
+    pr = next((b for b in blocks_pr if b.get('key') == 'pending-review'), None)
+    chk('senior 工作台含「付费孵化待审核」面板（列含 负责人/提交时间/审核说明/操作）',
+        pr is not None and {'达人', '负责人', '提交时间', '审核说明', '操作'} <= set(pr.get('columns') or []),
+        [b.get('key') for b in blocks_pr])
+    # lead_reassigned：李婷 → 王浩 重新分配，新旧负责人都收消息
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % (msg_id or 'T0000'), {'owner': '李婷', 'ownerPosition': 'recruit'})
+    chk('重新分配用例前置：线索先分给李婷', st == 200, (st, (j or {}).get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/reassign' % (msg_id or 'T0000'), {'owner': '王浩', 'reason': '回归：重新分配消息用例'})
+    chk('senior 重新分配给 ops → 200', st == 200, (st, (j or {}).get('error')))
+    st, j = call(recruit, '/api/notifications')
+    ritems = ((j.get('data') or {}).get('items') or [])
+    chk('重新分配 → 原负责人李婷收到 lead_reassigned 消息（正文含达人名与新负责人）',
+        any(m.get('type') == 'lead_reassigned' and 'APItest消息中心' in (m.get('body') or '') for m in ritems),
+        [(m.get('type'), m.get('title')) for m in ritems[:3]])
+    st, j = call(staff, '/api/notifications')
+    sitems_r = ((j.get('data') or {}).get('items') or [])
+    chk('重新分配 → 新负责人王浩收到 lead_reassigned 消息',
+        any(m.get('type') == 'lead_reassigned' and 'APItest消息中心' in (m.get('body') or '') for m in sitems_r),
+        [(m.get('type'), m.get('title')) for m in sitems_r[:3]])
+    # SLA 停止业务使用（20260921a）：工作台 cards 不再下发 slaOverdue/slaRemind
+    st, j = call(staff, '/api/mvp/workbench')
+    wbcd = ((j.get('data') or {}).get('cards') or {})
+    chk('工作台 cards 不再含 SLA 计数（slaOverdue/slaRemind 已移除，历史字段保留）',
+        st == 200 and 'slaOverdue' not in wbcd and 'slaRemind' not in wbcd, sorted(wbcd.keys()))
 
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):
