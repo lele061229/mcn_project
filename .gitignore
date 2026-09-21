@@ -22,3 +22,6 @@ _shot_*.png
 # CDP 探针/线上对照临时文件（本地调试产物，不入库）
 _probe_*.js
 _online_index.html
+
+# 本地截图目录（回归/排查用，不入库）
+**/_shots/
