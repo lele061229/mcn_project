@@ -1029,16 +1029,34 @@ route('GET', '/api/mvp/leads', async (ctx) => {
   if (q.get('slaEscalated') === '1') rows = rows.filter(t => slaOf(t).slaStatus === 'overdue' && t.escalatedAt);
   ok(ctx.res, rows.map(toMvpLead));
 });
-/* 轻量轮询探针（20260921b）：前端每 8 秒问一次「有没有新线索 / 新分配」。
- * 只返回可见范围内的条数与最新 ID（不返回明细），发现变化后由前端拉全量并原地增量刷新，
- * 避免整页刷新；行级权限与列表接口完全一致（resolveScope + leadVisibleTo），不额外暴露数据。 */
+/* 轻量轮询探针（20260921b，20260921c 加固）：前端每 8 秒问一次「我看到的数据有没有变」。
+ * 只返回可见范围内的 count / latestId / rev（不返回明细），发现变化后前端拉全量并原地增量刷新。
+ * ⚠ 只比 count + latestId 是不够的：把「未分配 → 分配给某运营」、改状态、跟进、确认接收这类
+ *   **不改变条数的修改**全都会漏掉（管理员视角仍是 20 条、最新 ID 也没变，页面就不刷新）。
+ *   所以额外算一个 rev = 每条可见线索「可变更字段」的集合指纹（顺序无关的 djb2 哈希）：
+ *   字段值变 → 指纹变；只是返回顺序变 → 指纹不变（不触发无意义刷新）。
+ *   纯计算、不落库、不加字段，也不引入任何新依赖。
+ * 行级权限与列表接口完全一致（resolveScope + leadVisibleTo），不额外暴露数据。 */
+const LEAD_REV_FIELDS = ['id', 'isActive', 'status', 'stage', 'owner', 'ownerId', 'ownerPosition',
+  'assignState', 'assignAckAt', 'assignedAt', 'opsBy', 'opsId', 'talentOperator',
+  'handoverStatus', 'handoverTo', 'handoverToId', 'handoverReceivedAt',
+  'reviewState', 'reviewAt', 'reviewBy', 'convertedBy', 'convertedAt',
+  'lastFollowAt', 'nextFollowAt', 'potentialLevel', 'intentLevel', 'talentClass', 'talentStatus', 'talentLevel'];
+function leadListRev(rows) {
+  const parts = rows.map(t => LEAD_REV_FIELDS.map(k => String(t[k] === undefined || t[k] === null ? '' : t[k])).join('\u0001'));
+  parts.sort();                                  // 顺序无关：同一集合换返回顺序不算数据变更
+  const s = parts.join('\u0002');
+  let h = 5381;                                  // djb2 → 无符号 32 位十六进制
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0;
+  return h.toString(16) + '-' + s.length;
+}
 route('GET', '/api/mvp/leads/version', async (ctx) => {
   const arr = await db.list('leads');
   const scope = resolveScope(ctx, ctx.query.get('scope'));
   const rows = arr.filter(t => t.isActive !== false).filter(t => leadVisibleTo(t, ctx, scope));
   const num = s => parseInt(String(s).replace(/\D/g, ''), 10) || 0;
   const latestId = rows.reduce((m, t) => (num(t.id) > num(m) ? String(t.id) : m), '');
-  ok(ctx.res, { count: rows.length, latestId, at: nowStr() });
+  ok(ctx.res, { count: rows.length, latestId, rev: leadListRev(rows), at: nowStr() });
 });
 /* 自动分配建议（2026-09-19a）：负载最低原则，只推荐不执行。
  * 新线索（未分配）超过 AUTO_ASSIGN_STALE_MIN 分钟视为「待分配」，
@@ -2353,6 +2371,7 @@ route('POST', '/api/mvp/handovers/:id/:action', async (ctx) => {
   const ownerChanged = newStatus === 'confirmed';
   const nowT = nowStr();
   await db.update('handovers', h.id, { status: newStatus, confirmedAt: nowT, operator: ctx.operator });
+  let followedTasks = 0;          // 本次交接跟随换人的「未结束任务」条数（写进操作日志，便于回溯）
   if (t) {
     // 交接摘要保留在线索上（便于在总表看「上次交接从谁到谁」），只有负责人字段在有确认时变更
     const patchT = {
@@ -2386,18 +2405,21 @@ route('POST', '/api/mvp/handovers/:id/:action', async (ctx) => {
       patchT.handoverReceivedAt = '';
     }
     await db.update(coll, t.id, patchT);
-    // 任务负责人跟随达人归属（20260921b）：达人交接给新的运营后，该达人未完结的寄拍/内容任务
-    // 必须一并转到新负责人名下——否则任务中心仍显示原运营，与「达人档案-运营负责人」自相矛盾，
-    // 新运营也无权推进（taskVisibleTo 按 talentId 判定，但列表头显示的 owner 仍是旧人）。
-    // 只在「交接给运营岗」时同步：招募岗之间交接不影响任务归属（任务归属恒为运营负责人）。
+    // 任务负责人跟随达人归属（20260921b，20260921c 收窄）：达人交接给新的运营后，该达人**未结束**的
+    // 寄拍/内容任务一并转到新负责人名下——否则任务中心仍显示原运营，与「达人档案-运营负责人」自相矛盾，
+    // 新运营也无权推进。**已完成 / 已取消 / 异常终态等历史任务保留原负责人**：那是历史业绩与责任人留痕，
+    // 跟着达人换人会凭空改写「谁做的」，污染运营绩效与后续佣金/工作量分析（状态口径复用 ACTIVE_TASK，
+    // 见 server.js:39，不另造第二套状态）。招募岗之间交接不影响任务归属（任务归属恒为运营负责人）。
     if (ownerChanged && h.toPosition === 'ops') {
       const nOwner = h.toUser || '';
       const nOwnerId = h.toUserId || uidByName(nOwner);
       if (nOwner) {
         for (const tk of (await db.list('tasks'))) {
           if (tk.talentId !== t.id) continue;
+          if (!ACTIVE_TASK.includes(tk.status)) continue;          // 只跟随未结束任务，历史任务不动
           if (tk.owner === nOwner && tk.ownerId === nOwnerId) continue;
           await db.update('tasks', tk.id, { owner: nOwner, ownerId: nOwnerId });
+          followedTasks++;
         }
       }
     }
@@ -2405,7 +2427,8 @@ route('POST', '/api/mvp/handovers/:id/:action', async (ctx) => {
   const logType = { confirm: '线索交接-确认', reject: '线索交接-驳回', cancel: '线索交接-撤回', force: '线索交接-强制指派' }[action];
   const beforeTxt = '负责人=' + h.fromUser + '（' + posLabel(h.fromPosition) + '）';
   const afterTxt = ownerChanged
-    ? ('负责人=' + h.toUser + '（' + posLabel(h.toPosition) + '）；' + ctx.operator + ' 确认')
+    ? ('负责人=' + h.toUser + '（' + posLabel(h.toPosition) + '）；' + ctx.operator + ' 确认'
+      + (followedTasks ? '；未结束任务 ' + followedTasks + ' 条跟随换负责人（历史任务保留原负责人）' : ''))
     : ('负责人保持 ' + h.fromUser + '；' + (action === 'reject' ? '接收人驳回' : '发起人撤回'));
   await addLog(ctx.operator, '达人：' + (h.talentName || h.talentId), logType, beforeTxt, afterTxt);
   ok(ctx.res, toHandover(Object.assign({}, h, { status: newStatus, confirmedAt: nowT })));

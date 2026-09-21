@@ -1,7 +1,8 @@
 /* ============================================================
  * 达人线索管理模块（独立文件，避免主 app.js 膨胀）
  * 依赖：Vue 全局（CDN）。运行后挂载到 window.TalentLeadsModule
- * 仅 mock 数据，不接后端。
+ * 数据来源：**一律以服务端为准**（GET /api/mvp/leads + 8 秒轮询 /api/mvp/leads/version）。
+ *   20260921b 起不再内置任何演示数据。
  * ============================================================ */
 (function (global) {
   const { ref, reactive, computed, reactive: _r } = Vue;
@@ -146,7 +147,10 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
       try {
         const j = await (await fetch('/api/mvp/leads/version')).json();
         if (!j || !j.ok || !j.data) return;
-        const sig = j.data.count + '#' + (j.data.latestId || '');
+        const d = j.data || {};
+        // 签名 = 条数 + 最新 ID + 服务端算的变更指纹 rev。只比前两项会漏掉「已有线索被分配 /
+        // 改状态 / 跟进 / 确认接收」这类不改变条数的修改（服务端 LEAD_REV_FIELDS 已覆盖）。
+        const sig = d.count + '#' + (d.latestId || '') + '#' + (d.rev || '');
         if (leadPollSig && sig !== leadPollSig) { await syncFromDb(true); loadInbox(); }
         leadPollSig = sig;
       } catch (e) { /* 网络抖动忽略，下一轮自愈 */ }

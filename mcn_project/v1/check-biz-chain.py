@@ -89,18 +89,35 @@ check('逾期任务派生 overdue=True', row['overdue'] is True and row['dueSoon
 tal = [x for x in call('/api/mvp/talents')['data'] if x['id'] == lid][0]
 check('建任务不改达人运营负责人', tal['opsBy'] == '王浩')
 
-# ---- 4.5 交接确认后任务归属跟随新运营（20260921b）----
-# 场景：达人还在招募岗李婷名下 → 建任务（归属李婷）→ 交接给运营王浩 → 确认后任务归属必须一起改，
-# 否则任务中心仍显示旧负责人，与达人档案的运营负责人自相矛盾（验收报告 P0「任务负责人与当前运营不一致」）。
+# ---- 4.5 交接确认后任务归属跟随新运营，但历史已完成任务保留原负责人（20260921b/c）----
+# 场景：达人还在招募岗李婷名下 → 建两条任务（都归属李婷）：
+#   ① 一条推到终态「已完成」（历史归属，交接后必须永远是李婷）
+#   ② 一条停在「待确认」（未结束，交接后应跟随新运营王浩）
+# 然后交接给运营王浩 → 确认：①不动、②改。否则要么任务中心与达人档案自相矛盾（P0），
+# 要么历史考核归属被追溯改写（P0）。
 t3 = call('/api/mvp/leads', {'name': '主链回归任务归属-' + TODAY, 'contact': 'chain3', 'channel': '其他',
                              'owner': '李婷', 'ownerPosition': 'recruit'})
 lid3 = t3['data']['id']
 call('/api/mvp/leads/' + lid3, {'status': '已报名'}, 'PUT')
 call('/api/mvp/leads/' + lid3 + '/convert', {}, 'POST')
+# ② 未结束任务
 tk3 = call('/api/tasks', {'talentId': lid3, 'product': '归属跟随鞋', 'commission': 10, 'owner': '李婷'})
 tid3 = tk3['data']['id']
 check('交接前任务归属招募岗李婷', tk3['data']['owner'] == '李婷' and tk3['data']['ownerId'] == 'demo-recruit',
       (tk3['data'].get('owner'), tk3['data'].get('ownerId')))
+# ① 历史已完成任务：confirm → send → sign → startShoot → submitContent → auditPass → publish → complete
+tk3b = call('/api/tasks', {'talentId': lid3, 'product': '历史完成任务', 'commission': 12, 'owner': '李婷'})
+tid3b = tk3b['data']['id']
+for a, extra in [('confirm', {}), ('send', {'trackingNo': 'SF-HIST'}), ('sign', {}), ('startShoot', {}),
+                 ('submitContent', {'contentUrl': 'http://hist', 'contentNote': 'n'}), ('auditPass', {}),
+                 ('publish', {'contentUrl': 'http://hist'}), ('complete', {})]:
+    call('/api/tasks/' + tid3b + '/status', dict({'action': a}, **extra), 'PATCH')
+hist_before = [x for x in call('/api/tasks')['data'] if x['id'] == tid3b]
+hist_before = hist_before[0] if hist_before else {}
+check('历史任务推进到终态「已完成」且归属李婷',
+      hist_before.get('status') == '已完成' and hist_before.get('owner') == '李婷',
+      (hist_before.get('status'), hist_before.get('owner')))
+# —— 同一达人下有 1 条已完成 + 1 条未结束，现在交接 ——
 ho3 = call('/api/mvp/leads/' + lid3 + '/handover', {'toUser': '王浩', 'reason': '任务归属跟随回归'})
 conf3 = call('/api/mvp/handovers/' + ho3['data']['id'] + '/confirm', {}, 'POST')
 check('交接给运营后确认成功', conf3.get('ok') is True, conf3)
@@ -109,9 +126,14 @@ check('确认后达人负责人=王浩(ops) 且 opsBy 固化', trow3['owner'] ==
       (trow3.get('owner'), trow3.get('opsBy')))
 row3 = [x for x in call('/api/tasks')['data'] if x['id'] == tid3]
 row3 = row3[0] if row3 else {}
-check('交接确认后任务归属跟随新运营（owner/ownerId 同步为王浩）',
+check('交接确认后「未结束」任务归属跟随新运营（owner/ownerId 同步为王浩）',
       row3.get('owner') == '王浩' and row3.get('ownerId') == 'demo-staff',
       (row3.get('owner'), row3.get('ownerId')))
+hist_after = [x for x in call('/api/tasks')['data'] if x['id'] == tid3b]
+hist_after = hist_after[0] if hist_after else {}
+check('交接后「已完成历史任务」负责人仍为李婷（历史归属不被追溯改写）',
+      hist_after.get('owner') == '李婷' and hist_after.get('ownerId') == 'demo-recruit',
+      (hist_after.get('owner'), hist_after.get('ownerId')))
 
 # ---- 4.6 转正式达人权限收敛（20260921b）：招募/运营必须走「提交审核」----
 t4 = call('/api/mvp/leads', {'name': '主链回归转正权限-' + TODAY, 'contact': 'chain4', 'channel': '其他',

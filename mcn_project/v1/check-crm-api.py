@@ -17,7 +17,9 @@ N = {'ra': 'APItest%s-招募A' % RUN, 'rb': 'APItest%s-招募B' % RUN, 'oa': 'AP
      'shoot': 'APItest%s-寄拍主链D' % RUN, 'ops2': 'APItest%s-双负责人E' % RUN,
      'asg': 'APItest%s-分配F' % RUN,
      # 20260921b 权限收敛用例
-     'conv': 'APItest%s-转正权限G' % RUN}
+     'conv': 'APItest%s-转正权限G' % RUN,
+     # 20260921c 轮询探针变更感知用例
+     'rev': 'APItest%s-变更感知H' % RUN}
 _results = []
 
 
@@ -969,6 +971,41 @@ def main():
     st, j = call(admin, '/api/leads', {'nickname': 'APItest%s-手机号' % RUN, 'phone': '123'})
     chk('报名手机号格式非法（123）→ 400（服务端兜底校验）',
         st == 400 and '手机号' in (j.get('message') or ''), (st, j.get('message')))
+
+    # d) 轮询探针必须能感知「已有线索被修改」——只比 count+latestId 会漏掉分配/接收/改状态
+    st, j = call(admin, '/api/mvp/leads', {'name': N['rev'] + '-变更感知', 'owner': '未分配', 'channel': 'API回归'})
+    chk('变更感知用例前置：未分配线索创建成功', st == 200 and j.get('ok'), (st, j.get('error')))
+    rev_id = (j.get('data') or {}).get('id') or 'T0000'
+    extra['revprobe'] = rev_id
+    st, va = call(admin, '/api/mvp/leads/version')
+    st, vb = call(admin, '/api/mvp/leads/version')
+    da, db_ = (va.get('data') or {}), (vb.get('data') or {})
+    chk('探针幂等：状态未变时连续两次 rev 相同（不会误触发无意义刷新）',
+        st == 200 and da.get('rev') and da.get('rev') == db_.get('rev'), (da.get('rev'), db_.get('rev')))
+    st, j = call(senior, '/api/mvp/leads/%s/assign' % rev_id, {'owner': '王浩', 'ownerPosition': 'ops'})
+    chk('变更感知前置：把已有线索分配给运营', st == 200, (st, (j or {}).get('error')))
+    st, v1 = call(admin, '/api/mvp/leads/version')
+    d1 = v1.get('data') or {}
+    chk('【核心】分配已有线索（条数不变）→ rev 必须变化（旧实现漏检）',
+        d1.get('count') == da.get('count') and d1.get('latestId') == da.get('latestId') and d1.get('rev') != da.get('rev'),
+        {'count': (da.get('count'), d1.get('count')), 'latestId': (da.get('latestId'), d1.get('latestId')),
+         'rev': (da.get('rev'), d1.get('rev'))})
+    st, j = call(staff, '/api/mvp/leads/%s/assign-ack' % rev_id, {}, method='POST')
+    chk('变更感知前置：运营确认接收', st == 200, (st, (j or {}).get('error')))
+    st, v2 = call(admin, '/api/mvp/leads/version')
+    d2 = v2.get('data') or {}
+    chk('【核心】确认接收（条数不变）→ rev 必须变化',
+        d2.get('count') == d1.get('count') and d2.get('rev') != d1.get('rev'), (d1.get('rev'), d2.get('rev')))
+    st, j = call(admin, '/api/mvp/leads/%s' % rev_id, {'status': '已联系'}, method='PUT')
+    st, v3 = call(admin, '/api/mvp/leads/version')
+    d3 = v3.get('data') or {}
+    chk('【核心】修改线索状态（条数不变）→ rev 必须变化',
+        st == 200 and d3.get('count') == d2.get('count') and d3.get('rev') != d2.get('rev'), (d2.get('rev'), d3.get('rev')))
+    st, v4 = call(staff, '/api/mvp/leads/version')
+    st, jl = call(staff, '/api/mvp/leads')
+    chk('运营视角探针 count 仍与列表一致（新分配线索进入可见范围，口径不放宽）',
+        st == 200 and (v4.get('data') or {}).get('count') == len(jl.get('data') or []),
+        ((v4.get('data') or {}).get('count'), len(jl.get('data') or []) if st == 200 else st))
 
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):

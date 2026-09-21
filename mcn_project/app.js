@@ -267,14 +267,17 @@ createApp({
       { id: 'L001', name: '阿强', channel: '私聊邀约', contact: 'aqiang_7', owner: '张萌', level: 'C', status: '无效线索', lastFollow: '2026-08-26', nextFollow: '', invalidReason: '时间不匹配，无意向' },
     ]);
 
-    /* 接入后端真实数据：启动时拉取达人库，成功则替换演示数据，失败保持演示模式 */
+    /* 接入后端真实数据：启动时拉取线索，成功即整体替换演示数据（含返回空数组的情况）。
+       ⚠ 20260921c：原来写成 `&& j.data.length`，只要返回 0 条（新运营还没分到线索 / 权限范围为空）
+       就保留内置演示数据 → 页面上会出现库里根本不存在的线索。判据应是「接口是否正常应答」，
+       而不是「是否有数据」——空数据集本身就是正确的业务事实。 */
     let leadsFromApi = false;
     fetch('/api/mvp/leads').then(r => r.json()).then(j => {
-      if (j && j.ok && Array.isArray(j.data) && j.data.length) {
+      if (j && j.ok && Array.isArray(j.data)) {
         leads.splice(0, leads.length, ...j.data);
         leadsFromApi = true;
       }
-    }).catch(() => { /* 本地演示模式 */ });
+    }).catch(() => { /* 接口不可用：保持只读演示模式，不写入任何数据 */ });
 
     /* 新达人录入提醒：每 30 秒检查一次数据库，发现新线索弹提示并自动上屏 */
     setInterval(() => {
