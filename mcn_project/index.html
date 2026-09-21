@@ -1650,7 +1650,7 @@ tailwind.config = {
                           <button v-if="tl.canJudge" @click="tl.openClassify(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">分类</button>
                           <button v-if="tl.isAdmin || tl.isSenior" @click="tl.openAssign(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-cyan-700 hover:bg-cyan-50">分配负责人</button>
                           <button @click="tl.openHandover(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">交接</button>
-                          <button v-if="tl.isAdmin || row.owner === tl.myName" @click="tl.convertTalent(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50">转为正式达人</button>
+                          <button v-if="tl.isAdmin || tl.isSenior" @click="tl.convertTalent(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50">转为正式达人</button>
                           <!-- 删除与后端同口径：管理员或该线索负责人本人 -->
                           <button v-if="tl.isAdmin || row.owner === tl.myName" @click="tl.openDelete(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50">删除</button>
                         </div>
@@ -1718,7 +1718,7 @@ tailwind.config = {
                     <button v-if="tl.canJudge" @click="tl.openClassify(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">分类</button>
                     <button v-if="tl.isAdmin || tl.isSenior" @click="tl.openAssign(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-cyan-700 hover:bg-cyan-50">分配负责人</button>
                     <button @click="tl.openHandover(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-slate-700 hover:bg-slate-50">交接</button>
-                    <button v-if="tl.isAdmin || row.owner === tl.myName" @click="tl.convertTalent(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50">转为正式达人</button>
+                    <button v-if="tl.isAdmin || tl.isSenior" @click="tl.convertTalent(row, showToast); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-emerald-600 hover:bg-emerald-50">转为正式达人</button>
                     <button v-if="tl.isAdmin || row.owner === tl.myName" @click="tl.openDelete(row); tl.closeMore()" class="block w-full text-left px-3 py-1.5 text-rose-600 hover:bg-rose-50">删除</button>
                   </div>
                 </div>
@@ -3155,7 +3155,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260921a"></script>
-<script src="./app.js?v=20260921a"></script>
+<script src="./talent-leads.js?v=20260921b"></script>
+<script src="./app.js?v=20260921b"></script>
 </body>
 </html>

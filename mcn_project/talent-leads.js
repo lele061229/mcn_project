@@ -36,42 +36,19 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
      默认值：来源=其他（表单未采集渠道）、阶段=新线索、潜力/意愿/路径=待判断、分类=待分类、负责人未分配；
      粉丝量区间取中值（0～500→250、500～1000→750、5000～1万→7500、1万～5万→30000、5万以上→50000）；
      提交时间作为最近跟进时间；第 9 题疑问与上传截图文件名写入备注。 */
-  function lead(id, name, lastFollow, extra) {
-    return Object.assign({ id, name, contact: '未填写', source: '其他', hasMedia: false, platforms: ['无'], fans: 0,
-      hasExp: false, coopCategories: '无', wantCategories: '待沟通', appearWay: '待定', stage: '新线索',
-      potential: '待判断', willing: '待判断', category: '待分类', coopPath: '待判断', owner: '未分配',
-      lastFollow, nextFollow: '', note: '' }, extra);
-  }
-  const MOCK = [
-    lead('CL001', '鸟', '2026-09-07 09:40', { owner: '李婷', wantCategories: '衣服 / 裤子，鞋类', appearWay: '本人出镜，但不露脸', note: '想了解：商单 / 收益相关' }),
-    lead('CL002', '11', '2026-09-07 09:44', { owner: '李婷', wantCategories: '数码产品', appearWay: '都可以，看具体商品要求', note: '想了解：商单 / 收益相关' }),
-    lead('CL003', '麒神', '2026-09-07 10:03', { owner: '王浩', wantCategories: '衣服 / 裤子，鞋类', appearWay: '真人露脸出镜', note: '想了解：其他: 打不打pubg' }),
-    lead('CL004', '三温鱼粉', '2026-09-07 10:07', { owner: '王浩', wantCategories: '衣服 / 裤子，鞋类，美妆护肤', appearWay: '真人露脸出镜，手部 / 局部出镜，都可以，看具体商品要求', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，拍摄有什么要求，作品发布有什么要求，寄拍是否需要费用，商单 / 收益相关' }),
-    lead('CL005', '爸爸', '2026-09-07 10:18', { owner: '张萌', hasMedia: true, platforms: ['抖音'], fans: 50000, wantCategories: '手表 / 饰品，包包，衣服 / 裤子，鞋类，美妆护肤，数码产品，家居 / 日用品，其他', appearWay: '真人露脸出镜，本人出镜，但不露脸，手部 / 局部出镜，只拍产品，不本人出镜，都可以，看具体商品要求', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，商品怎么选择，拍摄有什么要求，作品发布有什么要求，寄拍是否需要费用，商单 / 收益相关，其他' }),
-    lead('CL006', '王', '2026-09-07 10:20', { owner: '张萌', wantCategories: '手表 / 饰品', appearWay: '本人出镜，但不露脸', note: '想了解：寄拍具体流程' }),
-    lead('CL007', '小吴', '2026-09-07 10:21', { hasMedia: true, platforms: ['小红书', '抖音'], fans: 250, appearWay: '都可以，看具体商品要求', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，商品怎么选择，拍摄有什么要求，作品发布有什么要求，商单 / 收益相关；主页：Screenshot_2026-09-07-10-21-08-48_2332cb9b27b851b548ba47a91682926c.jpg' }),
-    lead('CL008', '小余', '2026-09-07 10:21', { hasMedia: true, platforms: ['抖音', '快手'], fans: 250, wantCategories: '手表 / 饰品，包包，衣服 / 裤子，鞋类，美妆护肤，数码产品，家居 / 日用品', appearWay: '真人露脸出镜，都可以，看具体商品要求', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，商品怎么选择，拍摄有什么要求，作品发布有什么要求，商单 / 收益相关；主页：IMG_2876.png' }),
-    lead('CL009', 'kk', '2026-09-07 10:21', { wantCategories: '衣服 / 裤子', appearWay: '本人出镜，但不露脸', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，拍摄有什么要求，寄拍是否需要费用' }),
-    lead('CL010', '张哲俊', '2026-09-07 10:37', { wantCategories: '数码产品', appearWay: '本人出镜，但不露脸', note: '想了解：商单 / 收益相关' }),
-    lead('CL011', 'tyh', '2026-09-07 10:42', { appearWay: '只拍产品，不本人出镜', note: '想了解：寄拍具体流程，拍摄有什么要求，作品发布有什么要求，寄拍是否需要费用，商单 / 收益相关' }),
-    lead('CL012', '小李', '2026-09-07 10:43', { wantCategories: '数码产品', appearWay: '都可以，看具体商品要求', note: '想了解：对账号 / 粉丝有没有要求' }),
-    lead('CL013', '房若曦', '2026-09-07 10:44', { hasMedia: true, platforms: ['B站'], fans: 250, wantCategories: '鞋类，家居 / 日用品', appearWay: '真人露脸出镜', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，商单 / 收益相关；主页：1788680993544.png' }),
-    lead('CL014', '小诺', '2026-09-07 10:50', { wantCategories: '手表 / 饰品，衣服 / 裤子，鞋类，美妆护肤，数码产品', appearWay: '本人出镜，但不露脸，手部 / 局部出镜，只拍产品，不本人出镜', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，商品怎么选择，拍摄有什么要求，作品发布有什么要求，寄拍是否需要费用，商单 / 收益相关' }),
-    lead('CL015', 'xx', '2026-09-07 11:07', { wantCategories: '手表 / 饰品，衣服 / 裤子，鞋类', appearWay: '只拍产品，不本人出镜', note: '想了解：对账号 / 粉丝有没有要求，商品怎么选择' }),
-    lead('CL016', '小安', '2026-09-07 15:22', { hasMedia: true, platforms: ['抖音'], fans: 30000, appearWay: '真人露脸出镜', note: '想了解：寄拍具体流程；主页：IMG_9884.png' }),
-    lead('CL017', '小陈', '2026-09-07 15:48', { hasMedia: true, platforms: ['快手'], fans: 7500, wantCategories: '手表 / 饰品', appearWay: '真人露脸出镜', note: '想了解：寄拍具体流程；主页：IMG_5454.png' }),
-    lead('CL018', 'zhuoxiii', '2026-09-07 21:10', { hasMedia: true, platforms: ['小红书', '抖音', '其他'], fans: 750, hasExp: true, coopCategories: '数码产品', wantCategories: '数码产品', appearWay: '真人露脸出镜', note: '想了解：寄拍具体流程，对账号 / 粉丝有没有要求，商品怎么选择，拍摄有什么要求，作品发布有什么要求，寄拍是否需要费用，商单 / 收益相关；主页：Screenshot_2026-09-07-21-10-37-22_2332cb9b27b851b548ba47a91682926c.jpg' }),
-    lead('CL019', '测试1', '2026-09-09 08:41', { hasMedia: true, platforms: ['得物', '小红书'], fans: 30000, hasExp: true, coopCategories: '手表 / 饰品', wantCategories: '衣服 / 裤子', appearWay: '本人出镜，但不露脸', note: '想了解：作品发布有什么要求，寄拍是否需要费用' }),
-  ];
-
   /* ---------------- composable ---------------- */
+  //（20260921b：原「金数据调研 19 条演示数据」已移除——线索列表只认服务端返回的数据，
+  //  避免运营岗看到他人/公海的假线索、也避免点开假线索后接口 404）
   function useTalentLeads(opts) {
     const meRef = (opts && opts.me) || null;
     const myRole = computed(() => (meRef && meRef.value && meRef.value.role) || 'staff');
     const myName = computed(() => (meRef && meRef.value && meRef.value.displayName) || '');
     const myPosition = computed(() => (meRef && meRef.value && meRef.value.position) || '');
     const isAdmin = computed(() => myRole.value === 'admin');
-    const list = reactive(MOCK.map(r => ({ ...r })));
+    // 20260921b：线索列表一律以服务端返回为准（syncFromDb 原地合并），不再内置 19 条演示数据。
+    // 之前 MOCK 种子让运营岗看到「他人线索 / 公海」的假数据（验收报告 P0 根因之一），
+    // 且这些假数据点开「跟进/详情」会 404——库中根本没有这条 ID。
+    const list = reactive([]);
 
     /* 接入数据库：把「报名表单」新报名合并进列表（历史 CL 线索保留） */
     function talentToLead(t) {
@@ -155,6 +132,34 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
     }
     function loadFromDb() { syncFromDb(false); }
     loadFromDb();
+
+    /* ---- 轻量轮询（20260921b）：每 8 秒问一次 /api/mvp/leads/version ----
+       该探针只返回「可见范围内的条数 + 最新线索 ID」，发现变化才拉全量并原地增量刷新，
+       解决「新报名 / 被分配 / 交接接收后列表与统计不更新，必须手动 F5」的体验问题。
+       服务端探针与列表接口共用 resolveScope + leadVisibleTo，权限口径完全一致，不额外暴露数据。
+       页面切回前台（visibilitychange）时立即补一次，避免后台标签页定时器被节流导致长时间不同步。 */
+    let leadPollTimer = null, leadPollSig = '';
+    async function pollLeadsOnce() {
+      if (!myName.value) return;                      // 未登录 / 未拿到会话时静默跳过
+      const pos = myPosition.value;
+      if (!isAdmin.value && !['recruit', 'ops', 'senior_ops'].includes(pos)) return; // 推广/财务不参与线索流转
+      try {
+        const j = await (await fetch('/api/mvp/leads/version')).json();
+        if (!j || !j.ok || !j.data) return;
+        const sig = j.data.count + '#' + (j.data.latestId || '');
+        if (leadPollSig && sig !== leadPollSig) { await syncFromDb(true); loadInbox(); }
+        leadPollSig = sig;
+      } catch (e) { /* 网络抖动忽略，下一轮自愈 */ }
+    }
+    function startLeadPolling() {
+      if (leadPollTimer) return;
+      pollLeadsOnce();
+      leadPollTimer = setInterval(pollLeadsOnce, 8000);
+      if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) pollLeadsOnce(); });
+      }
+    }
+    startLeadPolling();
 
     /* ---- 岗位数据可见范围 ----
        服务端已按角色强制过滤（越权请求会被降级）；这里保证界面呈现口径一致。

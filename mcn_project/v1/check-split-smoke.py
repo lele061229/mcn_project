@@ -60,30 +60,33 @@ def main():
     st, j = call(admin, '/api/dashboard')
     chk('V1 老看板仍可用（合并读取）', st == 200 and j.get('ok'), st)
 
-    # 2. 转化全链路：建线索 → 分配给李婷 → 李婷转化
+    # 2. 转化全链路：建线索 → 分配给李婷 → 李婷提交审核 → 管理员/主管转化
     st, j = call(admin, '/api/mvp/leads', {'name': TAG + '-转化链', 'channel': '朋友圈', 'owner': '未分配'})
     lid = j['data']['id']
     st, j = call(admin, '/api/mvp/leads/%s/assign' % lid, {'owner': '李婷', 'ownerPosition': 'recruit'})
     chk('管理员分配线索给李婷', st == 200, st)
     st, j = call(staff, '/api/mvp/leads/%s/convert' % lid, method='POST')
     chk('非负责人（运营王浩）转化 → 403', st == 403, st)
+    # 20260921b 权限收敛：转正式达人只给主管（高级运营/管理员），招募/运营一律 403
     st, j = call(recruit, '/api/mvp/leads/%s/convert' % lid, method='POST')
+    chk('线索负责人李婷（招募岗）直接转化 → 403（需走「提交审核」）', st == 403, st)
+    st, j = call(admin, '/api/mvp/leads/%s/convert' % lid, method='POST')
     d = (j or {}).get('data') or {}
-    chk('线索负责人李婷转化成功', st == 200 and d.get('status') == '已成为达人', (st, d.get('status')))
-    chk('固化转化人=李婷 + 转化时间', d.get('convertedBy') == '李婷' and d.get('convertedById') == 'demo-recruit' and bool(d.get('convertedAt')),
+    chk('管理员转化成功', st == 200 and d.get('status') == '已成为达人', (st, d.get('status')))
+    chk('固化转化人=管理员 + 转化时间', d.get('convertedBy') == '管理员' and d.get('convertedById') == 'admin' and bool(d.get('convertedAt')),
         {k: d.get(k) for k in ('convertedBy', 'convertedById', 'convertedAt')})
     st, j = call(admin, '/api/mvp/leads?scope=all')
     chk('转化后线索池不再有该线索', all(x['id'] != lid for x in j['data']))
     st, j = call(recruit, '/api/mvp/talents')
     mine = [x for x in j['data'] if x['id'] == lid]
-    chk('转化后达人档案可见（李婷视角）', len(mine) == 1 and mine[0].get('convertedBy') == '李婷', len(mine))
+    chk('转化后达人档案可见（李婷视角，负责人保留）', len(mine) == 1 and mine[0].get('owner') == '李婷', len(mine))
     st, j = call(recruit, '/api/mvp/leads/%s/history' % lid)
     chk('转化后仍能回看线索流转历史', st == 200 and j.get('ok'), st)
     st, j = call(recruit, '/api/mvp/leads/%s/follow-ups' % lid)
     chk('转化后仍能回看跟进记录（回退查询）', st == 200 and j.get('ok'), st)
     st, j = call(admin, '/api/logs')
     hit = [l for l in j['data'] if l.get('type') == '转为正式达人' and TAG in l.get('target', '')]
-    chk('操作日志记录「转为正式达人」+ 转化人', len(hit) >= 1 and '转化人=李婷' in hit[0]['after'], hit[:1])
+    chk('操作日志记录「转为正式达人」+ 转化人', len(hit) >= 1 and '转化人=管理员' in hit[0]['after'], hit[:1])
     # 3. 清理：转化的达人在 talents，删除走 /api/talents 原生接口? 用 admin 的 mvp talents? —— 直接查无删除接口时跳过
     # （转化测试数据保留在达人库，幂等脚本以唯一 TAG 命名，不影响后续运行）
     st, j = call(admin, '/api/mvp/leads', {'name': TAG + '-残留', 'channel': '其他', 'owner': '未分配'})

@@ -15,7 +15,9 @@ N = {'ra': 'APItest%s-招募A' % RUN, 'rb': 'APItest%s-招募B' % RUN, 'oa': 'AP
      'oc': 'APItest%s-合作C' % RUN,
      # V0.3 主链：寄拍任务链路 + 双负责人固化
      'shoot': 'APItest%s-寄拍主链D' % RUN, 'ops2': 'APItest%s-双负责人E' % RUN,
-     'asg': 'APItest%s-分配F' % RUN}
+     'asg': 'APItest%s-分配F' % RUN,
+     # 20260921b 权限收敛用例
+     'conv': 'APItest%s-转正权限G' % RUN}
 _results = []
 
 
@@ -671,7 +673,7 @@ def main():
     sen = (j.get('data') or {})
     senLabels = [c.get('label') for c in (sen.get('extraCards') or [])]
     chk('senior 顶部卡片 6 张（20260921a）：待分配新线索/今日新增报名/超时未处理线索/付费孵化待审核/团队在管达人总数/重点培养达人数量',
-        st == 200 and {'待分配新线索', '今日新增报名', '超时未处理线索', '付费孵化待审核', '团队在管达人总数', '重点培养达人数量'} <= set(senLabels)
+        st == 200 and {'待分配新线索', '今日新增报名', '超 2 天未跟进线索', '付费孵化待审核', '团队在管达人总数', '重点培养达人数量'} <= set(senLabels)
         and len(senLabels) == 6, senLabels)
     senTeam = next((b for b in ((sen.get('panels') or {}).get('blocks') or []) if b.get('key') == 'ops-team'), None)
     chk('senior 运营团队概览面板有运营行（团队视角：看到每个普通运营的负载/异常/完成率）',
@@ -932,6 +934,41 @@ def main():
     wbcd = ((j.get('data') or {}).get('cards') or {})
     chk('工作台 cards 不再含 SLA 计数（slaOverdue/slaRemind 已移除，历史字段保留）',
         st == 200 and 'slaOverdue' not in wbcd and 'slaRemind' not in wbcd, sorted(wbcd.keys()))
+
+    # ---------- 12.9 权限收敛 / 实时刷新探针 / 报名校验（20260921b，验收报告 P0+P1） ----------
+    # a) 轻量轮询探针：只暴露「可见条数 + 最新 ID」，且与列表接口同一行级权限口径
+    st, j = call(staff, '/api/mvp/leads/version')
+    vd = (j.get('data') or {}) if st == 200 else {}
+    chk('轮询探针 /api/mvp/leads/version：运营可读且只返回 count/latestId（无明细泄露）',
+        st == 200 and isinstance(vd.get('count'), int) and 'latestId' in vd and 'items' not in vd, (st, vd))
+    st, j = call(staff, '/api/mvp/leads')
+    chk('轮询探针 count 与列表接口条数一致（同口径，不额外放权）',
+        st == 200 and vd.get('count') == len(j['data']), (vd.get('count'), len(j['data']) if st == 200 else st))
+    st, j = call(staff, '/api/mvp/leads?scope=all')
+    st2, jv = call(staff, '/api/mvp/leads/version?scope=all')
+    chk('运营请求 scope=all 被强制降级为「我负责的」（不开放公海与同岗池）',
+        st == 200 and st2 == 200 and (jv.get('data') or {}).get('count') == len(j['data']),
+        ((jv.get('data') or {}).get('count'), len(j['data']) if st == 200 else st))
+
+    # b) 转正式达人权限：运营/招募一律 403，必须走「提交审核」；主管（高级运营/管理员）放行
+    st, j = call(admin, '/api/mvp/leads', {'name': N['conv'] + '-权限', 'owner': '王浩', 'ownerPosition': 'ops', 'channel': 'API回归'})
+    chk('权限收敛用例前置：运营名下线索创建成功', st == 200 and j.get('ok'), (st, j.get('error')))
+    extra['convguard'] = j['data']['id'] if st == 200 else ''
+    cid = extra['convguard'] or 'T0000'
+    st, j = call(staff, '/api/mvp/leads/%s/convert' % cid, {}, method='POST')
+    chk('普通运营直接转正式达人 → 403（提示走提交审核）',
+        st == 403 and '提交审核' in (j.get('error') or ''), (st, j.get('error')))
+    st, j = call(recruit, '/api/mvp/leads/%s/convert' % cid, {}, method='POST')
+    chk('招募岗直接转正式达人 → 403', st == 403, (st, j.get('error')))
+    st, j = call(senior, '/api/mvp/leads/%s/convert' % cid, {}, method='POST')
+    chk('高级运营转正式达人 → 200（转化人=张萌）',
+        st == 200 and (j.get('data') or {}).get('convertedBy') == '张萌',
+        (st, (j.get('data') or {}).get('convertedBy')))
+
+    # c) 报名联系方式服务端兜底校验（前端拦一次，服务端必须再拦一次）
+    st, j = call(admin, '/api/leads', {'nickname': 'APItest%s-手机号' % RUN, 'phone': '123'})
+    chk('报名手机号格式非法（123）→ 400（服务端兜底校验）',
+        st == 400 and '手机号' in (j.get('message') or ''), (st, j.get('message')))
 
     # ---------- 13. 清理 ----------
     def cleanup_one(tid):

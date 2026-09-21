@@ -21,9 +21,11 @@ def call(path, data=None, method=None):
 
 import urllib.error
 N = [0]
+FAILS = []
 def check(name, cond, extra=''):
     N[0] += 1
     tag = '✓' if cond else '✗'
+    if not cond: FAILS.append(name)
     print(f"{tag} {name}" + (f" | {extra}" if extra and not cond else ''))
     return cond
 
@@ -86,6 +88,45 @@ row = [x for x in call('/api/tasks')['data'] if x['id'] == tid][0]
 check('逾期任务派生 overdue=True', row['overdue'] is True and row['dueSoon'] is False)
 tal = [x for x in call('/api/mvp/talents')['data'] if x['id'] == lid][0]
 check('建任务不改达人运营负责人', tal['opsBy'] == '王浩')
+
+# ---- 4.5 交接确认后任务归属跟随新运营（20260921b）----
+# 场景：达人还在招募岗李婷名下 → 建任务（归属李婷）→ 交接给运营王浩 → 确认后任务归属必须一起改，
+# 否则任务中心仍显示旧负责人，与达人档案的运营负责人自相矛盾（验收报告 P0「任务负责人与当前运营不一致」）。
+t3 = call('/api/mvp/leads', {'name': '主链回归任务归属-' + TODAY, 'contact': 'chain3', 'channel': '其他',
+                             'owner': '李婷', 'ownerPosition': 'recruit'})
+lid3 = t3['data']['id']
+call('/api/mvp/leads/' + lid3, {'status': '已报名'}, 'PUT')
+call('/api/mvp/leads/' + lid3 + '/convert', {}, 'POST')
+tk3 = call('/api/tasks', {'talentId': lid3, 'product': '归属跟随鞋', 'commission': 10, 'owner': '李婷'})
+tid3 = tk3['data']['id']
+check('交接前任务归属招募岗李婷', tk3['data']['owner'] == '李婷' and tk3['data']['ownerId'] == 'demo-recruit',
+      (tk3['data'].get('owner'), tk3['data'].get('ownerId')))
+ho3 = call('/api/mvp/leads/' + lid3 + '/handover', {'toUser': '王浩', 'reason': '任务归属跟随回归'})
+conf3 = call('/api/mvp/handovers/' + ho3['data']['id'] + '/confirm', {}, 'POST')
+check('交接给运营后确认成功', conf3.get('ok') is True, conf3)
+trow3 = [x for x in call('/api/mvp/talents')['data'] if x['id'] == lid3][0]
+check('确认后达人负责人=王浩(ops) 且 opsBy 固化', trow3['owner'] == '王浩' and trow3['opsBy'] == '王浩',
+      (trow3.get('owner'), trow3.get('opsBy')))
+row3 = [x for x in call('/api/tasks')['data'] if x['id'] == tid3]
+row3 = row3[0] if row3 else {}
+check('交接确认后任务归属跟随新运营（owner/ownerId 同步为王浩）',
+      row3.get('owner') == '王浩' and row3.get('ownerId') == 'demo-staff',
+      (row3.get('owner'), row3.get('ownerId')))
+
+# ---- 4.6 转正式达人权限收敛（20260921b）：招募/运营必须走「提交审核」----
+t4 = call('/api/mvp/leads', {'name': '主链回归转正权限-' + TODAY, 'contact': 'chain4', 'channel': '其他',
+                             'owner': '李婷', 'ownerPosition': 'recruit'})
+lid4 = t4['data']['id']
+call('/api/login', {'user': 'demo-recruit', 'pass': 'demo123456'})
+cv4 = call('/api/mvp/leads/' + lid4 + '/convert', {}, 'POST')
+check('招募岗（线索负责人）直接转正式达人被拒 403', cv4.get('HTTP') == 403, cv4)
+call('/api/login', {'user': 'demo-staff', 'pass': 'demo123456'})
+cv5 = call('/api/mvp/leads/' + lid4 + '/convert', {}, 'POST')
+check('普通运营直接转正式达人被拒 403', cv5.get('HTTP') == 403, cv5)
+call('/api/login', {'user': 'admin', 'pass': 'wsccbe9e7e38e3'})
+cv6 = call('/api/mvp/leads/' + lid4 + '/convert', {}, 'POST')
+check('管理员转正式达人放行（主管特权保留）', cv6.get('ok') is True, cv6)
+
 # 招募岗不能发起（寄拍执行岗位已删除，任务由运营登记、达人完成）
 call('/api/login', {'user': 'demo-recruit', 'pass': 'demo123456'})
 tk2 = call('/api/tasks', {'talentId': lid, 'product': '越权'})
@@ -112,7 +153,14 @@ check('档案汇总：最近发布=今天', trow['lastPublish'] == TODAY)
 
 # ---- 7 清理 ----
 call('/api/tasks/' + tid, method='DELETE')
+call('/api/tasks/' + tid3, method='DELETE')
 call('/api/talents/' + lid, method='DELETE')
 call('/api/talents/' + lid2, method='DELETE')
+call('/api/talents/' + lid3, method='DELETE')
+call('/api/talents/' + lid4, method='DELETE')
+if FAILS:
+    print(f"\n失败 {len(FAILS)} 项：{' | '.join(FAILS)}")
+    print(f"通过 {N[0] - len(FAILS)} 项，失败 {len(FAILS)} 项")
+    sys.exit(1)
 print(f"\n通过 {N[0]} 项断言")
 sys.exit(0)

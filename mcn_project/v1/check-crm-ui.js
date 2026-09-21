@@ -18,6 +18,8 @@ const RUN = String(Date.now()).slice(-6);
 const N = {
   ra: 'UI回归' + RUN + '-招募A', rb: 'UI回归' + RUN + '-招募B',
   oa: 'UI回归' + RUN + '-运营A', ob: 'UI回归' + RUN + '-运营B',
+  // 20260921b：前端演示数据（MOCK）已移除，「未分配」筛选断言需要一条真实公海线索
+  pub: 'UI回归' + RUN + '-公海',
 };
 
 (async () => {
@@ -82,6 +84,7 @@ const N = {
     out.push(await mk(names.rb,'李婷','recruit'));
     out.push(await mk(names.oa,'王浩','ops'));
     out.push(await mk(names.ob,'王浩','ops'));
+    out.push(await mk(names.pub,'未分配',''));
     return out.map(x => x && x.ok ? 'ok' : JSON.stringify(x));
   })()`);
   check('测试线索创建成功', Array.isArray(seed) && seed.every(s => s === 'ok'), seed);
@@ -295,7 +298,7 @@ const N = {
     for (const t of hit) await fetch('/api/mvp/leads/' + encodeURIComponent(t.id), { method:'DELETE' });
     return hit.length;
   })()`);
-  check('清理本次回归创建的 4 条线索', cleaned === 4, cleaned);
+  check('清理本次回归创建的 5 条线索', cleaned === 5, cleaned);
 
   check('全程无 JS 运行时异常', errs.length === 0, errs.slice(0, 4));
 
