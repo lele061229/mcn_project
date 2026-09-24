@@ -81,6 +81,10 @@ const FOLLOW_RESULTS = ['已接通', '未接通', '已加微信', '待回复', '
         talentLevel: t.talentLevel || '待判断',
         // 报名数据（20260919d）：作品链接 + 报名时间（列表「报名数据」列与详情弹窗「报名信息」区展示）
         works: t.works || '',
+        // 报名原始字段补全（20260921d）：主页截图 / 疑问 / 微信号 / 手机号（详情弹窗「报名信息」区展示）
+        profileScreenshot: r.profileScreenshot || t.profileScreenshot || '',
+        questions: questions || '',
+        wechat: r.wechatId || '', phone: r.phone || '',
         createdAt: String(t.createdAt || '').slice(0, 16),
         // 线索类型 + 付费孵化审核流（20260921a）
         leadType: t.leadType || 'free_recruit',

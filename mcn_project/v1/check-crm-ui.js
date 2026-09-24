@@ -286,8 +286,10 @@ const N = {
     hist.types && hist.types.includes('线索交接-发起') && hist.types.includes('线索交接-确认'), hist.types);
   const openDetail = await ev(`(() => { const b=[...document.querySelectorAll('button')].find(x=>x.textContent.trim()==='查看'); if(!b) return 'NO_BTN'; b.click(); return 'ok'; })()`);
   await sleep(1800);
-  const detail = await ev(`(() => { const t=document.body.innerText; return { hasHistory: t.includes('流转历史'), hasFollow: t.includes('跟进记录') }; })()`);
-  check('详情弹窗有「跟进记录」与「流转历史」区块', openDetail === 'ok' && detail.hasHistory && detail.hasFollow, { openDetail, detail });
+  // 断言口径：跟进区块的标题固定为「跟进时间轴」；空态文案才是「还没有跟进记录…」。
+  // 只认「跟进记录」四个字会依赖「首行线索恰好没有跟进」，属数据顺序 flake —— 两者任一命中即算有该区块。
+  const detail = await ev(`(() => { const t=document.body.innerText; return { hasHistory: t.includes('流转历史'), hasFollow: t.includes('跟进时间轴') || t.includes('跟进记录') }; })()`);
+  check('详情弹窗有「跟进记录（时间轴）」与「流转历史」区块', openDetail === 'ok' && detail.hasHistory && detail.hasFollow, { openDetail, detail });
 
   console.log('== J. 清理本次回归数据 ==');
   await loginAs('admin', ADMIN_PASS);

@@ -31,7 +31,6 @@ tailwind.config = {
 }
 </script>
 <script src="./vendor/vue.global.prod.js"></script>
-<script src="./vendor/echarts.min.js"></script>
 <!-- xlsx（861KB）体积大且只在 Excel 导入时用到：改为打开导入弹窗时按需加载，缩短首屏时间 -->
 <style>
   [v-cloak]{display:none}
@@ -176,240 +175,6 @@ tailwind.config = {
 
       <main class="flex-1 p-4 md:p-6 pb-24 md:pb-6">
 
-        <!-- ============ 经营看板 ============ -->
-        <section v-if="page==='dashboard'">
-          <!-- 管理员：经营总览（原有 dashboard 全部保留） -->
-          <template v-if="dashView==='admin'">
-          <div class="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 md:mb-5">
-            <div v-for="k in kpis" :key="k.label" class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm"
-                 :class="k.page ? 'cursor-pointer hover:border-indigo-300 hover:shadow-lg transition-all' : ''"
-                 @click="k.page && goPage(k.page)">
-              <div class="text-[13px] text-slate-500 mb-2 flex items-center">{{ k.label }}<span v-if="k.page" class="ml-auto text-slate-300 group-hover:text-indigo-400">→</span></div>
-              <div class="text-2xl font-bold text-slate-900 tracking-tight">{{ k.value }}<span class="text-sm font-normal text-slate-400 ml-1">{{ k.unit }}</span></div>
-              <div class="mt-2 text-xs flex items-center gap-1" :class="k.good? 'text-emerald-600':'text-slate-400'">
-                <span v-html="k.good ? trendUp : trendFlat"></span> {{ k.note }}<span v-if="k.page" class="ml-auto text-slate-300">查看 →</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-5 flex items-start gap-3">
-            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shrink-0 font-bold">AI</div>
-            <div class="text-[13px] leading-relaxed text-slate-700 flex-1">
-              <div v-if="canSeeCost">
-                <span class="font-semibold text-indigo-700">数据结论：</span>
-                本月获客投入 <b>¥{{ fmt(totalCost) }}</b>，新增达人 <b class="cursor-pointer underline decoration-dotted decoration-slate-300 hover:text-indigo-600" @click="goPage('talent-leads')">{{ monthNewTalents }}</b> 人，单达人成本 <b>¥{{ costPerTalent }}</b>；
-                <b>{{ insight.bestChannel }}</b> 转化率最高（{{ insight.bestRate }}%）
-                <span v-if="canFin">，待付达人分成 <b class="cursor-pointer underline decoration-dotted decoration-slate-300 hover:text-indigo-600" @click="goPage('finance')">¥{{ fmt(finUnpaid) }}</b>{{ finTotals.overdueCount ? '（逾期 ' + finTotals.overdueCount + ' 单）' : '' }}</span>。
-              </div>
-              <div v-else>
-                <span class="font-semibold text-indigo-700">数据结论：</span>
-                当前可见线索 <b>{{ boardFunnel.total }}</b> 条，已分配负责人 <b>{{ boardFunnel.assigned }}</b> 条、已跟进 <b>{{ boardFunnel.followed }}</b> 条；高潜强意愿 <b>{{ boardFunnel.hot }}</b> 人，已合作达人 <b>{{ boardFunnel.cooperated }}</b> 人。
-                <span v-if="boardAttention.unassigned">待分配 <b class="cursor-pointer underline decoration-dotted decoration-slate-300 hover:text-indigo-600" @click="goPage('talent-leads')">{{ boardAttention.unassigned }}</b> 条；</span>
-                <span v-if="boardAttention.overdueFollow">逾期未跟进 <b>{{ boardAttention.overdueFollow }}</b> 条；</span>
-                <span v-if="boardAttention.pendingHandover">待接收交接 <b>{{ boardAttention.pendingHandover }}</b> 单。</span>
-              </div>
-              <div class="mt-1.5 pt-1.5 border-t border-indigo-100/80">
-                <span class="font-semibold text-emerald-700">下一步建议：</span>
-                <template v-if="canSeeCost">
-                  ① 把 <b>{{ insight.bestChannel }}</b> 的素材与话术模板复制到其他渠道；② 付费预算优先续投 <b>{{ insight.cheapChannel }}</b>（¥{{ insight.cheapCost }}/人，ROI 最好）；
-                  <span v-if="canFin"><template v-if="finTotals.overdueCount">③ 本周内清完 {{ finTotals.overdueCount }} 笔逾期结算；</template><template v-else>③ 保持结算节奏，及时支付待付分成；</template></span>
-                  <span v-else>③ 今天先处理「我的工作台」里的逾期跟进；</span>
-                </template>
-                <template v-else>
-                  <span v-if="boardAttention.unassigned">① 先给 <b>{{ boardAttention.unassigned }}</b> 条公海线索指派负责人；</span>
-                  <span v-else>① 线索都已分配，保持跟进节奏；</span>
-                  <span v-if="boardAttention.overdueFollow">② 逾期未跟进 {{ boardAttention.overdueFollow }} 条，今天清完；</span>
-                  <span v-else>② 暂无逾期跟进；</span>
-                  <span v-if="boardAttention.pendingAudit">③ 有 {{ boardAttention.pendingAudit }} 个寄拍内容待审核。</span>
-                  <span v-else>③ 关注寄拍任务进度，及时发起新寄拍。</span>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <!-- 风险提醒：哪里需要处理（服务端按真实字段实时推导） -->
-          <div v-if="boardAlerts.length" class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-4 mb-5">
-            <div class="flex items-center gap-2 mb-3">
-              <span class="w-6 h-6 rounded-lg bg-rose-500 text-white flex items-center justify-center text-xs font-bold">!</span>
-              <span class="text-sm font-semibold text-slate-800">需要处理</span>
-              <span class="text-xs text-slate-400">由数据实时推导，点击可直达对应页面</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              <button v-for="a in boardAlerts" :key="a.type" @click="a.page && goPage(a.page)"
-                class="flex items-center gap-3 rounded-xl border px-3.5 py-2.5 text-left transition hover:shadow-md"
-                :class="a.tone === 'rose' ? 'border-rose-200 bg-rose-50 hover:border-rose-300' : a.tone === 'amber' ? 'border-amber-200 bg-amber-50 hover:border-amber-300' : 'border-teal-200 bg-teal-50 hover:border-teal-300'">
-                <span class="text-xl font-bold tabular-nums" :class="a.tone === 'rose' ? 'text-rose-600' : a.tone === 'amber' ? 'text-amber-600' : 'text-teal-600'">{{ a.count }}</span>
-                <span class="min-w-0">
-                  <span class="block text-[13px] font-medium" :class="a.tone === 'rose' ? 'text-rose-700' : a.tone === 'amber' ? 'text-amber-700' : 'text-teal-700'">{{ a.type }}</span>
-                  <span class="block text-[11px] text-slate-500 truncate">{{ a.text }}</span>
-                </span>
-                <span class="ml-auto text-slate-300">→</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 md:mb-5">
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="text-sm font-semibold mb-3">招募转化漏斗（全渠道）</div>
-              <div ref="funnelChart" style="height:220px"></div>
-            </div>
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="text-sm font-semibold mb-3">渠道效果对比</div>
-              <div ref="channelChart" style="height:220px"></div>
-            </div>
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="text-sm font-semibold mb-3">30 天新增线索趋势</div>
-              <div ref="trend30Chart" style="height:220px"></div>
-            </div>
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="flex items-center justify-between mb-3">
-                <div class="text-sm font-semibold">负责人负载</div>
-                <span class="text-[11px] text-slate-400">线索 + 进行中任务×2 + 逾期×2 + 待接收×2</span>
-              </div>
-              <div class="space-y-2.5">
-                <div v-for="w in board.workload" :key="w.owner" class="flex items-center gap-3 text-[13px]">
-                  <span class="w-20 shrink-0 truncate" :class="w.owner==='未分配' ? 'text-rose-500 font-medium' : 'text-slate-700'">{{ w.owner }}</span>
-                  <span class="w-10 shrink-0 text-[11px] text-slate-400">{{ w.position || '—' }}</span>
-                  <div class="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full bg-gradient-to-r from-cyan-400 to-indigo-500" :style="{width: loadPct(w)+'%'}"></div>
-                  </div>
-                  <span class="w-28 shrink-0 text-right text-[11px] text-slate-500">
-                    {{ w.leads }}线索 · {{ w.talents }}达人<span v-if="w.tasks"> · {{ w.tasks }}任务</span><span v-if="w.overdueFollow" class="text-rose-500"> · 逾期{{ w.overdueFollow }}</span>
-                  </span>
-                </div>
-                <div v-if="!board.workload.length" class="text-center text-xs text-slate-400 py-8">暂无负责人数据</div>
-              </div>
-            </div>
-            <div v-if="canFin" class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="text-sm font-semibold mb-3">平台收益走势（按结算周期）</div>
-              <div ref="trendChart" style="height:220px"></div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="flex items-center justify-between mb-3">
-                <div class="text-sm font-semibold">待办跟进</div>
-                <span class="text-xs text-indigo-600 cursor-pointer" @click="goPage('talent-leads')">去处理 →</span>
-              </div>
-              <div class="space-y-2.5">
-                <div v-for="t in todos" :key="t.id" class="flex items-center gap-3 text-[13px] rounded-lg px-1.5 py-1 -mx-1.5"
-                     :class="t.page ? 'cursor-pointer hover:bg-indigo-50 transition-colors' : ''"
-                     @click="t.page && goPage(t.page)">
-                  <span class="w-1.5 h-1.5 rounded-full" :class="t.urgent?'bg-rose-500':'bg-amber-400'"></span>
-                  <span class="text-slate-700 font-medium">{{ t.name }}</span>
-                  <span class="text-slate-400">{{ t.action }}</span>
-                  <span class="ml-auto text-xs" :class="t.urgent?'text-rose-500':'text-slate-400'">{{ t.time }}</span>
-                  <span v-if="t.page" class="text-slate-300">→</span>
-                </div>
-                <div v-if="!todos.length" class="text-center text-xs text-slate-400 py-8">暂无待办跟进，一切正常</div>
-              </div>
-            </div>
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/70 shadow-sm">
-              <div class="flex items-center justify-between mb-3">
-                <div class="text-sm font-semibold">任务阶段分布</div>
-                <span class="text-xs text-indigo-600 cursor-pointer" @click="goPage('tasks')">查看全部 →</span>
-              </div>
-              <div class="space-y-2">
-                <div v-for="s in taskStageDist" :key="s.name" class="flex items-center gap-3 text-[13px]">
-                  <span class="w-20 text-slate-500 shrink-0">{{ s.name }}</span>
-                  <div class="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-500" :style="{width:(s.count/tasks.length*100)+'%'}"></div>
-                  </div>
-                  <span class="w-6 text-right font-semibold">{{ s.count }}</span>
-                </div>
-                <div v-if="!taskStageDist.length" class="text-center text-xs text-slate-400 py-8">暂无寄拍任务（当前角色未开放或还没有任务）</div>
-              </div>
-            </div>
-          </div>
-          </template>
-          <!-- 非管理员：岗位工作台视图（服务端按 position 装配面板，前端只渲染不做权限判断） -->
-          <template v-else>
-          <div class="flex items-center justify-between mb-5">
-            <div>
-              <h1 class="text-2xl font-bold text-slate-800">{{ myPositionLabel }}工作台</h1>
-              <p class="text-sm text-slate-400 mt-1">按你的岗位展示对应工作面板；全局经营数据仅管理员可见</p>
-            </div>
-            <div class="text-sm text-slate-400 flex items-center gap-3">
-              <span>{{ dashPanels.today || today }}</span>
-              <button @click="loadDashPanels()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs text-slate-600 hover:bg-white">刷新</button>
-            </div>
-          </div>
-          <div v-if="dashPanels.blocks && dashPanels.blocks.length" class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-            <div v-for="b in dashPanels.blocks" :key="b.key" class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
-              <div class="flex items-start justify-between mb-3">
-                <div>
-                  <div class="font-semibold text-slate-700">{{ b.title }}</div>
-                  <div v-if="b.hint" class="text-[11px] text-slate-400 mt-0.5">{{ b.hint }}</div>
-                </div>
-                <button v-if="b.link" @click="goPage(b.link)" class="text-xs text-indigo-600 hover:underline shrink-0">查看 →</button>
-              </div>
-              <div v-if="b.type==='funnel'" class="space-y-2.5">
-                <div v-for="(it,i) in b.items" :key="it.key" class="flex items-center gap-3">
-                  <span class="w-20 shrink-0 text-xs text-slate-500">{{ it.label }}</span>
-                  <div class="flex-1 h-7 rounded-lg bg-slate-100 relative overflow-hidden">
-                    <div class="h-full rounded-lg bg-gradient-to-r from-violet-400 to-indigo-500 transition-all" :style="{ width: funnelWidth(b, it.value) }"></div>
-                    <span class="absolute inset-0 flex items-center px-2 text-xs font-semibold text-slate-700">{{ it.value }}<span class="ml-1 font-normal text-slate-400 text-[10px]">当前 {{ it.raw }}</span></span>
-                  </div>
-                  <span class="w-12 shrink-0 text-right text-[11px]" :class="i ? 'text-slate-400' : 'text-transparent'">{{ i ? funnelRate(b, i) : '—' }}</span>
-                </div>
-              </div>
-              <div v-else-if="b.type==='stats'" class="grid grid-cols-2 gap-3">
-                <div v-for="it in b.items" :key="it.label" class="rounded-xl bg-slate-50/70 p-3">
-                  <div class="text-[11px] text-slate-400">{{ it.label }}</div>
-                  <div class="text-2xl font-bold mt-0.5" :class="it.tone || 'text-slate-800'">{{ it.value }}</div>
-                  <div v-if="it.sub" class="text-[10px] text-slate-400 mt-0.5 leading-snug">{{ it.sub }}</div>
-                </div>
-              </div>
-              <div v-else-if="b.type==='table'" class="-mx-1 overflow-x-auto">
-                <table class="w-full text-xs">
-                  <thead><tr class="text-left text-slate-400 border-b border-slate-100">
-                    <th v-for="col in b.columns" :key="col" class="py-2 px-1 font-medium whitespace-nowrap">{{ col }}</th>
-                  </tr></thead>
-                  <tbody>
-                    <tr v-for="(r,ri) in b.rows" :key="ri" class="border-b border-slate-50 hover:bg-slate-50/60">
-                      <td v-for="(cv,ci) in r" :key="ci" class="py-2 px-1 text-slate-600 whitespace-nowrap">
-                        <template v-if="cv && typeof cv==='object' && cv.kind==='assign-actions'">
-                          <button @click="goPage('talent-pool')" class="text-indigo-600 hover:underline">查看达人</button>
-                          <button v-if="!cv.ack" @click="ackAssign(cv.talentId)" class="ml-2 text-cyan-600 hover:underline font-medium">确认接收</button>
-                          <span v-else class="text-emerald-600">已接收</span>
-                        </template>
-                        <template v-else-if="cv && typeof cv==='object' && cv.kind==='lead-actions'">
-                          <!-- 新线索提醒行内操作（20260919a）：查看报名信息 / 去分配 -->
-                          <button @click="panelLeadAct(cv,'view')" class="text-indigo-600 hover:underline">查看</button>
-                          <button @click="panelLeadAct(cv,'assign')" class="ml-2 text-cyan-600 hover:underline font-medium">分配</button>
-                        </template>
-                        <template v-else-if="cv && typeof cv==='object' && cv.kind==='lead-review'">
-                          <!-- 付费孵化待审核行内操作（20260921a）：查看线索 / 审核 -->
-                          <button @click="panelLeadAct(cv,'view')" class="text-indigo-600 hover:underline">查看线索</button>
-                          <button @click="reviewPanelLead(cv)" class="ml-2 text-amber-600 hover:underline font-medium">审核</button>
-                        </template>
-                        <template v-else>{{ cv }}</template>
-                      </td>
-                    </tr>
-                    <tr v-if="!b.rows.length"><td :colspan="b.columns.length" class="py-6 text-center text-slate-300">暂无数据</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="space-y-2">
-                <div v-for="(it,i) in b.items" :key="i" class="flex items-start gap-2 text-sm">
-                  <span class="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0"
-                        :class="it.tone==='rose' ? 'bg-rose-500' : it.tone==='amber' ? 'bg-amber-500' : 'bg-slate-300'"></span>
-                  <div class="flex-1 min-w-0">
-                    <span class="text-slate-700">{{ it.text }}</span>
-                    <span v-if="it.sub" class="text-xs text-slate-400 ml-1">{{ it.sub }}</span>
-                  </div>
-                  <button v-if="it.page" @click="goPage(it.page)" class="text-[11px] text-indigo-600 hover:underline shrink-0">去处理</button>
-                </div>
-                <div v-if="!b.items.length" class="py-6 text-center text-slate-300 text-xs">暂无需要处理的事项</div>
-              </div>
-            </div>
-          </div>
-          <div v-else class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-10 text-center text-sm text-slate-400">
-            暂无岗位面板数据
-          </div>
-          </template>
-        </section>
 
         <!-- ============ 推广获客 ============ -->
         <section v-if="page==='channels'">
@@ -1270,17 +1035,26 @@ tailwind.config = {
           </div>
         </section>
 
-        <!-- ============ 我的工作台 ============ -->
+        <!-- ============ 我的工作台（20260922 起为全岗位统一首页） ============ -->
         <section v-if="page==='workbench'">
           <div class="flex items-center justify-between mb-5">
             <div>
-              <h1 class="text-2xl font-bold text-slate-800">我的工作台</h1>
-              <p class="text-sm text-slate-400 mt-1">待办按「推广获客 → 招募对接 → 达人运营 → 寄拍执行 → 收益结算」链路和你的岗位实时生成</p>
+              <h1 class="text-2xl font-bold text-slate-800">我的工作台<span v-if="wbPanels.roleLabel" class="ml-2 align-middle px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 text-sm font-medium">{{ wbPanels.roleLabel }}</span></h1>
+              <p class="text-sm text-slate-400 mt-1">{{ wbSubtitle }}</p>
             </div>
             <div class="text-sm text-slate-400 flex items-center gap-3">
               <span>{{ today }}</span>
               <button @click="loadWorkbench()" class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs text-slate-600 hover:bg-white">刷新</button>
             </div>
+          </div>
+          <!-- 快捷入口：服务端按岗位下发（点一下直达要处理的业务页） -->
+          <div v-if="wbQuick.length" class="flex flex-wrap gap-2 mb-5">
+            <button v-for="q in wbQuick" :key="q.label" @click="wbCardAct(q)"
+                    class="group inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-slate-200/70 shadow-sm text-sm text-slate-700 hover:border-indigo-300 hover:text-indigo-700">
+              <span>{{ q.label }}</span>
+              <span class="text-[11px] text-slate-400 group-hover:text-indigo-500">{{ q.desc }}</span>
+              <span class="text-slate-300 group-hover:text-indigo-400">→</span>
+            </button>
           </div>
           <!-- 达人链路卡（招募 / 运营 / 管理员） -->
           <div v-if="!wbExtraCards.length" class="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7 gap-4 mb-6">
@@ -1310,10 +1084,17 @@ tailwind.config = {
               <div class="text-[11px] text-slate-400 mt-1">潜力高 + 意愿强，还没进入合作</div>
             </div>
           </div>
-          <!-- 岗位专属卡（推广 / 寄拍 / 财务）：服务端按岗位生成 -->
-          <div v-else class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <div v-for="c in wbExtraCards" :key="c.label" class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5">
-              <div class="text-xs text-slate-400 mb-1">{{ c.label }}</div>
+          <!-- 岗位专属卡（推广 / 运营 / 高级运营 / 财务 / 管理员）：服务端按岗位生成；
+               带 page / href 的卡片可点击直达对应业务页（20260922：数字 + 为什么处理 + 点进去处理） -->
+          <div v-else class="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 mb-6">
+            <div v-for="c in wbExtraCards" :key="c.label"
+                 class="bg-white rounded-2xl border border-slate-200/70 shadow-sm p-5"
+                 :class="(c.page || c.href) ? 'cursor-pointer hover:border-indigo-300 hover:shadow transition' : ''"
+                 @click="wbCardAct(c)">
+              <div class="flex items-start justify-between">
+                <div class="text-xs text-slate-400 mb-1">{{ c.label }}</div>
+                <span v-if="c.page || c.href" class="text-[10px] text-indigo-400">去处理 →</span>
+              </div>
               <div class="text-3xl font-bold" :class="c.tone || 'text-slate-800'">{{ c.value }}</div>
               <div class="text-[11px] text-slate-400 mt-1">{{ c.sub }}</div>
             </div>
@@ -1928,6 +1709,9 @@ tailwind.config = {
                 <div><span class="text-slate-400 text-xs">达人昵称：</span>{{ tl.dlg.current.name }}</div>
                 <div><span class="text-slate-400 text-xs">联系方式：</span>{{ tl.dlg.current.contact }}</div>
                 <div><span class="text-slate-400 text-xs">来源渠道：</span>{{ tl.dlg.current.source }}</div>
+                <div><span class="text-slate-400 text-xs">报名类型：</span><span class="px-1.5 py-0.5 rounded text-xs" :class="tl.dlg.current.leadType==='paid_incubation' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'">{{ tl.dlg.current.leadTypeLabel || '免费招募' }}</span></div>
+                <div><span class="text-slate-400 text-xs">手机号：</span>{{ tl.dlg.current.phone || '—' }}</div>
+                <div><span class="text-slate-400 text-xs">微信号：</span>{{ tl.dlg.current.wechat || '—' }}</div>
                 <div><span class="text-slate-400 text-xs">自媒体情况：</span>{{ tl.dlg.current.hasMedia ? '有（' + tl.dlg.current.platforms.join(' / ') + '）' : '无' }}</div>
                 <div><span class="text-slate-400 text-xs">粉丝量：</span>{{ tl.dlg.current.fans > 0 ? fmt(tl.dlg.current.fans) : '—' }}</div>
                 <div><span class="text-slate-400 text-xs">报名/创建时间：</span>{{ tl.dlg.current.createdAt || tl.dlg.current.lastFollow || '—' }}</div>
@@ -1936,6 +1720,8 @@ tailwind.config = {
                 <div class="col-span-2"><span class="text-slate-400 text-xs">想接的品类（接拍类型）：</span>{{ tl.dlg.current.wantCategories }}</div>
                 <div class="col-span-2"><span class="text-slate-400 text-xs">出镜方式：</span>{{ tl.dlg.current.appearWay }}</div>
                 <div class="col-span-2"><span class="text-slate-400 text-xs">作品：</span><a v-if="tl.dlg.current.works" :href="tl.dlg.current.works" target="_blank" rel="noopener" class="text-sky-600 hover:underline break-all">{{ tl.dlg.current.works }}</a><span v-else class="text-slate-300">—</span></div>
+                <div class="col-span-2"><span class="text-slate-400 text-xs">想了解（疑问）：</span>{{ tl.dlg.current.questions || '—' }}</div>
+                <div class="col-span-2 md:col-span-3"><span class="text-slate-400 text-xs">账号主页截图：</span><a v-if="tl.dlg.current.profileScreenshot" :href="tl.dlg.current.profileScreenshot" target="_blank" rel="noopener"><img :src="tl.dlg.current.profileScreenshot" alt="账号主页截图" class="mt-1 max-h-32 rounded-lg border border-slate-200 inline-block"></a><span v-else class="text-slate-300">未上传</span></div>
               </div>
               <!-- 运营判断与跟进（线索阶段由运营填写；转正式达人后在达人档案模块管理） -->
               <div class="text-xs font-semibold text-slate-400 mt-5 mb-2 pt-4 border-t border-slate-100">运营判断与跟进 <span class="font-normal">（运营/高级运营跟进后填写）</span></div>
@@ -3155,7 +2941,7 @@ tailwind.config = {
     <div v-if="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900 text-white text-sm px-5 py-3 rounded-xl shadow-2xl">{{ toast }}</div>
   </transition>
 </div>
-<script src="./talent-leads.js?v=20260921c"></script>
-<script src="./app.js?v=20260921c"></script>
+<script src="./talent-leads.js?v=20260922c"></script>
+<script src="./app.js?v=20260922c"></script>
 </body>
 </html>

@@ -40,10 +40,13 @@ const { createApp, reactive, ref, computed, watch, nextTick, onMounted } = Vue;
 createApp({
   setup() {
     /* ================= 基础状态 ================= */
-    const page = ref('dashboard');
+    // 落地页统一为「我的工作台」（20260922 信息架构调整）：
+    // 原「经营看板」与「我的工作台」两个入口重叠（非管理员进经营看板时渲染的就是岗位工作台视图，
+    // 数据同样来自 /api/mvp/workbench）。现全部岗位登录后都看工作台；经营看板仅管理员保留（全局经营视角）。
+    const page = ref('workbench');
     const mnav = ref(false); // 移动端抽屉导航开关
     const mobTabs = computed(() => [
-      { key: 'dashboard', label: '看板' },
+      { key: 'workbench', label: '工作台' },
       { key: 'talent-leads', label: '线索' },
       { key: 'tasks', label: '任务' },
       { key: 'finance', label: '结算' },
@@ -53,7 +56,11 @@ createApp({
     const today = '2026-09-07';
 
     const allNav = [
-      { key: 'dashboard', label: '经营看板', desc: '全局经营数据一屏总览' },
+      /* 2026-09-22 信息架构调整（v20260922c）：「经营看板」页面已整体删除（导航入口 + 页面模板 + 前端图表逻辑）。
+         原因：员工点「经营看板」时渲染的本来就是岗位工作台视图（同一个 /api/mvp/workbench）；
+         管理员需要的全局经营信息已由工作台面板（漏斗/渠道ROI/负责人负载/异常提醒）承载，页面本身冗余。
+         保留：/api/mvp/dashboard 接口未删（回归断言仍锁定，未来要做报表可复用）。
+         旧跳转/书签：goPage 里对 'dashboard' 统一安全落到「我的工作台」。 */
       /* 2026-09-15 合并：原「线索管理」页与「达人线索」重复（同一张 /api/mvp/leads 表、两套字段模型）。
          看板视图已并入达人线索页（列表/看板切换），本入口停用。恢复需同时还原 NAV_ROLES、
          顶栏「+ 新增线索」按钮、看板待办「去处理」链接、pendingLeads 徽标的目标页。 */
@@ -95,11 +102,11 @@ createApp({
     };
     allNav.forEach(n => { if (icons[n.key]) n.icon = icons[n.key]; }); // 仅给原 8 项补图标；V1 增量项自带图标、分组项无图标
 
-    /* ---- 角色权限（2026-09-15 收紧版，用户确认）----
-       admin  管理员：全部 8 页 + 账号管理
-       staff  运营：业务五页（经营看板/推广获客/线索管理/达人线索/寄拍任务），
+    /* ---- 角色权限（2026-09-15 收紧版；20260922 经营看板页面已整体删除）----
+       admin  管理员：全部 8 页 + 账号管理（全局经营信息在工作台面板看）
+       staff  运营：业务四页（推广获客/线索管理/达人线索/寄拍任务）+ 我的工作台，
               不可见：收益结算、AI 生图、数据导入、账号管理
-       finance 财务：经营看板（看数字对账）+ 收益结算，
+       finance 财务：我的工作台 + 收益结算，
               不可见：推广获客、线索管理、达人线索、寄拍任务、AI 生图、数据导入、账号管理 */
     const canFin = computed(() => ['admin', 'finance'].includes(me.value.role));
     const NAV_ROLES = {
@@ -122,7 +129,7 @@ createApp({
        - 普通运营（ops）：达人线索（长期管理）+ 账号运营 + 寄拍任务（登记跟进）
        - 高级运营（senior_ops）：爆款拆解 / 方法沉淀 / 给普通运营分配任务 / 管理运营质量（跨运营看全部达人）
        - 财务岗：收益结算
-       不在映射里的页面（经营看板 / 我的工作台）对所有岗位可见；管理员不受限。 */
+       不在映射里的页面（我的工作台）对所有岗位可见；管理员不受限。 */
     const NAV_POSITIONS = {
       channels: ['promote'],
       'talent-leads': ['recruit', 'ops', 'senior_ops'],
@@ -382,7 +389,6 @@ createApp({
           const i = talentRows.findIndex(x => x.id === talentId);
           if (i >= 0) talentRows.splice(i, 1, Object.assign({}, talentRows[i], { assignState: 'assigned', assignAckAt: (j.data || {}).assignAckAt || '' }));
           showToast('已确认接收，可以开始陪跑啦');
-          loadDashPanels();
         } else showToast((j && j.error) || '确认失败');
       } catch (e) { showToast('网络错误，确认失败'); }
     }
@@ -427,8 +433,9 @@ createApp({
     fetch('/api/me').then(r => r.json()).then(j => {
       if (j && j.ok) {
         me.value = { user: j.data.user, role: j.data.role, displayName: j.data.displayName || j.data.user, position: j.data.position || '' };
-        // 落地页按链路岗位分流：员工先看自己的工作台，管理员看全链路总览
-        if (me.value.role !== 'admin' && page.value === 'dashboard') goPage('workbench');
+        // 落地页统一为「我的工作台」（20260922 信息架构调整）：管理员原先落在经营看板，
+        // 现与员工一致，登录后直接看自己的工作台（内容仍按岗位装配，管理员=全局视角）。
+        if (page.value === 'dashboard') goPage('workbench');
       }
     }).catch(() => { });
     // 侧边栏底部岗位显示名（字段名与中文显示名分离；未知岗位兜底「成员」）
@@ -489,14 +496,8 @@ createApp({
         }, 350);
       }
     }
-    /* 经营看板按岗位分流：管理员=经营总览（原有 dashboard），其他岗位=岗位工作台视图（服务端按 position 装配 panels） */
-    const dashPanels = reactive({ role: '', blocks: [], today: '' });
-    const dashView = computed(() => (me.value.role === 'admin' ? 'admin' : 'position'));
-    function loadDashPanels() {
-      return fetch('/api/mvp/workbench').then(r => r.json()).then(j => {
-        if (j && j.ok) { dashPanels.role = j.data.panels.role; dashPanels.blocks = j.data.panels.blocks || []; dashPanels.today = j.data.today || ''; }
-      }).catch(() => { });
-    }
+    /* 「经营看板按岗位分流」已随页面一起删除（v20260922c）：员工侧原本渲染的就是岗位工作台视图，
+       管理员侧的全局信息由工作台面板承载。工作台数据见下方 loadWorkbench。 */
     const accModal = ref(false), pwModal = ref(false);
     const accList = reactive([]);
     // 岗位决定账号能看到哪些线索（与 talents.ownerPosition 对应）
@@ -741,12 +742,8 @@ createApp({
     }
 
     // 渠道（投放数据只有管理员 / 推广岗能拿；其他岗位看渠道与漏斗的真实聚合）
-    const canSeeCost = computed(() => me.value.role === 'admin' || me.value.position === 'promote');
     const canTasks = computed(() => me.value.role === 'admin' || ['ops', 'senior_ops'].includes(me.value.position));
     const totalCost = computed(() => sum(campaigns, 'cost'));
-    const totalTalentsAcquired = computed(() => sum(campaigns, 'talents'));
-    const monthNewTalents = computed(() => sum(campaigns, 'talents'));
-    const costPerTalent = computed(() => fmt(totalCost.value / totalTalentsAcquired.value));
     const cpa = channel => {
       const c = campaigns.filter(x => x.channel === channel);
       const cost = sum(c, 'cost'), t = sum(c, 'talents');
@@ -761,68 +758,6 @@ createApp({
       const paid = ranked.filter(c => c.cost > 0).map(c => ({ ...c, cpa: c.talents ? c.cost / c.talents : 0 })).sort((a, b) => a.cpa - b.cpa)[0];
       return { bestChannel: best.channel || '—', bestRate: (best.rate || 0).toFixed(1), cheapChannel: (paid && paid.channel) || '—', cheapCost: fmt(paid ? paid.cpa : 0) };
     });
-    const boardFunnel = computed(() => {
-      const f = board.value.funnel || [];
-      const at = n => (f.find(x => x.name === n) || {}).value || 0;
-      return {
-        total: at('线索进入'), assigned: at('已分配负责人'), followed: at('已跟进'),
-        intent: at('有意向/已报名'), cooperated: at('已成为达人'), hot: board.value.hot || 0,
-      };
-    });
-    const boardAttention = computed(() => board.value.attention || {});
-    const boardAlerts = computed(() => board.value.alerts || []);   // 风险提醒：哪里需要处理
-
-    // 看板 KPI（page = 点击卡片跳转的目标页）
-    const kpis = computed(() => [
-      ...(canSeeCost.value ? [
-        { label: '本月新增达人', value: monthNewTalents.value, unit: '人', good: true, note: '各渠道新增合计', page: 'channels' },
-      ] : [
-        { label: '线索总数', value: boardFunnel.value.total, unit: '条', good: true, note: '已分配 ' + boardFunnel.value.assigned + ' · 已跟进 ' + boardFunnel.value.followed, page: 'talent-leads' },
-        { label: '待分配线索', value: boardAttention.value.unassigned || 0, unit: '条', good: false, note: '还没指定负责人的公海线索', page: 'talent-leads' },
-        { label: '逾期未跟进', value: boardAttention.value.overdueFollow || 0, unit: '条', good: false, note: '超过下次跟进时间', page: 'workbench' },
-        { label: '待接收交接', value: boardAttention.value.pendingHandover || 0, unit: '单', good: false, note: '等接收人确认', page: 'workbench' },
-        { label: '已合作达人', value: boardFunnel.value.cooperated, unit: '人', good: true, note: '高潜强意愿 ' + boardFunnel.value.hot + ' 人待推进', page: 'talent-leads' },
-      ]),
-      { label: '本月寄拍任务', value: tasks.length, unit: '个', good: true, note: '待审核 ' + (boardAttention.value.pendingAudit || 0) + ' · 逾期 ' + (boardAttention.value.taskOverdue || 0), page: 'tasks', onlyTasks: true },
-      { label: '平台收益合计', value: '¥' + fmt(finPlatform.value), unit: '', good: true, note: '得物结算给公司的总额', page: 'finance', fin: true },
-      { label: 'MCN 分成留存', value: '¥' + fmt(finMcn.value), unit: '', good: true, note: '分成 ' + Math.round(finSettings.mcnRate * 100) + '%', page: 'finance', fin: true },
-      { label: '已付达人', value: '¥' + fmt(finPaid.value), unit: '', good: false, note: '实际打款给达人', page: 'finance', fin: true },
-      { label: '待付达人', value: '¥' + fmt(finUnpaid.value), unit: '', good: false, note: finTotals.value.overdueCount ? '含逾期 ' + finTotals.value.overdueCount + ' 单' : '暂无逾期', page: 'finance', fin: true },
-      ...(canSeeCost.value ? [
-        { label: '单达人获客成本', value: '¥' + costPerTalent.value, unit: '', good: true, note: '全渠道平均', page: 'channels' },
-        { label: '本月有效线索', value: sum(campaigns, 'validLeads'), unit: '条', good: true, note: '报名 ' + sum(campaigns, 'signed') + ' 人', page: 'channels' },
-      ] : []),
-    ].filter(k => (k.onlyTasks ? canTasks.value : true))
-     .filter(k => { const r = NAV_ROLES[k.page]; return !r || r.includes(me.value.role); })
-     .filter(k => !(k.page === 'channels' && !canSeeCost.value)));
-
-    // 待办跟进：真实数据，不写死。来源 = 工作台接口的服务端推导（wbApi.todos，登录后自动拉取）
-    // + 看板风险提醒（board.alerts）。此前这里是 5 条写死的演示文案，与真实业务无关。
-    const todos = computed(() => {
-      const out = [];
-      const seen = new Set();
-      const push = (id, name, action, time, urgent, page) => {
-        const r = NAV_ROLES[page];
-        if (r && !r.includes(me.value.role)) return;              // 角色无该页面权限 → 不展示
-        const k = name + '|' + action;
-        if (seen.has(k)) return; seen.add(k);
-        out.push({ id, name, action, time, urgent, page });
-      };
-      // 1) 服务端工作台待办（新分配/今日待跟进/逾期/SLA/交接…按登录人职责推导）
-      const wb = (wbReady.value && Array.isArray(wbApi.value.todos)) ? wbApi.value.todos : [];
-      wb.slice(0, 6).forEach((t, i) => {
-        const page = /结算/.test(t.type || '') ? 'finance' : (/任务|寄拍|拍摄/.test(t.type || '') ? 'tasks' : 'talent-leads');
-        push(t.talentId || ('wb-' + i), t.name || '', (t.type || '') + (t.action ? ' · ' + t.action : ''), t.due || '', t.priority === '高', page);
-      });
-      // 2) 看板风险提醒（未分配/超时/SLA 超时/逾期结算…全局口径）
-      const alerts = (board.value && Array.isArray(board.value.alerts)) ? board.value.alerts : [];
-      alerts.slice(0, 4).forEach((a, i) => {
-        push('alert-' + i, a.type || '风险提醒', a.text || '', (a.count || 0) + ' 条', a.tone === 'rose', a.page || 'talent-leads');
-      });
-      return out.slice(0, 8);
-    });
-
-    const taskStageDist = computed(() => TASK_STAGES.map(s => ({ name: s, count: tasks.filter(t => t.status === s).length })).filter(x => x.count > 0));
     const pendingLeads = computed(() => { try { return tl.list.filter(r => r.stage !== '已交接').length; } catch (e) { return leads.filter(l => l.status !== '已成为达人' && l.status !== '无效线索').length; } });
 
     /* ================= 线索页 ================= */
@@ -1218,125 +1153,6 @@ createApp({
       showToast('成功导入 ' + count + ' 条数据');
     }
 
-    /* ================= 图表 ================= */
-    const funnelChart = ref(null), channelChart = ref(null), trendChart = ref(null), trend30Chart = ref(null);
-    let charts = {};
-    /* 经营看板真实数据：漏斗（由达人状态实时推导）/ 渠道效果 / 负责人负载，来自 /api/mvp/dashboard */
-    const board = ref({ funnel: [], workload: [], byChannel: [], attention: {} });
-    function loadBoard() {
-      return fetch('/api/mvp/dashboard').then(r => r.json()).then(j => {
-        if (j && j.ok && j.data) board.value = j.data;
-        renderCharts();
-      }).catch(() => {});
-    }
-    const boardReady = computed(() => (board.value.funnel || []).some(x => x.value > 0));
-    const maxLoad = computed(() => Math.max(1, ...((board.value.workload || []).map(w => w.load))));
-    const loadPct = w => Math.max(6, Math.round(w.load / maxLoad.value * 100));
-    function renderCharts() {
-      nextTick(() => {
-        if (funnelChart.value) {
-          charts.f = charts.f || echarts.init(funnelChart.value);
-          // 真实漏斗：线索进入 → 已分配负责人 → 已跟进 → 高潜强意愿 → 已合作（由达人表实时推导）
-          const fn = (board.value.funnel || []).length ? board.value.funnel : [
-            { name: '线索进入', value: 0 }, { name: '已分配负责人', value: 0 }, { name: '已跟进', value: 0 },
-            { name: '高潜强意愿', value: 0 }, { name: '已合作', value: 0 },
-          ];
-          charts.f.setOption({
-            tooltip: { trigger: 'item', formatter: '{b}: {c}' },
-            series: [{
-              type: 'funnel', left: '5%', width: '90%', top: 10, bottom: 10, minSize: '22%',
-              label: { formatter: '{b} {c}', fontSize: 11 },
-              color: ['#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#312e81'],
-              data: fn.map(x => ({ value: x.value, name: x.name })),
-            }],
-          });
-        }
-        if (channelChart.value) {
-          charts.c = charts.c || echarts.init(channelChart.value);
-          // 渠道效果：按达人来源渠道实时聚合（不再依赖投放表的手工汇总数字）
-          const chs = board.value.byChannel || [];
-          const names = chs.length ? chs.map(c => c.channel) : ['暂无数据'];
-          const showCost = chs.some(c => c.cost !== null && c.cost !== undefined);
-          charts.c.setOption({
-            tooltip: { trigger: 'axis' },
-            legend: { data: showCost ? ['单达人成本(元)', '线索→达人转化率%'] : ['线索数', '成为达人', '线索→达人转化率%'], bottom: 0, textStyle: { fontSize: 10 } },
-            // 渠道名是手填自由文本：x 轴标签截断到 8 字 + 斜排，防止长名字互相重叠盖住图例
-            grid: { left: 40, right: 40, top: 20, bottom: 75 },
-            xAxis: { type: 'category', data: names, axisLabel: { fontSize: 10, interval: 0, rotate: 30, formatter: v => (v.length > 8 ? v.slice(0, 8) + '…' : v) } },
-            yAxis: [{ type: 'value' }, { type: 'value', max: 100, axisLabel: { formatter: '{value}%' } }],
-            series: showCost ? [
-              { name: '单达人成本(元)', type: 'bar', data: chs.map(c => c.costPerTalent || 0), itemStyle: { color: '#c7d2fe', borderRadius: [4, 4, 0, 0] }, barWidth: 18 },
-              { name: '线索→达人转化率%', type: 'line', yAxisIndex: 1, data: chs.map(c => c.talentRate || 0), itemStyle: { color: '#4f46e5' }, lineStyle: { width: 3 } },
-            ] : [
-              { name: '线索数', type: 'bar', data: chs.map(c => c.leads), itemStyle: { color: '#c7d2fe', borderRadius: [4, 4, 0, 0] }, barWidth: 14 },
-              { name: '成为达人', type: 'bar', data: chs.map(c => c.talents), itemStyle: { color: '#818cf8', borderRadius: [4, 4, 0, 0] }, barWidth: 14 },
-              { name: '线索→达人转化率%', type: 'line', yAxisIndex: 1, data: chs.map(c => c.talentRate || 0), itemStyle: { color: '#4f46e5' }, lineStyle: { width: 3 } },
-            ],
-          });
-        }
-        if (trendChart.value) {
-          charts.t = charts.t || echarts.init(trendChart.value);
-          const byPeriod = {};
-          settlements.forEach(s => { byPeriod[s.period] = (byPeriod[s.period] || 0) + s.platformIncome; });
-          const periods = Object.keys(byPeriod).sort();
-          charts.t.setOption({
-            tooltip: { trigger: 'axis' },
-            legend: { data: ['平台收益(元)', '结算单数'], bottom: 0, textStyle: { fontSize: 10 } },
-            grid: { left: 62, right: 42, top: 20, bottom: 40 },
-            xAxis: { type: 'category', data: periods.length ? periods : ['暂无结算单'] },
-            yAxis: [{ type: 'value' }, { type: 'value' }],
-            series: [
-              { name: '平台收益(元)', type: 'line', smooth: true, data: periods.map(p => Math.round(byPeriod[p])), areaStyle: { color: 'rgba(99,102,241,.12)' }, itemStyle: { color: '#6366f1' }, lineStyle: { width: 3 } },
-              { name: '结算单数', type: 'bar', yAxisIndex: 1, data: periods.map(p => settlements.filter(s => s.period === p).length), itemStyle: { color: '#c7d2fe', borderRadius: [4, 4, 0, 0] }, barWidth: 22 },
-            ],
-          });
-        }
-        if (trend30Chart.value) {
-          charts.d = charts.d || echarts.init(trend30Chart.value);
-          // 近 30 天每日新增线索：优先用服务端看板接口聚合好的 trend30（按 createdAt，口径唯一）；
-          // 接口未返回时回退到本地按线索模块列表聚合（老数据兼容）。
-          let days30 = [], vals30 = [], empty30 = true;
-          const t30 = (board.value && Array.isArray(board.value.trend30)) ? board.value.trend30 : null;
-          if (t30 && t30.length) {
-            days30 = t30.map(d => d.date); vals30 = t30.map(d => d.count);
-            empty30 = vals30.every(v => !v);
-          } else {
-            const now = new Date();
-            for (let i = 29; i >= 0; i--) { const d = new Date(now.getTime() - i * 86400000); days30.push(d.toISOString().slice(5)); }
-            const rows30 = (tl && Array.isArray(tl.list)) ? tl.list : [];
-            const byDay = {}; rows30.forEach(r => { const k = String(r.createdAt || '').slice(0, 10); byDay[k] = (byDay[k] || 0) + 1; });
-            vals30 = days30.map(d => byDay[d] || 0);
-            empty30 = rows30.length === 0;
-          }
-          charts.d.setOption({
-            title: empty30 ? { text: me.value.role === 'admin' ? '暂无线索数据' : '当前角色无线索数据权限', left: 'center', top: 'middle', textStyle: { color: '#94a3b8', fontSize: 12, fontWeight: 'normal' } } : undefined,
-            tooltip: { trigger: 'axis' },
-            grid: { left: 34, right: 16, top: 16, bottom: 26 },
-            xAxis: { type: 'category', data: days30, axisLabel: { fontSize: 9, interval: 6 } },
-            yAxis: { type: 'value', minInterval: 1 },
-            series: [{
-              name: '新增线索', type: 'bar', barWidth: '55%',
-              data: vals30,
-              itemStyle: { color: '#818cf8', borderRadius: [3, 3, 0, 0] },
-            }],
-          });
-        }
-        setTimeout(() => Object.values(charts).forEach(c => c && c.resize()), 50);
-      });
-    }
-    watch(page, p => { if (p === 'dashboard') renderCharts(); window.scrollTo(0, 0); });
-    // 图表响应式重绘：数据（看板/结算单/任务/线索列表）晚于页面到达时自动补画。
-    // 此前只在挂载后 300ms/1500ms 两个固定时间点绘制，线上冷启动数据晚到就会一直空白。
-    watch(
-      [board, () => settlements.length, () => tasks.length, () => (tl && Array.isArray(tl.list) ? tl.list.length : 0)],
-      () => { if (page.value === 'dashboard') nextTick(renderCharts); },
-    );
-    // 首次进看板也要渲染图表（此前只有切页才触发，导致登录后图表空白）
-    onMounted(() => {
-      loadBoard();
-      if (canTasks.value) loadTasks();   // 寄拍任务只有运营/寄拍/管理员能拉，其他人拉到 403 留空
-      setTimeout(renderCharts, 300); setTimeout(renderCharts, 1500);
-    });
     // /api/me 是异步返回的：挂载瞬间 canTasks 还是 false，导致看板「任务阶段分布」永远空。
     // 等 me 到位、权限变 true 时补加载一次（tasksLoaded 防重复）。
     watch(canTasks, v => { if (v && !tasksLoaded.value) loadTasks(); });
@@ -1389,6 +1205,19 @@ createApp({
     const wbExtraCards = computed(() => (wbReady.value && Array.isArray(wbApi.value.extraCards)) ? wbApi.value.extraCards : []);
     // 岗位面板（运营中台）：服务端按岗位装配的模块块，前端只负责渲染，不做权限判断
     const wbPanels = computed(() => (wbReady.value && wbApi.value.panels) ? wbApi.value.panels : { role: '', blocks: [] });
+    /* 工作台按岗位差异化（20260922 信息架构调整）：
+       - 标题/副标题：服务端按 position 下发（推广=获客 / 招募=联系新人 / 运营=管达人 /
+         高级运营=分配审核 / 财务=对账 / 管理员=全局状态）——同一个工作台框架，不同岗位看到不同交代
+       - 快捷入口：服务端下发的岗位专属动作（带 page 或 href），点一下直达要处理的业务页 */
+    const wbTitle = computed(() => (wbPanels.value && wbPanels.value.title) || '我的工作台');
+    const wbSubtitle = computed(() => (wbPanels.value && wbPanels.value.subtitle) || '按「推广获客 → 招募对接 → 达人运营 → 收益结算」链路和你的岗位实时生成');
+    const wbQuick = computed(() => (wbPanels.value && Array.isArray(wbPanels.value.quick)) ? wbPanels.value.quick : []);
+    // 岗位卡点击：有 page → 切页并带上筛选提示；有 href → 新窗口打开（如报名表）
+    function wbCardAct(c) {
+      if (!c) return;
+      if (c.href) { window.open(c.href, '_blank', 'noopener'); return; }
+      if (c.page) { goPage(c.page); if (c.filter) showToast('已进入「' + (c.filter) + '」，请按筛选条件查看'); }
+    }
     // 漏斗条宽：以第一层为基准（分母兜底 1，避免全 0 时除零）
     function funnelWidth(b, v) {
       const max = (b.items && b.items.length && b.items[0].value) || 1;
@@ -1445,13 +1274,15 @@ createApp({
 
     function goPage(k) {
       if (k === 'accounts') { openAccounts(); return; } // 系统设置组的账号管理：打开弹窗而非切页
+      // 20260922 信息架构（v20260922c）：经营看板页面已删除 —— 旧入口/旧跳转/书签统一安全落到「我的工作台」
+      //（/api/mvp/dashboard 接口保留未删；全局经营信息由工作台面板承载）
+      if (k === 'dashboard') k = 'workbench';
       const r = NAV_ROLES[k];
       if (r && !r.includes(me.value.role)) { toast.value = '没有权限访问该页面'; setTimeout(() => (toast.value = ''), 2600); return; }
       // 岗位职责边界：岗位设置了却不属于该页面的，拦截（管理员不受限）
       const p = NAV_POSITIONS[k];
       if (p && me.value.role !== 'admin' && me.value.position && !p.includes(me.value.position)) { toast.value = '该页面不在你的岗位职责内（' + (POSITIONS.find(x => x.key === me.value.position) || {}).label + '岗）'; setTimeout(() => (toast.value = ''), 2600); return; }
       page.value = k;
-      if (k === 'dashboard') { if (dashView.value === 'admin') { loadBoard(); setTimeout(renderCharts, 60); } else loadDashPanels(); }
       if (k === 'workbench') loadWorkbench();   // 待办按服务端规则实时重算
       if (k === 'account-ops') loadAccounts();  // 账号指标每次进入都刷新
       if (k === 'talent-pool') loadTalents(); // 达人档案：转化入库后实时刷新
@@ -1463,14 +1294,15 @@ createApp({
     return {
       page, nav, currentNav, today, toast, trendUp, trendFlat, tl, mnav, mobTabs, showToast,
       wbToday, wbOverdue, wbHandover, wbHot, wbInbox, wbTodos, wbOpen, wbCards, wbExtraCards, wbPanels, wbConfirm, wbReject, wbStartHandover, loadWorkbench,
-      funnelWidth, funnelRate, talentTimelineDlg, openTalentTimeline, dashView, dashPanels, loadDashPanels,
+      wbTitle, wbSubtitle, wbQuick, wbCardAct,
+      funnelWidth, funnelRate, talentTimelineDlg, openTalentTimeline,
       dewuRows, dewuStats, dewuReady, fansText, dewuDlg, dewuForm, openDewuEdit, saveDewu, loadAccounts,
       talentRows, talentStats, talentReady, loadTalents,
       me, canFin, accModal, pwModal, accList, accForm, pwForm, resetInfo, openAccounts, createAccount, removeAccount, resetAccount, updateAccount, POSITIONS, openPassword, changePassword, logout,
       CHANNELS, channelsAll, chAddOpen, chNewName, addCustomChannel, OWNERS, TASK_STAGES, leadStagesAll, leadFunnel,
       campaigns, leads, tasks,
       cmpModal, cmpEditing, cmpForm, openCmpCreate, openCmpEdit, saveCampaign, deleteCampaign,
-      kpis, todos, taskStageDist, pendingLeads,
+      pendingLeads,
       fmt, cpa, sum, stageIdx, leadStageColor, taskStageColor,
       totalCost,
       finMode, finSettings, settlements, settleFiltered, settleKeyword, settleStatusFilter, SETTLE_STATUSES, ADJ_TYPES,
@@ -1481,7 +1313,7 @@ createApp({
       confirmSettle, closeSettle, deleteSettlement, addAdjustment, removeAdjustment, settleStatusColor,
       payModal, payDirection, payTarget, payForm, openPayModal, savePayment, deletePayment,
       setModal, setForm, openSettings, saveSettings, talentNameOptions, todayStr,
-      monthNewTalents, costPerTalent, insight,
+      insight,
       talentCards,
       leadView, leadKeyword, leadModal, leadForm, filteredLeads, leadsFiltered, isOverdue,
       openLeadModal, saveLead, onLeadMove,
@@ -1490,10 +1322,9 @@ createApp({
       notif, NOTIF_TYPE_LABEL, toggleNotif, readNotif, readAllNotifs, panelLeadAct, reviewPanelLead,
       opsTaskProgDlg, openOpsTaskProgress, saveOpsTaskProgress, deleteOpsTask,
       hitCases, hitCasesLoaded, hitCaseQ, hitCasesFiltered, canEditHitCase, loadHitCases, hitCaseDlg, openHitCase, saveHitCase, deleteHitCase,
-      board, loadBoard, boardReady, maxLoad, loadPct, boardFunnel, boardAttention, boardAlerts, canSeeCost, canTasks,
+      canTasks,
       ai, aiTemplates, aiPrompt, aiUsableRate, generateImages,
       tplList, imp, downloadTemplate, handleFile, confirmImport,
-      funnelChart, channelChart, trendChart, trend30Chart,
       goPage,
     };
   },

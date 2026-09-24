@@ -47,13 +47,15 @@ const check = (label, cond, got) => {
   };
 
   // 期望值：菜单看 role + 岗位（链路分工），数据范围看 position
+  // 20260922 增：chip = 工作台标题旁的岗位徽标；sub = 该岗位工作台副标题里的特征短语
+  // 20260922c 改：经营看板页面整体删除（含管理员），全岗位只有「我的工作台」；落地页=工作台
   const cases = [
-    { key: 'admin',        label: '管理员', user: 'admin',        role: 'admin',   position: 'admin',   fin: true,  accounts: true,  ai: true,  talents: true,  chan: true,  acc: true },
-    { key: 'demo-promote', label: '推广',   user: 'demo-promote', role: 'staff',   position: 'promote', fin: false, accounts: false, ai: false, talents: false, chan: true,  acc: false },
-    { key: 'demo-recruit', label: '招募',   user: 'demo-recruit', role: 'staff',   position: 'recruit', fin: false, accounts: false, ai: false, talents: true,  chan: false, acc: false },
-    { key: 'demo-staff',   label: '运营',   user: 'demo-staff',   role: 'staff',   position: 'ops',     fin: false, accounts: false, ai: false, talents: true,  chan: false, acc: true },
-    { key: 'demo-senior',  label: '高级运营', user: 'demo-senior',  role: 'staff',   position: 'senior_ops', fin: false, accounts: false, ai: false, talents: true,  chan: false, acc: true },
-    { key: 'demo-finance', label: '财务',   user: 'demo-finance', role: 'finance', position: 'finance', fin: true,  accounts: false, ai: false, talents: false, chan: false, acc: false },
+    { key: 'admin',        label: '管理员', user: 'admin',        role: 'admin',   position: 'admin',   fin: true,  accounts: true,  ai: true,  talents: true,  chan: true,  acc: true,  chip: '管理员',   sub: '系统整体状态', dash: false },
+    { key: 'demo-promote', label: '推广',   user: 'demo-promote', role: 'staff',   position: 'promote', fin: false, accounts: false, ai: false, talents: false, chan: true,  acc: false, chip: '推广',     sub: '今天投哪里', dash: false },
+    { key: 'demo-recruit', label: '招募',   user: 'demo-recruit', role: 'staff',   position: 'recruit', fin: false, accounts: false, ai: false, talents: true,  chan: false, acc: false, chip: '招募',     sub: '今天该联系谁', dash: false },
+    { key: 'demo-staff',   label: '运营',   user: 'demo-staff',   role: 'staff',   position: 'ops',     fin: false, accounts: false, ai: false, talents: true,  chan: false, acc: true,  chip: '普通运营', sub: '今天该处理哪些达人', dash: false },
+    { key: 'demo-senior',  label: '高级运营', user: 'demo-senior',  role: 'staff',   position: 'senior_ops', fin: false, accounts: false, ai: false, talents: true,  chan: false, acc: true,  chip: '高级运营', sub: '今天要分配、审核', dash: false },
+    { key: 'demo-finance', label: '财务',   user: 'demo-finance', role: 'finance', position: 'finance', fin: true,  accounts: false, ai: false, talents: false, chan: false, acc: false, chip: '财务',     sub: '今天哪些钱需要确认', dash: false },
   ];
 
   // ---- 0. DEMO 区块结构：管理员 + 5 个岗位按钮，且带说明小字 ----
@@ -93,6 +95,27 @@ const check = (label, cond, got) => {
     check(`菜单·达人线索 ${c.talents ? '可见' : '隐藏'}`, nav.talents === c.talents, nav);
     check(`菜单·推广获客 ${c.chan ? '可见' : '隐藏'}`, nav.chan === c.chan, nav);
     check(`菜单·账号运营 ${c.acc ? '可见' : '隐藏'}`, nav.acc === c.acc, nav);
+
+    /* 20260922 信息架构调整（工作台统一首页）：
+       ① 经营看板页面整体删除（20260922c，含管理员——全局信息由工作台面板承载）② 我的工作台入口在
+       ③ 落地页直接是工作台 ④ 工作台有该岗位的交代（岗位徽标 + 岗位化副标题） */
+    const ia = JSON.parse((await evalJs(`JSON.stringify((() => {
+      const navTxt=[...document.querySelectorAll('nav a')].map(x=>x.textContent).join('|');
+      const h1=(document.querySelector('h1')||{innerText:''}).innerText;
+      const t=document.body.innerText;
+      return {
+        dash: navTxt.includes('\u7ecf\u8425\u770b\u677f'),
+        wb: navTxt.includes('\u6211\u7684\u5de5\u4f5c\u53f0'),
+        landed: h1.includes('\u6211\u7684\u5de5\u4f5c\u53f0'),
+        chip: t.includes(${JSON.stringify(c.chip)}),
+        sub: t.includes(${JSON.stringify(c.sub)}),
+      };
+    })())`)) || '{}');
+    check('菜单·经营看板 已全岗位下线（页面已删除）', ia.dash === c.dash, ia);
+    check('菜单·我的工作台 可见', ia.wb === true, ia);
+    check('落地页 = 我的工作台（不再默认经营看板）', ia.landed === true, ia);
+    check(`工作台岗位交代·徽标「${c.chip}」`, ia.chip === true, ia);
+    check(`工作台岗位交代·副标题「${c.sub}」`, ia.sub === true, ia);
 
     await evalJs(`fetch('/api/logout',{method:'POST'})`);
   }

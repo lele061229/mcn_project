@@ -440,8 +440,8 @@ def main():
     # ---------- 12.5 运营中台：岗位面板 / 团队效率 / 运营任务 / 爆款拆解 / 达人评级 / 时间轴 ----------
     st, j = call(admin, '/api/mvp/workbench')
     wp = ((j or {}).get('data') or {}).get('panels') or {}
-    chk('管理员面板：成长漏斗+团队效率+渠道ROI+异常提醒',
-        st == 200 and [b['key'] for b in (wp.get('blocks') or [])] == ['growth-funnel', 'team-efficiency', 'channel-roi', 'alerts'],
+    chk('管理员面板：成长漏斗+团队效率+渠道ROI+异常提醒+负责人负载（20260922 增 owner-load）',
+        st == 200 and [b['key'] for b in (wp.get('blocks') or [])] == ['growth-funnel', 'team-efficiency', 'channel-roi', 'alerts', 'owner-load'],
         [b.get('key') for b in (wp.get('blocks') or [])])
     funnel = next((b for b in wp.get('blocks', []) if b.get('key') == 'growth-funnel'), None)
     chk('成长漏斗五层累计口径逐级单调递减',
@@ -687,9 +687,9 @@ def main():
     stfLabels = [c.get('label') for c in (stf.get('extraCards') or [])]
     stfTodos = stf.get('todos') or []
     stfKeys = set(b.get('key') for b in ((stf.get('panels') or {}).get('blocks') or []))
-    chk('ops 顶部卡片 7 张（20260921a）：我的达人数/今日新分配达人/待跟进达人/待发布内容/待寄拍（待起拍）/数据异常达人数/待审核线索',
-        st == 200 and {'我的达人数', '今日新分配达人', '待跟进达人', '待发布内容', '待寄拍（待起拍）', '数据异常达人数', '待审核线索'} <= set(stfLabels)
-        and len(stfLabels) == 7, stfLabels)
+    chk('ops 顶部卡片 8 张（20260922 增 待确认接收）：我的达人数/今日新分配达人/待确认接收/待跟进达人/待发布内容/待寄拍（待起拍）/数据异常达人数/待审核线索',
+        st == 200 and {'我的达人数', '今日新分配达人', '待确认接收', '待跟进达人', '待发布内容', '待寄拍（待起拍）', '数据异常达人数', '待审核线索'} <= set(stfLabels)
+        and len(stfLabels) == 8, stfLabels)
     chk('ops 工作台待办只来自自己名下（行级隔离：达人待办 owner=王浩，任务/账号待办无他人 owner）',
         all(t.get('owner') in ('王浩', None, '') for t in stfTodos),
         sorted({str(t.get('owner')) for t in stfTodos}))
@@ -699,9 +699,9 @@ def main():
     pro = (j.get('data') or {})
     proLabels = [c.get('label') for c in (pro.get('extraCards') or [])]
     proKeys = set(b.get('key') for b in ((pro.get('panels') or {}).get('blocks') or []))
-    chk('promote 顶部卡片 7 张（20260921a 新漏斗）：本月推广活动数/总投入/表单访问量/有效线索数/新增达人数/有效线索转化率/新增达人成本',
-        st == 200 and {'本月推广活动数', '总投入', '表单访问量', '有效线索数', '新增达人数', '有效线索转化率', '新增达人成本'} <= set(proLabels)
-        and len(proLabels) == 7, proLabels)
+    chk('promote 顶部卡片 9 张（20260922 增 今日/本周新增线索）：今日新增线索/本周新增线索/本月推广活动数/总投入/表单访问量/有效线索数/新增达人数/有效线索转化率/新增达人成本',
+        st == 200 and {'今日新增线索', '本周新增线索', '本月推广活动数', '总投入', '表单访问量', '有效线索数', '新增达人数', '有效线索转化率', '新增达人成本'} <= set(proLabels)
+        and len(proLabels) == 9, proLabels)
     chk('promote 活动类卡片口径来自投放表（活动列表面板列含 活动/渠道/投入）',
         next((b for b in ((pro.get('panels') or {}).get('blocks') or []) if b.get('key') == 'campaign-list'), {}).get('columns')
         and {'活动', '渠道', '投入'} <= set(next((b for b in ((pro.get('panels') or {}).get('blocks') or []) if b.get('key') == 'campaign-list')).get('columns') or []),
@@ -713,13 +713,52 @@ def main():
     recLabels = [c.get('label') for c in (rec.get('extraCards') or [])]
     recKeys = set(b.get('key') for b in ((rec.get('panels') or {}).get('blocks') or []))
     recTodos = rec.get('todos') or []
-    chk('recruit 顶部卡片 5 张（20260921a SLA 停用）：待处理新线索/今日待跟进/高意向达人/待交接达人/今日新增报名',
-        st == 200 and {'待处理新线索', '今日待跟进', '高意向达人', '待交接达人', '今日新增报名'} <= set(recLabels)
-        and len(recLabels) == 5, recLabels)
+    chk('recruit 顶部卡片 7 张（20260922 增 我的线索数/超 2 天未跟进）：待处理新线索/今日待跟进/高意向达人/待交接达人/今日新增报名/我的线索数/超 2 天未跟进',
+        st == 200 and {'待处理新线索', '今日待跟进', '高意向达人', '待交接达人', '今日新增报名', '我的线索数', '超 2 天未跟进'} <= set(recLabels)
+        and len(recLabels) == 7, recLabels)
     chk('recruit 面板不含运营团队 / 财务 / 深度账号运营数据面板',
         not {'ops-team', 'settle-overview', 'income-stats', 'team-efficiency'} & recKeys, sorted(recKeys))
     chk('recruit 待办无运营团队视角类型（不出现 待分配 公海待办）',
         all(t.get('type') != '待分配' for t in recTodos), [t.get('type') for t in recTodos[:5]])
+
+    # ---------- 12.7 工作台信息架构（20260922，20260922b 改：经营看板仅管理员保留）/ 全岗位统一工作台首页 / 岗位交代差异化 ----------
+    # 目标：底层一套工作台框架，但各岗位第一眼看到的内容必须明显不同（推广=获客、招募=联系新人、
+    # 运营=管达人、高级运营=分配审核、财务=对钱、管理员=全局），而不是「同一页隐藏几张卡」。
+    _wbMeta = {}
+    for _nm, _op in (('admin', admin), ('promote', promote), ('recruit', recruit),
+                     ('ops', staff), ('senior_ops', senior), ('finance', fin)):
+        _st, _j = call(_op, '/api/mvp/workbench')
+        _pn = ((_j or {}).get('data') or {}).get('panels') or {}
+        _wbMeta[_nm] = (_pn.get('roleLabel'), _pn.get('subtitle'),
+                        [q.get('label') for q in (_pn.get('quick') or [])])
+    chk('六岗位工作台都下发岗位交代（roleLabel + subtitle + 快捷入口均非空）',
+        all(rl and sb and qk for rl, sb, qk in _wbMeta.values()), _wbMeta)
+    chk('岗位交代互不相同（不是一套通用文案套六个岗位）',
+        len({v[1] for v in _wbMeta.values()}) == 6 and len({v[0] for v in _wbMeta.values()}) == 6,
+        [v[0] for v in _wbMeta.values()])
+    chk('岗位交代能体现岗位职责（推广含获客/投、招募含联系、运营含达人、高级运营含分配/审核、财务含钱）',
+        ('投' in _wbMeta['promote'][1] or '渠道' in _wbMeta['promote'][1])
+        and '联系' in _wbMeta['recruit'][1]
+        and '达人' in _wbMeta['ops'][1]
+        and ('分配' in _wbMeta['senior_ops'][1] or '审核' in _wbMeta['senior_ops'][1])
+        and ('钱' in _wbMeta['finance'][1] or '结算' in _wbMeta['finance'][1]),
+        {k: v[1] for k, v in _wbMeta.items()})
+    chk('快捷入口按岗位下发且不重复（管理员 5 个 / 推广含报名表外链 / 财务只有结算）',
+        len(_wbMeta['admin'][2]) >= 4 and '打开报名表' in _wbMeta['promote'][2]
+        and _wbMeta['finance'][2] == ['收益结算'], {k: v[2] for k, v in _wbMeta.items()})
+    # 卡片可点击：每张带了 page 的卡必须有明确业务页；管理员角色卡必须全部可点（都要能落到处理页）
+    _st, _j = call(admin, '/api/mvp/workbench')
+    _admCards = ((_j or {}).get('data') or {}).get('extraCards') or []
+    chk('管理员顶部卡片全部可点击（label→page 映射齐备，点进去就能处理）',
+        bool(_admCards) and all(c.get('page') for c in _admCards), [(c.get('label'), c.get('page')) for c in _admCards])
+    _st, _j = call(fin, '/api/mvp/workbench')
+    _finBlocks = [b.get('key') for b in (((_j or {}).get('data') or {}).get('panels') or {}).get('blocks') or []]
+    chk('财务工作台有真实结算记录面板（recent-settlements，非硬编码演示数据）',
+        'recent-settlements' in _finBlocks, _finBlocks)
+    _st, _j = call(admin, '/api/mvp/workbench')
+    _admBlocks = [b.get('key') for b in (((_j or {}).get('data') or {}).get('panels') or {}).get('blocks') or []]
+    chk('管理员工作台有负责人负载面板（owner-load，与经营看板口径一致但不重复做看板）',
+        'owner-load' in _admBlocks, _admBlocks)
 
     # ---------- 12.5 线索字段分层（2026-09-18）：报名只产映射字段；判断字段初始「待判断」；判断字段岗位权限 ----------
     signup = {'nickname': 'APItest报名分层', 'source_channel': '小红书', 'phone': '13800001111',

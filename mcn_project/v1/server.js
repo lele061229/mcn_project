@@ -1538,6 +1538,15 @@ async function buildWorkbenchPanels(ctx, all) {
     const undone = tasksAll.filter(k => k.status === '超时' || (ACTIVE_TASK.includes(k.status) && k.dueAt && k.dueAt < today)).length;
     if (undone) alertsItems.push({ text: '未完成任务', sub: undone + ' 个任务逾期 / 超时未完成', page: 'tasks', tone: 'rose' });
     blocks.push({ key: 'alerts', title: '异常提醒', type: 'alerts', items: alertsItems });
+    // 5) 负责人负载（20260922 从经营看板迁入工作台）：谁忙谁闲、该不该重新分配
+    //    复用 buildTeamMembers()（与 /api/mvp/dashboard 的负责人负载同口径），不改统计体系
+    const members = await buildTeamMembers();
+    blocks.push({
+      key: 'owner-load', title: '负责人负载', type: 'table', link: 'talent-pool',
+      hint: '每个运营手上的达人数与异常数 —— 判断要不要重新分配',
+      columns: ['负责人', '岗位', '在管达人', '异常', '任务完成率'],
+      rows: members.map(m => [m.name, m.positionLabel, m.talents, m.abnormal, m.taskRate + '%']),
+    });
   } else if (myPos === 'senior_ops') {
     // 1) 待分配线索：报名进来未分配的线索（付费孵化已由系统自动分配，这里主要是免费招募）+ 负载最低推荐
     const newLeads = all.filter(t => statusOf(t) === 'lead' && (!t.ownerId || t.owner === '未分配'))
@@ -1786,8 +1795,56 @@ async function buildWorkbenchPanels(ctx, all) {
       key: 'settle-todo', title: '待办提醒', type: 'alerts',
       items: overdue.slice(0, 5).map(s2 => ({ text: (s2.talentName || '达人') + ' ' + (s2.period || ''), sub: '¥' + s2.platformIncome + ' · 应结 ' + s2.dueDate, page: 'finance', tone: 'rose' })),
     });
+    // 最近结算记录（20260922）：只列库中真实结算单，不硬编码任何金额
+    const recent = sts.slice().sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || ''))).slice(0, 8);
+    blocks.push({
+      key: 'recent-settlements', title: '最近结算记录', type: 'table', link: 'finance',
+      hint: '按创建时间倒序：确认与结清操作在「收益结算」页完成',
+      columns: ['结算单', '达人', '周期', '平台收益', '状态', '应结日期'],
+      rows: recent.map(s2 => [s2.id, s2.talentName || '—', s2.period || '—', '¥' + (Number(s2.platformIncome) || 0), s2.status || '—', s2.dueDate || '—']),
+    });
   }
-  return { role: isAdmin ? 'admin' : (myPos || 'other'), blocks, today };
+  /* —— 岗位交代（20260922 信息架构调整）——
+     同一套工作台框架，不同岗位第一眼看到不同交代：
+     推广=获客 / 招募=联系新人 / 普通运营=管达人 / 高级运营=分配审核 / 财务=对账 / 管理员=全局状态。
+     标题、副标题、快捷入口全部由服务端按 position 下发（前端只渲染，不做岗位判断，与权限模型一致）。 */
+  const q = (label, desc, page) => ({ label, desc, page });
+  const WB_META = {
+    admin: { label: '管理员', sub: '系统整体状态 + 今天该处理的业务（不重复做经营看板，也不堆无行动意义的图表）', quick: [
+      q('线索', '分配 / 跟进 / 审核', 'talent-leads'),
+      q('达人', '档案 / 交接 / 生命周期', 'talent-pool'),
+      q('任务', '内容 / 寄拍 / 成长', 'tasks'),
+      q('推广', '投放 / 渠道 / 成本', 'channels'),
+      q('结算', '分成 / 应付 / 收款', 'finance'),
+    ] },
+    senior_ops: { label: '高级运营', sub: '今天要分配、审核、催办和处理异常：看全局、卡质量、盯异常', quick: [
+      q('分配达人', '把新线索指派给运营', 'talent-leads'),
+      q('待审核线索', '付费孵化提交审核', 'talent-leads'),
+      q('运营负载', '谁忙谁闲，决定重新分配', 'talent-pool'),
+      q('全部达人', '跨运营查看与质检', 'talent-pool'),
+    ] },
+    ops: { label: '普通运营', sub: '今天该处理哪些达人：先确认接收新分配，再推进内容与任务', quick: [
+      q('我的达人', '只看我负责的达人', 'talent-pool'),
+      q('我的任务', '内容 / 寄拍执行', 'tasks'),
+      q('账号运营', '更新频率与信誉等级', 'account-ops'),
+      q('达人线索', '我名下的线索跟进', 'talent-leads'),
+    ] },
+    recruit: { label: '招募', sub: '今天该联系谁：新线索先首次触达，再判断潜力与意愿', quick: [
+      q('我的线索', '按报名时间倒序跟进', 'talent-leads'),
+      q('待跟进', '逾期 / 今日待跟', 'talent-leads'),
+      q('达人档案', '已合作待交接给运营', 'talent-pool'),
+    ] },
+    promote: { label: '推广', sub: '今天投哪里：看渠道来了多少线索，看哪个渠道真正有效', quick: [
+      { label: '打开报名表', desc: '复制链接发给渠道', href: '/recruit.html' },
+      q('渠道数据', '投放 / 访问 / 转化', 'channels'),
+      q('线索明细', '哪个渠道来的线索', 'talent-leads'),
+    ] },
+    finance: { label: '财务', sub: '今天哪些钱需要确认：待结算、待核对、异常账目', quick: [
+      q('收益结算', '核对 / 确认 / 结清', 'finance'),
+    ] },
+  };
+  const meta = WB_META[isAdmin ? 'admin' : myPos] || { label: '', sub: '按你的岗位实时生成待办', quick: [] };
+  return { role: isAdmin ? 'admin' : (myPos || 'other'), roleLabel: meta.label, subtitle: meta.sub, quick: meta.quick, blocks, today };
 }
 
 /* ---------------- 达人评级 / 生命周期（线索与达人通用，兼容两表） ----------------
@@ -2619,9 +2676,13 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
     const chLeads = myChannels.length ? all.filter(t => myChannels.includes(t.channel || '')) : [];
     const formLeads = chLeads.filter(t => t.formSource === 'recruit.html');
     const toTalent = chLeads.filter(t => ['合作中', '暂停合作'].includes(t.status)).length;
+    // 今日 / 本周新增线索（20260922）：本周口径=本周一 00:00 起
+    const weekStart = fmtDate(new Date(Date.now() - ((new Date().getDay() + 6) % 7) * 86400000));
     const totalCost = cs.reduce((s, c) => s + (Number(c.cost) || 0), 0);
     const totalVisits = cs.reduce((s, c) => s + (Number(c.visits) || 0), 0);
     extraCards = [
+      { label: '今日新增线索', value: chLeads.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '我负责渠道今天进来的线索', tone: 'text-rose-600' },
+      { label: '本周新增线索', value: chLeads.filter(t => String(t.createdAt || '').slice(0, 10) >= weekStart).length, sub: '本周（周一起）累计新增', tone: 'text-indigo-600' },
       { label: '本月推广活动数', value: csMonth.length, sub: today.slice(0, 7) + ' 创建的投放活动（名下共 ' + cs.length + ' 个）', tone: 'text-cyan-600' },
       { label: '总投入', value: '¥' + totalCost, sub: '名下活动成本合计', tone: 'text-indigo-600' },
       { label: '表单访问量', value: totalVisits, sub: '报名表单访问人次（推广获客页维护）', tone: 'text-slate-800' },
@@ -2640,6 +2701,9 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       { label: '高意向达人', value: universe.filter(t => t.intentLevel === '强').length, sub: '意愿=强，优先推进转化', tone: 'text-emerald-600' },
       { label: '待交接达人', value: universe.filter(t => ['合作中', '暂停合作'].includes(t.status) && !hoOf(t.id)).length, sub: '已合作，尽快交接给运营', tone: 'text-teal-600' },
       { label: '今日新增报名', value: universe.filter(t => String(t.createdAt || '').slice(0, 10) === today).length, sub: '今天报名进入线索池', tone: 'text-indigo-600' },
+      { label: '我的线索数', value: universe.length, sub: '我的招募范围（我负责的 + 招募岗同岗池）', tone: 'text-slate-800' },
+      { label: '超 2 天未跟进', value: universe.filter(t => t.owner && t.owner !== '未分配' && !WB_DONE_STATUS.includes(t.status)
+        && t.lastFollowAt && (Date.now() - ts(t.lastFollowAt)) > 2 * 86400000).length, sub: '负责人超过 2 天没有跟进动作', tone: 'text-rose-600' },
     ];
   } else if (myPos === 'finance' && !isAdmin) {
     const ss = await db.list('settlements');
@@ -2663,6 +2727,7 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
     extraCards = [
       { label: '我的达人数', value: mineTalents.length, sub: '我名下长期管理的达人', tone: 'text-cyan-600' },
       { label: '今日新分配达人', value: todayAssigned, sub: '今天分配到我名下，先确认接收再首次联系', tone: 'text-emerald-600' },
+      { label: '待确认接收', value: mineTalents.filter(t => t.assignState === 'pending_assign').length, sub: '主管已分配、我还没点「确认接收」', tone: 'text-amber-500' },
       { label: '待跟进达人', value: toFollow, sub: '今日该跟进 + 已逾期未跟进', tone: 'text-indigo-600' },
       { label: '待发布内容', value: toPublish, sub: '含待我审核的寄拍内容', tone: 'text-amber-500' },
       { label: '待寄拍（待起拍）', value: needShoot, sub: '合作中但当前没有进行中寄拍任务', tone: 'text-teal-600' },
@@ -2670,6 +2735,31 @@ route('GET', '/api/mvp/workbench', async (ctx) => {
       { label: '待审核线索', value: mineTalents.filter(t => t.leadType === 'paid_incubation' && ['pending_review', 'supplement'].includes(t.reviewState)).length, sub: '付费孵化线索已提交/被退回，等高级运营确认', tone: 'text-violet-600' },
     ];
   }
+  /* 卡片可点击（20260922 信息架构调整）：每张岗位卡标注「点进去能处理」的目标业务页，
+     前端渲染成可点卡片（数字 + 为什么需要处理 + 点进去处理）。
+     只做标签→页面映射，不改任何统计口径；未映射到的卡片保持纯展示。 */
+  const CARD_PAGE = {
+    // 管理员
+    '未分配线索': 'talent-leads', '超时线索': 'talent-leads', '待运营接收': 'talent-pool',
+    '待确认交接': 'talent-pool', '异常任务': 'tasks', '逾期结算': 'finance',
+    // 高级运营
+    '待分配新线索': 'talent-leads', '今日新增报名': 'talent-leads', '超 2 天未跟进线索': 'talent-leads',
+    '付费孵化待审核': 'talent-leads', '团队在管达人总数': 'talent-pool', '重点培养达人数量': 'talent-pool',
+    // 普通运营
+    '我的达人数': 'talent-pool', '今日新分配达人': 'talent-pool', '待确认接收': 'talent-pool',
+    '待跟进达人': 'talent-pool', '待发布内容': 'tasks', '待寄拍（待起拍）': 'tasks',
+    '数据异常达人数': 'account-ops', '待审核线索': 'talent-leads',
+    // 招募
+    '待处理新线索': 'talent-leads', '今日待跟进': 'talent-leads', '高意向达人': 'talent-leads',
+    '待交接达人': 'talent-pool', '我的线索数': 'talent-leads', '超 2 天未跟进': 'talent-leads',
+    // 推广
+    '今日新增线索': 'talent-leads', '本周新增线索': 'talent-leads', '本月推广活动数': 'channels',
+    '总投入': 'channels', '表单访问量': 'channels', '有效线索数': 'talent-leads',
+    '新增达人数': 'talent-pool', '有效线索转化率': 'channels', '新增达人成本': 'channels',
+    // 财务
+    '待核对结算单': 'finance', '待付款': 'finance', '已结清': 'finance',
+  };
+  extraCards = extraCards.map(c => (CARD_PAGE[c.label] ? Object.assign({}, c, { page: CARD_PAGE[c.label] }) : c));
   // 岗位面板（中台化）：管理员=经营视角，高级运营=管理视角，普通运营=陪跑视角，招募=线索视角
   const panels = await buildWorkbenchPanels(ctx, all);
   ok(ctx.res, {
@@ -3231,6 +3321,8 @@ route('POST', '/api/leads', async (ctx) => {
       appearWay: b.appearance_style || '', hasExp: b.business_experience || '',
       coopCategories: b.cooperation_categories || '', preferredCategories: b.preferred_categories || '',
       questions: b.questions || '', profileScreenshot: b.profile_screenshot || '', works: b.works || '',
+      // 微信/手机号原始值独立留痕（20260921d）：contact 是拼接展示串，拆不开；原始值进 recruit{} 不新建顶层字段
+      wechatId: b.wechat_id || '', phone: b.phone || '',
     },
     lastFollowAt: nowStr(), createdAt: nowStr(),
     rejectReason: '', auditAt: '', auditBy: '', isActive: true,
